@@ -6,6 +6,9 @@ from opendbc.car.hyundai.values import (HyundaiFlags, CAR, DBC, CAMERA_SCC_CAR, 
 from opendbc.car.hyundai.radar_interface import RADAR_START_ADDR
 from opendbc.car.interfaces import CarInterfaceBase
 from opendbc.car.disable_ecu import disable_ecu
+from opendbc.car.hyundai.carcontroller import CarController
+from opendbc.car.hyundai.carstate import CarState
+from opendbc.car.hyundai.radar_interface import RadarInterface
 
 import copy
 from openpilot.common.params import Params
@@ -18,11 +21,15 @@ ENABLE_BUTTONS = (ButtonType.accelCruise, ButtonType.decelCruise, ButtonType.can
 
 
 class CarInterface(CarInterfaceBase):
+  CarState = CarState
+  CarController = CarController
+  RadarInterface = RadarInterface
+
   @staticmethod
   def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, experimental_long, docs) -> structs.CarParams:
     ret.brand = "hyundai"
 
-    camera_scc = Params().get_bool("HyundaiCameraSCC")
+    camera_scc = Params().get_bool("CameraSccEnable")
 
     if camera_scc:
       ret.flags |= HyundaiFlags.CAMERA_SCC.value
@@ -45,7 +52,8 @@ class CarInterface(CarInterfaceBase):
       if {0x1AA, 0x1CF} & set(fingerprint[CAN.ECAN]):
         ret.flags |= HyundaiFlags.HAS_LDA_BUTTON.value
 
-      if 0x105 in fingerprint[CAN.ECAN]:
+      # Check if the car is hybrid. Only HEV/PHEV cars have 0xFA on E-CAN.
+      if 0xFA in fingerprint[CAN.ECAN]:
         ret.flags |= HyundaiFlags.HYBRID.value
 
       if lka_steering:
@@ -154,17 +162,13 @@ class CarInterface(CarInterfaceBase):
     # Common longitudinal control setup
 
     ret.experimentalLongitudinalAvailable = True  # candidate not in (CANFD_UNSUPPORTED_LONGITUDINAL_CAR | CANFD_RADAR_SCC_CAR)
-    ret.pcmCruise = Params().get_bool("PcmCruise")
+    ret.pcmCruise = Params().get_bool("PcmCruiseEnable")
 
     ret.radarUnavailable = RADAR_START_ADDR not in fingerprint[1] or Bus.radar not in DBC[ret.carFingerprint]
     ret.openpilotLongitudinalControl = (experimental_long and ret.experimentalLongitudinalAvailable) or camera_scc
     ret.startingState = True
-    ret.vEgoStarting = 0.3
-    ret.startAccel = 2.0
-    ret.stoppingDecelRate = 1.0
-    ret.vEgoStopping = 0.3
-    ret.stopAccel = -3.5
-
+    ret.vEgoStarting = 0.1
+    ret.startAccel = 1.0
     ret.longitudinalActuatorDelay = 0.5
 
     if ret.openpilotLongitudinalControl:
@@ -192,12 +196,6 @@ class CarInterface(CarInterfaceBase):
     if CP.flags & HyundaiFlags.ENABLE_BLINKERS:
       disable_ecu(can_recv, can_send, bus=CanBus(CP).ECAN, addr=0x7B1, com_cont_req=b'\x28\x83\x01')
 
-  @staticmethod
-  def get_params_adjust_set_speed(CP):
-    if CP.flags & HyundaiFlags.CANFD:
-      return [16], [20]
-    return [16, 20], [12, 14, 16, 18]
-
   def create_buttons(self, button):
     if self.CP.flags & HyundaiFlags.CANFD:
       if self.CP.flags & HyundaiFlags.CANFD_ALT_BUTTONS:
@@ -207,11 +205,11 @@ class CarInterface(CarInterfaceBase):
       return self.create_buttons_can(button)
 
   def create_buttons_can(self, button):
-    sccbus = 2 if self.CP.flags & HyundaiFlags.CAMERA_SCC.value else 0
     values = copy.copy(self.CS.clu11)
     values["CF_Clu_CruiseSwState"] = button
     values["CF_Clu_AliveCnt1"] = (values["CF_Clu_AliveCnt1"] + 1) % 0x10
-    return self.CC.packer.make_can_msg("CLU11", sccbus, values)
+    bus = 2 if self.CP.flags & HyundaiFlags.CAMERA_SCC else 0
+    return self.CC.packer.make_can_msg("CLU11", bus, values)
 
   def create_buttons_canfd(self, button):
     values = {

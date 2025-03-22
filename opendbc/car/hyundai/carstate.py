@@ -69,6 +69,7 @@ class CarState(CarStateBase):
     self.hda_info_4b4 = None
 
     self.cruise_buttons_msg = None
+    self.lfa_block_msg = None
 
     # On some cars, CLU15->CF_Clu_VehicleSpeed can oscillate faster than the dash updates. Sample at 5 Hz
     self.cluster_speed = 0
@@ -304,7 +305,7 @@ class CarState(CarStateBase):
     ret.vEgoRaw = (ret.wheelSpeeds.fl + ret.wheelSpeeds.fr + ret.wheelSpeeds.rl + ret.wheelSpeeds.rr) / 4.
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     #ret.vEgoCluster = ret.vEgo * 1.037
-    cluSpeed = cp.vl["CRUISE_BUTTONS_ALT"]["CLUSTER_SPEED"]
+    cluSpeed = cp.vl["CRUISE_BUTTONS_ALT"]["CLUSTER_SPEED_KPH"]
     ret.vEgoCluster = cluSpeed * speed_factor
 
     vEgoClu, aEgoClu = self.update_clu_speed_kf(ret.vEgoCluster)
@@ -329,11 +330,11 @@ class CarState(CarStateBase):
     if self.CP.enableBsm:
       cp_bsm_info = cp_cam if (self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value) else cp
       if self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
-        ret.leftBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FL_INDICATOR_ALT"] != 0
-        ret.rightBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FR_INDICATOR_ALT"] != 0
+        ret.leftBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FL_INDICATOR_ALT"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_LEFT_THREE"] != 0
+        ret.rightBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FR_INDICATOR_ALT"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_RIGHT_THREE"] != 0
       else:
-        ret.leftBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FL_INDICATOR"] != 0
-        ret.rightBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FR_INDICATOR"] != 0
+        ret.leftBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FL_INDICATOR"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_LEFT_TWO"] != 0
+        ret.rightBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FR_INDICATOR"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_RIGHT_TWO"] != 0
 
     # cruise state
     # CAN FD cars enable on main button press, set available if no TCS faults preventing engagement

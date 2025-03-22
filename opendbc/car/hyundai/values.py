@@ -29,7 +29,7 @@ class CarControllerParams:
   ANGLE_MIN_TORQUE = 30 # 25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
   ANGLE_TORQUE_UP_RATE = 2 # 1
   ANGLE_TORQUE_DOWN_RATE = 3
-  ANGLE_STEER_THRESHOLD = 200
+  ANGLE_STEER_THRESHOLD = 180
 
   def __init__(self, CP):
     self.STEER_DELTA_UP = 3

@@ -100,18 +100,12 @@ BO_ 272 LKAS_ALT: 32 XXX
  SG_ LFA_BUTTON : 56|1@1+ (1,0) [0|1] "" XXX
  SG_ LKA_ASSIST : 62|1@1+ (1,0) [0|1] "" XXX
  SG_ STEER_MODE : 65|3@1+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_1 : 75|4@0+ (1,0) [0|15] "" XXX
+ SG_ NEW_SIGNAL_2 : 70|2@0+ (1,0) [0|3] "" XXX
  SG_ LKAS_ANGLE_ACTIVE : 77|2@0+ (1,0) [0|3] "" XXX
  SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
  SG_ LKAS_ANGLE_CMD : 82|14@1- (0.1,0) [0|511] "" XXX
  SG_ LKAS_ANGLE_MAX_TORQUE : 96|8@1+ (1,0) [0|255] "" XXX
- SG_ VALUE104 : 104|8@1+ (1,0) [0|255] "" XXX
- SG_ LKAS_SIGNAL_2 : 225|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_3 : 228|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_4 : 231|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_5 : 232|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_6 : 247|8@0+ (1,0) [0|255] "" XXX
- SG_ LKAS_SIGNAL_7 : 255|8@0+ (1,0) [0|255] "" XXX
+ SG_ NEW_SIGNAL_3 : 111|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 293 STEERING_SENSORS: 16 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -132,18 +126,12 @@ BO_ 298 LFA: 16 ADRV
  SG_ LFA_BUTTON : 56|1@1+ (1,0) [0|1] "" XXX
  SG_ LKA_ASSIST : 62|1@1+ (1,0) [0|1] "" XXX
  SG_ STEER_MODE : 65|3@1+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_1 : 75|4@0+ (1,0) [0|15] "" XXX
+ SG_ NEW_SIGNAL_2 : 70|2@0+ (1,0) [0|3] "" XXX
  SG_ LKAS_ANGLE_ACTIVE : 77|2@0+ (1,0) [0|3] "" XXX
  SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
  SG_ LKAS_ANGLE_CMD : 82|14@1- (0.1,0) [0|511] "" XXX
  SG_ LKAS_ANGLE_MAX_TORQUE : 96|8@1+ (1,0) [0|255] "" XXX
- SG_ VALUE104 : 104|8@1+ (1,0) [0|255] "" XXX
- SG_ LKAS_SIGNAL_2 : 225|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_3 : 228|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_4 : 231|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_5 : 232|1@0+ (1,0) [0|1] "" XXX
- SG_ LKAS_SIGNAL_6 : 247|8@0+ (1,0) [0|255] "" XXX
- SG_ LKAS_SIGNAL_7 : 255|8@0+ (1,0) [0|255] "" XXX
+ SG_ NEW_SIGNAL_3 : 111|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 304 GEAR_SHIFTER: 16 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -345,9 +333,9 @@ BO_ 426 CRUISE_BUTTONS_ALT: 16 XXX
  SG_ NEW_SIGNAL_5 : 42|2@1+ (1,0) [0|3] "" XXX
  SG_ SET_ME_2 : 44|3@1+ (1,0) [0|7] "" XXX
  SG_ NEW_SIGNAL_6 : 47|1@1+ (1,0) [0|1] "" XXX
- SG_ BYTE6 : 48|8@1+ (1,0) [0|255] "" XXX
+ SG_ CLUSTER_SPEED_MPH : 48|8@1+ (0.5,0) [0|255] "mph" XXX
  SG_ BYTE7 : 56|8@1+ (1,0) [0|255] "" XXX
- SG_ CLUSTER_SPEED : 64|8@1+ (1,0) [0|255] "" XXX
+ SG_ CLUSTER_SPEED_KPH : 64|8@1+ (1,0) [0|255] "kph" XXX
  SG_ BYTE9 : 72|8@1+ (1,0) [0|255] "" XXX
  SG_ BYTE10 : 80|8@1+ (1,0) [0|255] "" XXX
  SG_ BYTE11 : 88|8@1+ (1,0) [0|255] "" XXX
@@ -639,6 +627,7 @@ BO_ 1264 LOCAL_TIME: 8 XXX
 CM_ SG_ 96 BRAKE_PRESSURE "User applied brake pedal pressure. Ramps from computer applied pressure on falling edge of cruise. Cruise cancels if !=0";
 CM_ SG_ 101 BRAKE_POSITION "User applied brake pedal position, max is ~700. Signed on some vehicles";
 CM_ BO_ 272 "Alternative LKAS message, used on cars such as 2023 Ioniq 6, 2nd gen Kona. Matches LKAS except size is 32 bytes";
+CM_ SG_ 272 LKA_AVAILABLE "Angle control cars: 3 when LKA is generally available, goes to 0 during changes with LFA";
 CM_ SG_ 272 LKAS_ANGLE_CMD "tracks MDPS->STEERING_ANGLE when not engaged, not STEERING_SENSORS->STEERING_ANGLE";
 CM_ SG_ 298 NEW_SIGNAL_4 "todo: figure out why always set to 9";
 CM_ SG_ 352 SET_ME_9 "has something to do with AEB settings";

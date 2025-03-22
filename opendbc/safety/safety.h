@@ -5,22 +5,22 @@
 
 // include the safety policies.
 #include "safety/safety_defaults.h"
-//#include "safety/safety_honda.h"
-//#include "safety/safety_toyota.h"
-//#include "safety/safety_tesla.h"
-//#include "safety/safety_gm.h"
-//#include "safety/safety_ford.h"
+#include "safety/safety_honda.h"
+#include "safety/safety_toyota.h"
+#include "safety/safety_tesla.h"
+#include "safety/safety_gm.h"
+#include "safety/safety_ford.h"
 #include "safety/safety_hyundai.h"
-//#include "safety/safety_chrysler.h"
-//#include "safety/safety_rivian.h"
-//#include "safety/safety_subaru.h"
-//#include "safety/safety_subaru_preglobal.h"
-//#include "safety/safety_mazda.h"
-//#include "safety/safety_nissan.h"
-//#include "safety/safety_volkswagen_mqb.h"
-//#include "safety/safety_volkswagen_pq.h"
+#include "safety/safety_chrysler.h"
+#include "safety/safety_rivian.h"
+#include "safety/safety_subaru.h"
+#include "safety/safety_subaru_preglobal.h"
+#include "safety/safety_mazda.h"
+#include "safety/safety_nissan.h"
+#include "safety/safety_volkswagen_mqb.h"
+#include "safety/safety_volkswagen_pq.h"
 #include "safety/safety_elm327.h"
-//#include "safety/safety_body.h"
+#include "safety/safety_body.h"
 
 // CAN-FD only safety modes
 #ifdef CANFD
@@ -398,33 +398,33 @@ static void reset_sample(struct sample_t *sample) {
 
 int set_safety_hooks(uint16_t mode, uint16_t param) {
   const safety_hook_config safety_hook_registry[] = {
-  {SAFETY_SILENT, &nooutput_hooks},
-  //{SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
-  //{SAFETY_TOYOTA, &toyota_hooks},
-  {SAFETY_ELM327, &elm327_hooks},
-  //{SAFETY_GM, &gm_hooks},
-  //{SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
-  {SAFETY_HYUNDAI, &hyundai_hooks},
-  //{SAFETY_CHRYSLER, &chrysler_hooks},
-  //{SAFETY_SUBARU, &subaru_hooks},
-  //{SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
-  //{SAFETY_NISSAN, &nissan_hooks},
-  {SAFETY_NOOUTPUT, &nooutput_hooks},
-  {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
-  //{SAFETY_MAZDA, &mazda_hooks},
-  //{SAFETY_BODY, &body_hooks},
-  //{SAFETY_FORD, &ford_hooks},
-  //{SAFETY_RIVIAN, &rivian_hooks},
+    {SAFETY_SILENT, &nooutput_hooks},
+    {SAFETY_HONDA_NIDEC, &honda_nidec_hooks},
+    {SAFETY_TOYOTA, &toyota_hooks},
+    {SAFETY_ELM327, &elm327_hooks},
+    {SAFETY_GM, &gm_hooks},
+    {SAFETY_HONDA_BOSCH, &honda_bosch_hooks},
+    {SAFETY_HYUNDAI, &hyundai_hooks},
+    {SAFETY_CHRYSLER, &chrysler_hooks},
+    {SAFETY_SUBARU, &subaru_hooks},
+    {SAFETY_VOLKSWAGEN_MQB, &volkswagen_mqb_hooks},
+    {SAFETY_NISSAN, &nissan_hooks},
+    {SAFETY_NOOUTPUT, &nooutput_hooks},
+    {SAFETY_HYUNDAI_LEGACY, &hyundai_legacy_hooks},
+    {SAFETY_MAZDA, &mazda_hooks},
+    {SAFETY_BODY, &body_hooks},
+    {SAFETY_FORD, &ford_hooks},
+    {SAFETY_RIVIAN, &rivian_hooks},
 #ifdef CANFD
-  {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
+    {SAFETY_HYUNDAI_CANFD, &hyundai_canfd_hooks},
 #endif
 #ifdef ALLOW_DEBUG
-  //{SAFETY_TESLA, &tesla_hooks},
-  //{SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
-  //{SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
-  {SAFETY_ALLOUTPUT, &alloutput_hooks},
+    {SAFETY_TESLA, &tesla_hooks},
+    {SAFETY_SUBARU_PREGLOBAL, &subaru_preglobal_hooks},
+    {SAFETY_VOLKSWAGEN_PQ, &volkswagen_pq_hooks},
+    {SAFETY_ALLOUTPUT, &alloutput_hooks},
 #endif
-};
+  };
 
   // reset state set by safety mode
   safety_mode_cnt = 0U;
@@ -644,12 +644,12 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const TorqueStee
 
   if (controls_allowed) {
     // *** global torque limit check ***
-    violation |= max_limit_check(desired_torque, limits.max_steer, -limits.max_steer);
+    violation |= max_limit_check(desired_torque, limits.max_torque, -limits.max_torque);
 
     // *** torque rate limit check ***
     if (limits.type == TorqueDriverLimited) {
       violation |= driver_limit_check(desired_torque, desired_torque_last, &torque_driver,
-                                      limits.max_steer, limits.max_rate_up, limits.max_rate_down,
+                                      limits.max_torque, limits.max_rate_up, limits.max_rate_down,
                                       limits.driver_torque_allowance, limits.driver_torque_multiplier);
     } else {
       violation |= dist_to_meas_check(desired_torque, desired_torque_last, &torque_meas,
@@ -662,7 +662,7 @@ bool steer_torque_cmd_checks(int desired_torque, int steer_req, const TorqueStee
 
     // every RT_INTERVAL set the new limits
     uint32_t ts_elapsed = get_ts_elapsed(ts, ts_torque_check_last);
-    if (ts_elapsed > limits.max_rt_interval) {
+    if (ts_elapsed > MAX_TORQUE_RT_INTERVAL) {
       rt_torque_last = desired_torque;
       ts_torque_check_last = ts;
     }

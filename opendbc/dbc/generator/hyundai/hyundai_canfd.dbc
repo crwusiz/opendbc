@@ -158,11 +158,16 @@ BO_ 353 CCNC_0x161: 32 CCNC
  SG_ FCA_ALT_ICON : 27|3@1+ (1,0) [0|7] "" XXX
  SG_ LKA_ICON : 30|3@1+ (1,0) [0|3] "" XXX
  SG_ HBA_ICON : 33|3@1+ (1,0) [0|7] "" XXX
+ SG_ ZEROS_1 : 36|4@1+ (1,0) [0|15] "" XXX
+ SG_ ZEROS_2 : 40|2@1+ (1,0) [0|3] "" XXX
  SG_ FCA_IMAGE : 42|3@1+ (1,0) [0|7] "" XXX
+ SG_ ZEROS_3 : 45|3@1+ (1,0) [0|7] "" XXX
+ SG_ ZEROS_4 : 48|3@1+ (1,0) [0|7] "" XXX
  SG_ BCA_LEFT : 51|3@1+ (1,0) [0|7] "" XXX
  SG_ BCA_RIGHT : 54|3@1+ (1,0) [0|7] "" XXX
  SG_ LCA_LEFT_ARROW : 57|3@1+ (1,0) [0|7] "" XXX
  SG_ LCA_RIGHT_ARROW : 60|3@1+ (1,0) [0|7] "" XXX
+ SG_ ZEROS_5 : 63|1@0+ (1,0) [0|1] "" XXX
  SG_ CENTERLINE : 64|2@1+ (1,0) [0|3] "" XXX
  SG_ TARGET : 66|3@1+ (1,0) [0|7] "" XXX
  SG_ TARGET_DISTANCE : 69|11@1+ (0.1,0) [0|204.7] "m" XXX
@@ -186,6 +191,8 @@ BO_ 353 CCNC_0x161: 32 CCNC
  SG_ SOUNDS_2 : 164|4@1+ (1,0) [0|3] "" XXX
  SG_ SOUNDS_3 : 168|4@1+ (1,0) [0|15] "" XXX
  SG_ SOUNDS_4 : 172|3@1+ (1,0) [0|7] "" XXX
+ SG_ ZEROS_6 : 175|1@0+ (1,0) [0|1] "" XXX
+ SG_ ZEROS_7 : 176|5@1+ (1,0) [0|31] "" XXX
  SG_ SETSPEED_HUD : 181|3@1+ (1,0) [0|7] "" XXX
  SG_ DISTANCE_LEAD : 184|5@1+ (1,0) [0|31] "" XXX
  SG_ DISTANCE_CAR : 189|3@1+ (1,0) [0|7] "" XXX
@@ -202,6 +209,8 @@ BO_ 353 CCNC_0x161: 32 CCNC
  SG_ BACKGROUND : 236|4@1+ (1,0) [0|15] "" XXX
  SG_ DAW_ICON : 240|3@1+ (1,0) [0|7] "" XXX
  SG_ CAR_CIRCLE : 243|3@1+ (1,0) [0|7] "" XXX
+ SG_ ZEROS_8 : 246|2@1+ (1,0) [0|3] "" XXX
+ SG_ ZEROS_9 : 248|8@1+ (1,0) [0|255] "" XXX
 
 BO_ 354 CCNC_0x162: 32 CCNC
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX

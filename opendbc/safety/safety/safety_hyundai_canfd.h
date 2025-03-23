@@ -81,8 +81,6 @@ static int hyundai_canfd_get_lka_addr(void) {
 }
 
 #define CANFD_TX_ENTRIES_SIZE 25
-#define MAX_ADDR_LIST_SIZE 128
-#define OP_CAN_SEND_TIMEOUT 100000
 
 typedef struct {
   int addr;
@@ -339,6 +337,8 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   return tx;
 }
 
+#define MAX_ADDR_LIST_SIZE 128
+
 typedef struct {
   int addrs[MAX_ADDR_LIST_SIZE];
   int count;
@@ -359,30 +359,49 @@ static bool add_addr_to_list(AddrList *list, int addr) {
   return true;
 }
 
-static void print_hex(uint32_t num) {
-  const char hex_digits[] = "0123456789abcdef";
-  char buf[9] = {0};
-  for (int i = 7; i >= 0; i--) {
-    buf[i] = hex_digits[num & 0xFU];
-    num >>= 4;
+static void print_number(uint32_t num, uint8_t base) {
+  const char digits[] = "0123456789abcdef";
+  char buffer[11];
+  unsigned int idx = 0;
+
+  if (num == 0) {
+    buffer[idx++] = '0';
+  } else {
+    while (num > 0 && idx < (sizeof(buffer) - 1)) {
+      buffer[idx++] = digits[num % base];
+      num /= base;
+    }
   }
-  int start = 0;
-  while (start < 7 && buf[start] == '0') start++;
-  print(&buf[start]);
+  buffer[idx] = '\0';
+
+  for (int i = idx-1; i >= 0; i--) {
+    char ch[2] = {buffer[i], '\0'};
+    print(ch);
+  }
 }
 
-static void print_addr_list(const char *prefix, const AddrList *list, int bus_num, uint32_t timestamp) {
-  print(prefix);
+static void print_addr_list(const AddrList *list, int bus_num, uint32_t now) {
+  static uint32_t last_print_time = 0;
+  const uint32_t PRINT_INTERVAL = 10000000U;
+
+  if ((now - last_print_time) < PRINT_INTERVAL) {
+    return;
+  }
+  last_print_time = now;
+
+  print("Debug: Bus Addr List - ");
   print("Bus=");
-  putui((uint32_t)bus_num);
+  print_number((uint32_t)bus_num, 10);
   print(", ts=");
-  putui(timestamp);
+  print_number(now, 10);
   print(", Addrs=[");
+
   for (int j = 0; j < list->count; j++) {
-    putui((uint32_t)list->addrs[j]);  // Dec
+    print_number((uint32_t)list->addrs[j], 10);
     print("(0x");
-    print_hex((uint32_t)list->addrs[j]);  // Hex
+    print_number((uint32_t)list->addrs[j], 16);
     print(")");
+
     if (j < (list->count - 1)) {
       print(", ");
     }
@@ -392,6 +411,7 @@ static void print_addr_list(const char *prefix, const AddrList *list, int bus_nu
 
 static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   bool block_msg = false;
+  uint32_t OP_CAN_SEND_TIMEOUT = 100000;
   uint32_t now = microsecond_timer_get();
   static AddrList addr_list = {{0}, 0};
 
@@ -426,7 +446,7 @@ static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   }
 
   if (add_addr_to_list(&addr_list, addr)) {
-    print_addr_list("Debug: Bus Addr List - ", &addr_list, bus_num, now);
+    print_addr_list(&addr_list, bus_num, now);
   }
 
   return block_msg;

@@ -507,10 +507,11 @@ struct CarParams {
 
   minEnableSpeed @7 :Float32;
   minSteerSpeed @8 :Float32;
+  steerAtStandstill @77 :Bool;  # is steering available at standstill? just check if it faults
   safetyConfigs @62 :List(SafetyConfig);
   alternativeExperience @65 :Int16;      # panda flag for features like no disengage on gas
 
-  # Car docs fields
+  # Car docs fields, not used for control
   maxLateralAccel @68 :Float32;
   autoResumeSng @69 :Bool;               # describes whether car can resume from a stop automatically
 
@@ -566,7 +567,7 @@ struct CarParams {
   secOcRequired @75 :Bool;  # Car requires SecOC message authentication to operate
   secOcKeyAvailable @76 :Bool;  # Stored SecOC key loaded from params
 
-  exFlags @77 :UInt32;
+  exFlags @79 :UInt32;
   isLfa @78 :Bool;
 
   struct SafetyConfig {

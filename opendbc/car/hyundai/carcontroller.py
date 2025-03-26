@@ -83,19 +83,47 @@ class CarController(CarControllerBase):
       apply_torque = apply_driver_steer_torque_limits(new_torque, self.apply_torque_last, CS.out.steeringTorque, self.params)
     else:
       # angle control
+      if CS.out.steeringPressed:
+        self.apply_angle_last = actuators.steeringAngleDeg
       self.apply_angle_last = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw,
                                                            CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
       # Similar to torque control driver torque override, we ramp up and down the max allowed torque,
       # but this is a single threshold for simplicity. It also matches the stock system behavior.
-      if abs(CS.out.steeringTorque) > self.params.ANGLE_STEER_THRESHOLD:
-        torque_diff_down = abs(CS.out.steeringTorque) - self.params.ANGLE_STEER_THRESHOLD
-        reduction_factor = max(self.params.ANGLE_TORQUE_DOWN_RATE, torque_diff_down / 10)
-        self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, self.params.ANGLE_MIN_TORQUE)
+      #if abs(CS.out.steeringTorque) > self.params.STEER_THRESHOLD:
+      #  torque_diff_down = abs(CS.out.steeringTorque) - self.params.ANGLE_STEER_THRESHOLD
+      #  reduction_factor = max(self.params.ANGLE_TORQUE_DOWN_RATE, torque_diff_down / 10)
+      #  self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, self.params.ANGLE_MIN_TORQUE)
+      #else:
+      #  torque_diff_up = self.params.ANGLE_STEER_THRESHOLD - abs(CS.out.steeringTorque)
+      #  increase_factor = max(self.params.ANGLE_TORQUE_UP_RATE, torque_diff_up / 10)
+      #  self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, self.params.ANGLE_MAX_TORQUE)
+
+      USER_OVERRIDING = abs(CS.out.steeringTorque) > self.params.STEER_THRESHOLD
+      NEAR_CENTER_ANGLE = 1.0  # Threshold in degrees to consider "near center"
+      OVERRIDE_CYCLES = 20  # Number of cycles to ramp down to minimum
+
+      if USER_OVERRIDING:
+        # When the user is overriding, calculate a ramp-down rate that will reach minimum torque in OVERRIDE_CYCLES
+        torque_delta = self.lkas_max_torque - self.params.ANGLE_MIN_TORQUE
+        adaptive_ramp_rate = max(torque_delta / OVERRIDE_CYCLES, 1)  # Ensure we move at least 1 unit per cycle
+        self.lkas_max_torque = max(self.lkas_max_torque - adaptive_ramp_rate, self.params.ANGLE_MIN_TORQUE)
       else:
-        torque_diff_up = self.params.ANGLE_STEER_THRESHOLD - abs(CS.out.steeringTorque)
-        increase_factor = max(self.params.ANGLE_TORQUE_UP_RATE, torque_diff_up / 10)
-        self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, self.params.ANGLE_MAX_TORQUE)
+        # Calculate target torque based on current speed
+        speed_range = [0, 4]  # Speed threshold for reduced torque effect
+        torque_range = [self.params.ANGLE_MIN_TORQUE * 1.5, self.params.ANGLE_MAX_TORQUE]
+        target_torque = float(np.interp(CS.out.vEgoRaw, speed_range, torque_range))
+
+        # Reduce torque when near center (when apply_angle_last is close to 0)
+        if abs(self.apply_angle_last) < NEAR_CENTER_ANGLE:
+          adaptive_max_torque = float(np.interp(abs(self.apply_angle_last), [0, NEAR_CENTER_ANGLE], [.5, 1]))
+          target_torque = min(target_torque, self.params.ANGLE_MAX_TORQUE * adaptive_max_torque)
+
+        # Ramp up or down toward the target torque
+        if self.lkas_max_torque > target_torque:
+          self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, target_torque)
+        else:
+          self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, target_torque)
 
     # Disable steering while turning blinker on and speed below 60 kph
     if CS.out.leftBlinker or CS.out.rightBlinker:
@@ -134,7 +162,7 @@ class CarController(CarControllerBase):
       if self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:
         can_sends.append(make_tester_present_msg(0x7b1, self.CAN.ECAN, suppress_response=True))
 
-    # CAN-FD platforms
+    # *** CAN/CAN FD specific ***
     if self.CP.flags & HyundaiFlags.CANFD:
       can_sends.extend(self.create_canfd_msgs(apply_steer_req, apply_torque, set_speed_in_units, accel,
                                               stopping, hud_control, actuators, CS, CC))

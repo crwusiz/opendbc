@@ -66,16 +66,13 @@ class CarController(CarControllerBase):
   def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     hud_control = CC.hudControl
+    apply_torque = 0
 
     # TODO: needed for angle control cars?
     # >90 degree steering fault prevention
     self.angle_limit_counter, apply_steer_req = common_fault_avoidance(abs(CS.out.steeringAngleDeg) >= MAX_FAULT_ANGLE, CC.latActive,
                                                                        self.angle_limit_counter, MAX_FAULT_ANGLE_FRAMES,
                                                                        MAX_FAULT_ANGLE_CONSECUTIVE_FRAMES)
-    # Hold torque with induced temporary fault when cutting the actuation bit
-    torque_fault = CC.latActive and not apply_steer_req
-
-    apply_torque = 0
 
     # steering torque
     if not self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING:
@@ -84,40 +81,44 @@ class CarController(CarControllerBase):
 
     # angle control
     else:
+      # Reset apply_angle_last if the driver is intervening
       if CS.out.steeringPressed:
         self.apply_angle_last = actuators.steeringAngleDeg
       self.apply_angle_last = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw,
                                                            CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
-      # Similar to torque control driver torque override, we ramp up and down the max allowed torque,
-      # but this is a single threshold for simplicity. It also matches the stock system behavior.
+      current_torque = abs(CS.out.steeringTorque)
+      torque_threshold = self.params.ANGLE_STEER_THRESHOLD
+      min_torque = self.params.ANGLE_MIN_TORQUE
+      max_torque = self.params.ANGLE_MAX_TORQUE
 
-      if abs(CS.out.steeringTorque) > self.params.ANGLE_STEER_THRESHOLD:
-        torque_diff_down = abs(CS.out.steeringTorque) - self.params.ANGLE_STEER_THRESHOLD
-        torque_delta = self.lkas_max_torque - self.params.ANGLE_MIN_TORQUE
+      # Override handling
+      if current_torque > torque_threshold:
+        torque_excess = current_torque - torque_threshold
+        available_reduction  = self.lkas_max_torque - min_torque
+        reduction_factor = max(torque_excess / 10, available_reduction / self.params.ANGLE_PARAMS['OVERRIDE_CYCLES'])
+        self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, min_torque)
 
-        override_cycles = 20  # Number of cycles to ramp down to minimum
-        reduction_factor = max(torque_diff_down / 10, torque_delta / override_cycles)
-        self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, self.params.ANGLE_MIN_TORQUE)
+      # Normal torque adjustment
       else:
-        torque_diff_up = self.params.ANGLE_STEER_THRESHOLD - abs(CS.out.steeringTorque)
-        increase_factor = max(self.params.ANGLE_TORQUE_UP_RATE, torque_diff_up / 10)
+        # Curvature-based target calculation
+        scaled_torque = [v * max_torque for v in self.params.ANGLE_PARAMS['TORQUE_SCALES']]
+        target_torque = float(np.interp(float(abs(actuators.curvature)),
+                                        self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
+        # Near-center adjustment
+        angle_from_center = abs(self.apply_angle_last)
+        near_center = self.params.ANGLE_PARAMS['NEAR_CENTER_THRESHOLD']
 
-        # Calculate target torque based on current speed
-        speed_range = [0, 4]  # Speed threshold for reduced torque effect
-        torque_range = [self.params.ANGLE_MIN_TORQUE * 1.5, self.params.ANGLE_MAX_TORQUE]
-        target_torque = float(np.interp(CS.out.vEgoRaw, speed_range, torque_range))
+        if angle_from_center < near_center:
+          adaptive_scale = float(np.interp(angle_from_center, [0, near_center], [0.3, 1.0]))
+          increase_factor = max(self.params.ANGLE_TORQUE_UP_RATE, (torque_threshold - current_torque) / 10) * adaptive_scale
 
-        near_center_angle = 1.0  # Threshold in degrees to consider "near center"
-        if abs(self.apply_angle_last) < near_center_angle:
-          adaptive_reduction = np.interp(abs(self.apply_angle_last), [0, near_center_angle], [0.3, 1.0])
-          increase_factor *= adaptive_reduction
+          max_torque_scale = float(np.interp(angle_from_center, [0, near_center], [0.5, 1.0]))
+          target_torque = min(target_torque, max_torque * max_torque_scale)
+        else:
+          increase_factor = self.params.ANGLE_TORQUE_UP_RATE
 
-          # Reduce torque when near center (when apply_angle_last is close to 0)
-          adaptive_max_torque = np.interp(abs(self.apply_angle_last), [0, near_center_angle], [0.5, 1.0])
-          target_torque = min(target_torque, self.params.ANGLE_MAX_TORQUE * adaptive_max_torque)
-
-        # Ramp up or down toward the target torque
+        # Ramp up or down toward the target torque smoothly
         if self.lkas_max_torque > target_torque:
             self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, target_torque)
         else:

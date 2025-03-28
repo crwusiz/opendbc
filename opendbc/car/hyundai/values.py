@@ -32,6 +32,14 @@ class CarControllerParams:
   ANGLE_TORQUE_UP_RATE = 2 #1  # Indicates how fast the torque ramps up after user intervention.
   ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
   ANGLE_STEER_THRESHOLD = 200
+  ANGLE_PARAMS = {
+    'CURVATURE_BP': [0.0, 0.03, 0.6],
+    'TORQUE_SCALES': [0.5, 0.75, 1.0],
+    'OVERRIDE_CYCLES': 17,
+    'NEAR_CENTER_THRESHOLD': 0.0,
+    'ADAPTIVE_REDUCTION_RANGE': [0.3, 1.0],
+    'MAX_TORQUE_RANGE': [0.5, 1.0]
+  }
 
   def __init__(self, CP):
     self.STEER_DELTA_UP = 3

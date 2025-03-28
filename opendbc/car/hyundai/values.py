@@ -33,7 +33,7 @@ class CarControllerParams:
   ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
   ANGLE_STEER_THRESHOLD = 200
   ANGLE_PARAMS = {
-    'CURVATURE_BP': [0.0, 0.03, 0.6],
+    'CURVATURE_BP': [0.0, 0.02, 0.35],
     'TORQUE_SCALES': [0.5, 0.75, 1.0],
     'OVERRIDE_CYCLES': 17,
     'NEAR_CENTER_THRESHOLD': 0.0,

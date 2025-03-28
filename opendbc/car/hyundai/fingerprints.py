@@ -508,15 +508,14 @@ FW_VERSIONS = {
   },
   CAR.HYUNDAI_GRANDEUR: {  # (IG)
     (Ecu.fwdRadar, 0x7d0, None): [
-      b'\xf1\x00IG__ SCC F_CUP   1.00 1.00 95400M9500     \xf1\xa01.00',
-      b'\xf1\x00IG__ SCC F_CUP   1.00 1.00 96400G8000     \xf1\xa01.00',
-      b'\xf1\x00IG__ SCC F-CU-      1.00 1.00 99110-G8100         ',
+      b'\xf1\x00IG__ SCC F_CUP   1.00 1.00 95400-M9500         ',
+      b'\xf1\x00IG__ SCC F_CUP   1.00 1.00 96400-G8000         ',
     ],
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\x00IG  MDPS C 1.00 1.02 56310G8510\x00 4IGSC103',
     ],
     (Ecu.fwdCamera, 0x7c4, None): [
-      b'\xf1\000IG MFC  1.00 1.00 95740F9200 180916',
+      b'\xf1\000IG MFC  1.00 1.00 95740-F9200 180916',
     ],
   },
   CAR.HYUNDAI_GRANDEUR_HEV: {  # (IG)
@@ -538,7 +537,7 @@ FW_VERSIONS = {
   },
   CAR.HYUNDAI_GRANDEUR_FL: {  # (IG)
     (Ecu.fwdRadar, 0x7d0, None): [
-      b'\xf1\x00IG__ SCC F-CU-      1.00 1.00 99110-G8100         ',
+      b'\xf1\x00IG__ SCC F-CUP   1.00 1.00 99110-G8100         ',
     ],
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\x00IG  MDPS C 1.00 1.02 56310G8510\x00 4IGSC103',
@@ -548,20 +547,20 @@ FW_VERSIONS = {
     ],
   },
   CAR.HYUNDAI_GRANDEUR_FL_HEV: {  # (IG)
-    (Ecu.fwdCamera, 0x7c4, None): [
-      b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.00 99211-G8000 180903',
-      b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.01 99211-G8000 181109',
-      b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.02 99211-G8100 191029',
+    (Ecu.fwdRadar, 0x7d0, None): [
+      b'\xf1\x00IGhe SCC FHCUP      1.00 1.00 99110-M9100         ',
+      b'\xf1\x00IGhe SCC FHCUP      1.00 1.01 99110-M9000         ',
+      b'\xf1\x00IGhe SCC FHCUP      1.00 1.02 99110-M9000         ',
     ],
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\x00IG  MDPS C 1.00 1.00 56310M9600\x00 4IHSC100',
       b'\xf1\x00IG  MDPS C 1.00 1.01 56310M9350\x00 4IH8C101',
       b'\xf1\x00IG  MDPS C 1.00 1.02 56310M9350\x00 4IH8C102',
     ],
-    (Ecu.fwdRadar, 0x7d0, None): [
-      b'\xf1\x00IGhe SCC FHCUP      1.00 1.00 99110-M9100         ',
-      b'\xf1\x00IGhe SCC FHCUP      1.00 1.01 99110-M9000         ',
-      b'\xf1\x00IGhe SCC FHCUP      1.00 1.02 99110-M9000         ',
+    (Ecu.fwdCamera, 0x7c4, None): [
+      b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.00 99211-G8000 180903',
+      b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.01 99211-G8000 181109',
+      b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.02 99211-G8100 191029',
     ],
   },
 

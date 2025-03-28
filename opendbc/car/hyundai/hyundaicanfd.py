@@ -334,7 +334,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         "LCA_RIGHT_ICON": 1 if CS.out.rightBlindspot else 2,
       }
 
-      if values["ALERTS_2"] == 5:
+      if values["ALERTS_2"] in [1, 2, 5]:
         values["ALERTS_2"] = 0
         values["SOUNDS_2"] = 0
 

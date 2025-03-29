@@ -27,18 +27,19 @@ class CarControllerParams:
 
   # Stock LFA system is seen sending 250 max, but for LKAS events it's 175 max.
   # 250 can at least achieve 4 m/s^2, 80 corresponds to ~2.5 m/s^2
-  ANGLE_MAX_TORQUE = 200 #250  # The maximum amount of torque that will be allowed
-  ANGLE_MIN_TORQUE = 30 #25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
+  ANGLE_MAX_TORQUE = 250  # The maximum amount of torque that will be allowed
+  ANGLE_MIN_TORQUE = 25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
   ANGLE_TORQUE_UP_RATE = 2 #1  # Indicates how fast the torque ramps up after user intervention.
   ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
   ANGLE_STEER_THRESHOLD = 200
   ANGLE_PARAMS = {
     'CURVATURE_BP': [0.0, 0.02, 0.35],
     'TORQUE_SCALES': [0.5, 0.75, 1.0],
-    'OVERRIDE_CYCLES': 17,
-    'NEAR_CENTER_THRESHOLD': 0.0,
     'ADAPTIVE_REDUCTION_RANGE': [0.3, 1.0],
-    'MAX_TORQUE_RANGE': [0.5, 1.0]
+    'MAX_TORQUE_RANGE': [0.5, 1.0],
+    'NEAR_CENTER_THRESHOLD': 1.0,
+    'TORQUE_DIFF_SCALE': 10,
+    'OVERRIDE_CYCLES': 15,
   }
 
   def __init__(self, CP):

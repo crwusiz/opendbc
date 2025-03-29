@@ -91,12 +91,15 @@ class CarController(CarControllerBase):
       torque_threshold = self.params.ANGLE_STEER_THRESHOLD
       min_torque = self.params.ANGLE_MIN_TORQUE
       max_torque = self.params.ANGLE_MAX_TORQUE
+      up_rate = self.params.ANGLE_TORQUE_UP_RATE
+      down_rate = self.params.ANGLE_TORQUE_DOWN_RATE
 
       # Override handling
       if current_torque > torque_threshold:
-        torque_excess = current_torque - torque_threshold
-        available_reduction  = self.lkas_max_torque - min_torque
-        reduction_factor = max(torque_excess / 10, available_reduction / self.params.ANGLE_PARAMS['OVERRIDE_CYCLES'])
+        torque_diff = current_torque - torque_threshold
+        available_reduction = self.lkas_max_torque - min_torque
+        reduction_factor = max(down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'],
+                               available_reduction / self.params.ANGLE_PARAMS['OVERRIDE_CYCLES'])
         self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, min_torque)
 
       # Normal torque adjustment
@@ -111,18 +114,22 @@ class CarController(CarControllerBase):
 
         if angle_from_center < near_center:
           adaptive_scale = float(np.interp(angle_from_center, [0, near_center], [0.3, 1.0]))
-          increase_factor = max(self.params.ANGLE_TORQUE_UP_RATE, (torque_threshold - current_torque) / 10) * adaptive_scale
-
           max_torque_scale = float(np.interp(angle_from_center, [0, near_center], [0.5, 1.0]))
-          target_torque = min(target_torque, max_torque * max_torque_scale)
-        else:
-          increase_factor = self.params.ANGLE_TORQUE_UP_RATE
 
-        # Ramp up or down toward the target torque smoothly
-        if self.lkas_max_torque > target_torque:
-            self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, target_torque)
+          target_torque = min(target_torque, max_torque * max_torque_scale)
+          torque_diff = torque_threshold - current_torque
+          increase_factor = max(up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']) * adaptive_scale
         else:
-            self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
+          torque_diff = torque_threshold - current_torque
+          increase_factor = max(up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'])
+
+        # Torque ramping logic
+        if self.lkas_max_torque > target_torque:
+          torque_diff = self.lkas_max_torque - target_torque
+          reduction_factor = max(down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'])
+          self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, target_torque)
+        else:
+          self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
 
     # Disable steering while turning blinker on and speed below 60 kph
     if CS.out.leftBlinker or CS.out.rightBlinker:

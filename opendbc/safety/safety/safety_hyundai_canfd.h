@@ -243,7 +243,7 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
       //{0, 5., 25.},
       //{1.2, 0.8, 0.2}
       {0., 5., 25.},
-      {1, 0.6, 0.2}
+      {1.0, 0.6, 0.2}
     },
     .angle_rate_down_lookup = {
       //{5., 25., 25.},

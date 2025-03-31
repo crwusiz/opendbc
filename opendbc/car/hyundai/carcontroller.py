@@ -93,6 +93,7 @@ class CarController(CarControllerBase):
       max_torque = self.params.ANGLE_MAX_TORQUE
       up_rate = self.params.ANGLE_TORQUE_UP_RATE
       down_rate = self.params.ANGLE_TORQUE_DOWN_RATE
+      speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 16.67, 30.0], [1.0, 1.4, 1.8])
 
       # Override handling
       if current_torque > torque_threshold:
@@ -105,7 +106,7 @@ class CarController(CarControllerBase):
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        scaled_torque = [v * max_torque for v in self.params.ANGLE_PARAMS['TORQUE_SCALES']]
+        scaled_torque = [v * max_torque for v in self.params.ANGLE_PARAMS['TORQUE_SCALES'] * speed_multiplier]
         target_torque = float(np.interp(float(abs(actuators.curvature)),
                                         self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
         # Near-center adjustment

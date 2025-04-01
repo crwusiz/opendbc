@@ -36,8 +36,6 @@ class CarControllerParams:
   ANGLE_PARAMS = {
     'CURVATURE_BP': [0.0, 0.003, 0.010, 0.018, 0.025],
     'TORQUE_SCALES': [0.25, 0.50, 0.65, 0.75, 1.0],
-    'CURVE_SPEED_FACTORS': [1.8, 1.6, 1.4, 1.2, 1.0],
-    'ADAPTIVE_SCALE_RANGE': [0.3, 1.0],
     'MAX_TORQUE_RANGE': [0.5, 1.0],
     'NEAR_CENTER_THRESHOLD': 1.0,
     'TORQUE_DIFF_SCALE': 10,

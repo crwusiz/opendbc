@@ -107,26 +107,16 @@ class CarController(CarControllerBase):
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        scaled_torque = [
-          min(v * speed_multiplier * self.params.ANGLE_PARAMS['CURVE_SPEED_FACTORS'][i], 1.8) * max_torque
-          for i, v in enumerate(self.params.ANGLE_PARAMS['TORQUE_SCALES'])
-        ]
-        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
+        scaled_torque = [v * max_torque for v in self.params.ANGLE_PARAMS['TORQUE_SCALES']]
+        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque * speed_multiplier))
 
         # Near-center adjustment
         angle_from_center = abs(self.apply_angle_last)
         near_center = self.params.ANGLE_PARAMS['NEAR_CENTER_THRESHOLD']
 
         if angle_from_center < near_center:
-          adaptive_scale = float(np.interp(angle_from_center, [0, near_center], self.params.ANGLE_PARAMS['ADAPTIVE_SCALE_RANGE']))
           max_torque_scale = float(np.interp(angle_from_center, [0, near_center], self.params.ANGLE_PARAMS['MAX_TORQUE_RANGE']))
-
           target_torque = min(target_torque, max_torque * max_torque_scale)
-          torque_diff = torque_threshold - current_torque
-          increase_factor = max(up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']) * adaptive_scale
-        else:
-          torque_diff = torque_threshold - current_torque
-          increase_factor = max(up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'])
 
         # Torque ramping logic
         if self.lkas_max_torque > target_torque:
@@ -134,6 +124,8 @@ class CarController(CarControllerBase):
           reduction_factor = max(down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'])
           self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, target_torque)
         else:
+          torque_diff = torque_threshold - current_torque
+          increase_factor = max(up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'])
           self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
 
     # Disable steering while turning blinker on and speed below 60 kph

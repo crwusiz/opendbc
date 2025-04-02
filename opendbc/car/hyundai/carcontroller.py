@@ -107,8 +107,8 @@ class CarController(CarControllerBase):
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        scaled_torque = [v * max_torque for v in self.params.ANGLE_PARAMS['TORQUE_SCALES']]
-        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque * speed_multiplier))
+        scaled_torque = [v * max_torque * speed_multiplier for v in self.params.ANGLE_PARAMS['TORQUE_SCALES']]
+        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
 
         # Near-center adjustment
         angle_from_center = abs(self.apply_angle_last)

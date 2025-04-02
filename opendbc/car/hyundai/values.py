@@ -33,7 +33,6 @@ class CarControllerParams:
   ANGLE_STEER_THRESHOLD = 200
   ANGLE_PARAMS = {
     'CURVATURE_BP': [0.0, 0.003, 0.010, 0.02, 0.03],
-    'TORQUE_SCALES': [0.25, 0.50, 0.65, 0.75, 1.0],
     'MAX_TORQUE_RANGE': [0.5, 1.0],
     'NEAR_CENTER_THRESHOLD': 1.0,
     'TORQUE_DIFF_SCALE': 10,

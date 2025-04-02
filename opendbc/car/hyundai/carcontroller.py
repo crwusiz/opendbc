@@ -96,6 +96,10 @@ class CarController(CarControllerBase):
       dynamic_down_rate = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [4.0, 3.5, 3.0])
       speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [1.0, 1.4, 1.8])
 
+      # Define torque values at different curvature breakpoints factoring in speed.
+      scaled_torque = [0.25 * max_torque * speed_multiplier, 0.50 * max_torque * speed_multiplier,
+                       0.65 * max_torque * speed_multiplier, 0.75 * max_torque * speed_multiplier, max_torque]
+
       # Override handling
       if current_torque > torque_threshold:
         torque_diff = current_torque - torque_threshold
@@ -107,7 +111,6 @@ class CarController(CarControllerBase):
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        scaled_torque = [v * max_torque * speed_multiplier for v in self.params.ANGLE_PARAMS['TORQUE_SCALES']]
         target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
 
         # Near-center adjustment

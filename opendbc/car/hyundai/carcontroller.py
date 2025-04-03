@@ -61,6 +61,9 @@ class CarController(CarControllerBase):
     self.angle_limit_counter = 0
     self.turningSignalTimer = 0
 
+    self.prev_curvature = 0
+    self.prev_filtered_curv = 0
+
     self.hyundai_jerk = HyundaiJerk()
 
   def update(self, CC, CS, now_nanos):
@@ -84,21 +87,39 @@ class CarController(CarControllerBase):
       # Reset apply_angle_last if the driver is intervening
       if CS.out.steeringPressed:
         self.apply_angle_last = actuators.steeringAngleDeg
-      else:
-        self.apply_angle_last = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw,
-                                                             CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
+
+      self.apply_angle_last = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw,
+                                                           CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
       current_torque = abs(CS.out.steeringTorque)
-      torque_threshold = self.params.ANGLE_STEER_THRESHOLD
+      torque_threshold = self.params.STEER_THRESHOLD
       min_torque = self.params.ANGLE_MIN_TORQUE
       max_torque = self.params.ANGLE_MAX_TORQUE
-      dynamic_up_rate = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [2.0, 1.5, 1.0])
-      dynamic_down_rate = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [4.0, 3.5, 3.0])
       speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [1.0, 1.4, 1.8])
 
       # Define torque values at different curvature breakpoints factoring in speed.
       scaled_torque = [0.25 * max_torque * speed_multiplier, 0.50 * max_torque * speed_multiplier,
                        0.65 * max_torque * speed_multiplier, 0.75 * max_torque * speed_multiplier, max_torque]
+
+      lookahead_time = 0.5
+      predicted_curvature = np.interp(abs(actuators.curvature) + CS.out.vEgoRaw * lookahead_time,
+                                      self.params.ANGLE_PARAMS['PREDICTED_CURVATURE_BP'],
+                                      self.params.ANGLE_PARAMS['CURVATURE_BP'])
+
+      curvature_rate = abs(predicted_curvature - self.prev_curvature) / DT_CTRL
+      self.prev_curvature = predicted_curvature
+
+      torque_up_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [2.0, 1.5, 1.0]))
+      torque_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
+
+      curve_up_rate = float(np.interp(curvature_rate, [0, 0.005, 0.02], [1.0, 2.5, 4.0]))
+      curve_down_rate = float(np.interp(curvature_rate, [0, 0.003, 0.015], [3.0, 2.0, 1.0]))
+
+      dynamic_up_rate = min(torque_up_rate, curve_up_rate)
+      dynamic_down_rate = max(torque_down_rate, curve_down_rate)
+
+      curvature_filtered = 0.7 * predicted_curvature + 0.3 * self.prev_filtered_curv
+      self.prev_filtered_curv = curvature_filtered
 
       # Override handling
       if current_torque > torque_threshold:
@@ -111,7 +132,7 @@ class CarController(CarControllerBase):
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
+        target_torque = float(np.interp(curvature_filtered, self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
 
         # Near-center adjustment
         angle_from_center = abs(self.apply_angle_last)

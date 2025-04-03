@@ -332,17 +332,19 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
         "LCA_LEFT_ICON": 1 if CS.out.leftBlindspot else 2,
         "LCA_RIGHT_ICON": 1 if CS.out.rightBlindspot else 2,
+
+        "SOUNDS_2": 0,
       }
 
-      if values["ALERTS_2"] in [1, 2, 5]:
-        values["ALERTS_2"] = 0
-        values["SOUNDS_2"] = 0
+      alerts_disable_map = {
+        "ALERTS_2": [1, 2, 5],
+        "ALERTS_3": [17, 26],
+        "ALERTS_5": [1, 2, 4, 5],
+      }
 
-      if values["ALERTS_3"] in [17, 26]:
-        values["ALERTS_3"] = 0
-
-      if values["ALERTS_5"] in [1, 2, 4, 5]:
-        values["ALERTS_5"] = 0
+      for key, reset_values in alerts_disable_map.items():
+        if values.get(key) in reset_values:
+          values[key] = 0
 
       curvature = {
         i: (31 if i == -1 else 13 - abs(i + 15)) if i < 0 else 15 + i

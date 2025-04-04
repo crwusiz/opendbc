@@ -216,15 +216,22 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
 
       "SET_ME_2": 4,
       "SET_ME_TMP_64": 100,
-      "DISTANCE_SETTING": hud.leadDistanceBars, # + 5,
-
-      "CRUISE_STANDSTILL": 1 if stopping and CS.out.aEgo > -0.1 else 0,
-      "NEW_SIGNAL_3": 1 if hud.leadVisible else 0, # 1이되면 차선이탈방지 알람이 뜬다고...  => 앞에 차가 있으면, 1또는 2가 됨. 전방두부?
+      "DISTANCE_SETTING": hud.leadDistanceBars + 5,
       "ZEROS_5": 0,
+
       "TARGET_DISTANCE": CS.out.vEgo * 1.0 + 4.0,
+      "CRUISE_STANDSTILL": 1 if stopping and CS.out.aEgo > -0.1 else 0,
+
       "NEW_SIGNAL_2": 0,  # 이것이 켜지면 가속을 안하는듯함.
+      "NEW_SIGNAL_4": 9 if hud.leadVisible else 0,
       "NEW_SIGNAL_1": 0,  # 눈이 묻어 레이더오류시... 2가 됨. 이때 가속을 안함...
     }
+
+    hud_lead_info = 0
+    if hud.leadVisible:
+      hud_lead_info = 1 if values["ACC_ObjRelSpd"] > 0 else 2
+    values["HUD_LEAD_INFO"] = hud_lead_info
+
   else:
     values = {
       "ACCMode": 0 if not enabled else (2 if gas_override else 1),

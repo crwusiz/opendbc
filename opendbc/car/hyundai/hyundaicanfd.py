@@ -374,6 +374,10 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
       for f in {"FAULT_LSS", "FAULT_HDA", "FAULT_DAS", "FAULT_LFA", "FAULT_DAW", "FAULT_FCA", "FAULT_LCA"}:
         values[f] = 0
 
+      if hud.leadDistance > 0:
+        values["LEAD_DISTANCE"] = hud.leadDistance
+        values["LEAD"] = 4 if hud.leadRelSpeed > -0.1 else 3
+
       if hud.leftLaneDepart or hud.rightLaneDepart:
         values["VIBRATE"] = 1
 

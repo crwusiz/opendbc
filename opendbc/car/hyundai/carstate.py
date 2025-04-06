@@ -60,6 +60,10 @@ class CarState(CarStateBase):
 
     self.cruise_info = {}
     self.lfa_info = {}
+    self.lfa_alt_info = {}
+    self.lfahda_cluster_info = {}
+    self.mdps_info = {}
+
     self.ccnc_info_161 = None
     self.ccnc_info_162 = None
     self.adrv_info_200 = None
@@ -356,6 +360,9 @@ class CarState(CarStateBase):
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
       self.cruise_info = copy.copy(cp_cam.vl["SCC_CONTROL"])
       self.lfa_info = copy.copy(cp_cam.vl["LFA"])
+      self.lfa_alt_info = copy.copy(cp_cam.vl["LFA_ALT"])
+      self.lfahda_cluster_info = copy.copy(cp_cam.vl["LFAHDA_CLUSTER"])
+      self.mdps_info = copy.copy(cp.vl["MDPS"])
 
       if self.CP.exFlags & HyundaiExFlags.CCNC.value:
         if "CCNC_0x161" in cp_cam.vl:
@@ -513,6 +520,8 @@ class CarState(CarStateBase):
       cam_messages += [
         ("SCC_CONTROL", 50),
         ("LFA", 20),
+        ("LFA_ALT", 100),
+        ("LFAHDA_CLUSTER", 20),
       ]
       if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:
         cam_messages += [

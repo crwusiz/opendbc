@@ -268,7 +268,7 @@ class CarController(CarControllerBase):
     camera_scc = self.CP.flags & HyundaiFlags.CAMERA_SCC
 
     # steering control
-    can_sends.extend(hyundaicanfd.create_steering_messages(self.packer, self.CP, CC, CS, self.CAN, apply_steer_req, apply_torque,
+    can_sends.extend(hyundaicanfd.create_steering_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, apply_steer_req, apply_torque,
                                                            self.apply_angle_last, self.lkas_max_torque))
 
     # prevent LFA from activating on LKA steering cars by sending "no lane lines detected" to ADAS ECU

@@ -38,11 +38,10 @@ class CanBus(CanBusBase):
     return self._cam
 
 
-def create_steering_messages(packer, CP, CC, CS, CAN, lat_active, apply_torque, apply_angle, angle_max_torque):
+def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_torque, apply_angle, angle_max_torque):
   enabled = CC.enabled
   angle_control = CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING
   camerascc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
-  lfa_info_copy = CS.lfa_info
 
   common_values = {
     "LKA_MODE": 2,
@@ -63,6 +62,18 @@ def create_steering_messages(packer, CP, CC, CS, CAN, lat_active, apply_torque, 
   # For cars with an ADAS ECU (commonly HDA2), by sending LKAS actuation messages we're
   # telling the ADAS ECU to forward our steering and disable stock LFA lane centering.
   ret = []
+
+  values = CS.mdps_info
+  if angle_control:
+    if CS.lfa_alt_info is not None:
+      values["LKA_ANGLE_ACTIVE"] = CS.lfa_alt_info["LKAS_ANGLE_ACTIVE"]
+  else:
+    if CS.lfa_info is not None:
+      values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
+
+  if frame % 1000 < 40:
+    values["STEERING_COL_TORQUE"] += 100
+  ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if angle_control:
     if camerascc:
@@ -375,8 +386,8 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         values[f] = 0
 
       if hud.leadDistance > 0:
-        values["LEAD_DISTANCE"] = hud.leadDistance
-        values["LEAD"] = 4 if hud.leadRelSpeed > -0.1 else 3
+        values["FF_DISTANCE"] = hud.leadDistance
+        values["FF_DETECT"] = 4 if hud.leadRelSpeed > -0.1 else 3
 
       if hud.leftLaneDepart or hud.rightLaneDepart:
         values["VIBRATE"] = 1

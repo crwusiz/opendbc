@@ -62,7 +62,8 @@ class CarController(CarControllerBase):
     self.turningSignalTimer = 0
 
     self.prev_curvature = 0
-    self.prev_filtered_curv = 0
+    self.prev_filtered_curvature = 0
+    self.prev_curvature_rate = 0
 
     self.hyundai_jerk = HyundaiJerk()
 
@@ -101,13 +102,14 @@ class CarController(CarControllerBase):
       scaled_torque = [0.25 * max_torque * speed_multiplier, 0.50 * max_torque * speed_multiplier,
                        0.65 * max_torque * speed_multiplier, 0.75 * max_torque * speed_multiplier, max_torque]
 
-      lookahead_time = 0.5
-      predicted_curvature = np.interp(abs(actuators.curvature) + CS.out.vEgoRaw * lookahead_time,
+      lookahead_time = np.interp(CS.out.vEgoRaw, [0, 15, 30], [0.3, 0.6, 1.2])
+      predicted_curvature = np.interp(abs(actuators.curvature) + (CS.out.vEgoRaw * lookahead_time * 0.3),
                                       self.params.ANGLE_PARAMS['PREDICTED_CURVATURE_BP'],
                                       self.params.ANGLE_PARAMS['CURVATURE_BP'])
-
-      curvature_rate = abs(predicted_curvature - self.prev_curvature) / DT_CTRL
       self.prev_curvature = predicted_curvature
+
+      curvature_rate = (abs(predicted_curvature - self.prev_curvature) / DT_CTRL) * 0.6 + self.prev_curvature_rate * 0.4
+      self.prev_curvature_rate = curvature_rate
 
       torque_up_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [2.0, 1.5, 1.0]))
       torque_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
@@ -118,8 +120,8 @@ class CarController(CarControllerBase):
       dynamic_up_rate = min(torque_up_rate, curve_up_rate)
       dynamic_down_rate = max(torque_down_rate, curve_down_rate)
 
-      curvature_filtered = 0.7 * predicted_curvature + 0.3 * self.prev_filtered_curv
-      self.prev_filtered_curv = curvature_filtered
+      curvature_filtered = 0.7 * predicted_curvature + 0.3 * self.prev_filtered_curvature
+      self.prev_filtered_curvature = curvature_filtered
 
       # Override handling
       if current_torque > torque_threshold:

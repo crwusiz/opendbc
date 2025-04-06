@@ -227,7 +227,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
 
       "SET_ME_2": 4,
       "SET_ME_TMP_64": 100,
-      "DISTANCE_SETTING": hud.leadDistanceBars + 5,
+      "DISTANCE_SETTING": hud.leadDistanceBars,
       "ZEROS_5": 0,
 
       "TARGET_DISTANCE": CS.out.vEgo * 1.0 + 4.0,

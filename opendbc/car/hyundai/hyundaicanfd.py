@@ -6,6 +6,19 @@ from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 from openpilot.common.params import Params
 from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
 
+def hyundai_crc8(data: bytes) -> int:
+  poly = 0x2F
+  crc = 0xFF
+
+  for byte in data:
+    crc ^= byte
+    for _ in range(8):
+      if crc & 0x80:
+        crc = ((crc << 1) ^ poly) & 0xFF
+      else:
+        crc = (crc << 1) & 0xFF
+
+  return crc ^ 0xFF
 
 class CanBus(CanBusBase):
   def __init__(self, CP, fingerprint=None, lka_steering=None) -> None:
@@ -79,10 +92,13 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
     if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
       values = CS.steer_touch_info
       if frame % 1000 < 40:
-        values["CHECKSUM_"] = 0
         values["TOUCH_DETECT"] = 3
         values["TOUCH1"] = 50
         values["TOUCH2"] = 50
+        values["CHECKSUM_"] = 0
+        dat = packer.make_can_msg("STEER_TOUCH_2AF", 0, values)[1]
+        values["CHECKSUM_"] = hyundai_crc8(dat[1:8])
+
       ret.append(packer.make_can_msg("STEER_TOUCH_2AF", CAN.CAM, values))
 
   if angle_control:
@@ -379,14 +395,14 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         for i in range(-15, 16)
       }
       values["LANELINE_CURVATURE"] = curvature.get(max(-15, min(int(disp_angle / 3), 15)), 14) if lat_active else 15
-      if hud.leftLaneDepart:
-        values["LANELINE_LEFT"] = 4 if (frame // 50) % 2 == 0 else 1
-      else:
-        values["LANELINE_LEFT"] = 2 if hud.leftLaneVisible else 0
-      if hud.rightLaneDepart:
-        values["LANELINE_RIGHT"] = 4 if (frame // 50) % 2 == 0 else 1
-      else:
-        values["LANELINE_RIGHT"] = 2 if hud.rightLaneVisible else 0
+
+      def get_lane_value(depart, visible, frame):
+        if depart:
+          return 4 if (frame // 50) % 2 == 0 else 1
+        return 2 if visible else 0
+
+      values["LANELINE_LEFT"] = get_lane_value(hud.leftLaneDepart, hud.leftLaneVisible, frame)
+      values["LANELINE_RIGHT"] = get_lane_value(hud.rightLaneDepart, hud.rightLaneVisible, frame)
 
       ret.append(packer.make_can_msg("CCNC_0x161", CAN.ECAN, values))
 
@@ -432,13 +448,15 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
     if frame % 20 == 0 and CS.hda_info_4a3 is not None:
       values = CS.hda_info_4a3
-      values["SIGNAL_0"] = 5
-      values["NEW_SIGNAL_1"] = 4
-      values["SPEED_LIMIT"] = 80
-      values["NEW_SIGNAL_3"] = 154
-      values["NEW_SIGNAL_4"] = 9
-      values["NEW_SIGNAL_5"] = 0
-      values["NEW_SIGNAL_6"] = 256
+      values |= {
+        "SIGNAL_0": 5,
+        "NEW_SIGNAL_1": 4,
+        "SPEED_LIMIT": 80,
+        "NEW_SIGNAL_3": 154,
+        "NEW_SIGNAL_4": 9,
+        "NEW_SIGNAL_5": 0,
+        "NEW_SIGNAL_6": 256,
+      }
       ret.append(packer.make_can_msg("HDA_INFO_4A3", CAN.CAM, values))
 
     return ret

@@ -80,14 +80,14 @@ static int hyundai_canfd_get_lka_addr(void) {
   return hyundai_canfd_lka_steering_alt ? 0x110 : 0x50;
 }
 
-#define CANFD_TX_ENTRIES_SIZE 25
+#define CANFD_TX_ENTRIES_SIZE 20
 
 typedef struct {
   int addr;
   uint32_t timestamp;
 } CanFdTxEntry;
 
-CanFdTxEntry canfd_tx_entries[CANFD_TX_ENTRIES_SIZE] = {
+CanFdTxEntry canfd_tx_entries1[CANFD_TX_ENTRIES_SIZE] = {
   [0]  = { .addr = 0x160,  .timestamp = 0 },  // ADRV_0x160
   [1]  = { .addr = 0x161,  .timestamp = 0 },  // CCNC_0x161
   [2]  = { .addr = 0x162,  .timestamp = 0 },  // CCNC_0x162
@@ -110,17 +110,23 @@ CanFdTxEntry canfd_tx_entries[CANFD_TX_ENTRIES_SIZE] = {
   //[] = { .addr = 0x1FA,  .timestamp = 0 },  // CLUSTER_SPEED_LIMIT
 };
 
-typedef struct {
-  int addr;
-  uint32_t timestamp;
-} CanFdTxEntry2;
-
 CanFdTxEntry canfd_tx_entries2[CANFD_TX_ENTRIES_SIZE] = {
   [0] = { .addr = 0x4A3,  .timestamp = 0 },  // HDA_INFO_0x4A3
   [1] = { .addr = 0x2AF,  .timestamp = 0 },  // STEER_TOUCH_2AF
   [2] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
   [3] = { .addr = 0x7C4,  .timestamp = 0 },  // VEHICLE DIAGNOSTICS
 };
+
+static void update_canfd_entry(CanFdTxEntry *entries, int size, int addr, bool tx) {
+  for (int i = 0; i < size; i++) {
+    if (entries[i].addr == 0) break;
+
+    if (entries[i].addr == addr) {
+      entries[i].timestamp = tx ? microsecond_timer_get() : 0;
+      break;
+    }
+  }
+}
 
 static uint8_t hyundai_canfd_get_counter(const CANPacket_t *to_push) {
   uint8_t ret = 0;
@@ -333,25 +339,8 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
-  for (int i = 0; i < CANFD_TX_ENTRIES_SIZE; i++) {
-    if (canfd_tx_entries[i].addr == 0) {
-      break;
-    }
-    if (addr == canfd_tx_entries[i].addr) {
-      canfd_tx_entries[i].timestamp = tx ? microsecond_timer_get() : 0;
-      break;
-    }
-  }
-
-  for (int i = 0; i < CANFD_TX_ENTRIES_SIZE; i++) {
-    if (canfd_tx_entries2[i].addr == 0) {
-      break;
-    }
-    if (addr == canfd_tx_entries2[i].addr) {
-      canfd_tx_entries2[i].timestamp = tx ? microsecond_timer_get() : 0;
-      break;
-    }
-  }
+  update_canfd_entry(canfd_tx_entries1, CANFD_TX_ENTRIES_SIZE, addr, tx);
+  update_canfd_entry(canfd_tx_entries2, CANFD_TX_ENTRIES_SIZE, addr, tx);
 
   return tx;
 }
@@ -428,6 +417,17 @@ static void print_addr_list(const AddrList *list, int bus_num, uint32_t now) {
   print("]\n");
 }
 
+static bool should_block_msg(CanFdTxEntry *entries, int size, int addr, uint32_t now, uint32_t timeout) {
+  for (int i = 0; i < size; i++) {
+    if (entries[i].addr == 0) break;
+
+    if (entries[i].addr == addr && (now - entries[i].timestamp) < timeout) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   bool block_msg = false;
   uint32_t OP_CAN_SEND_TIMEOUT = 100000;
@@ -435,28 +435,9 @@ static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   static AddrList addr_list = {{0}, 0};
 
   if (bus_num == 0) {
-    for (int i = 0; i < CANFD_TX_ENTRIES_SIZE; i++) {
-      if (canfd_tx_entries2[i].addr == 0) {
-        break;
-      }
-      if (addr == canfd_tx_entries2[i].addr && (now - canfd_tx_entries2[i].timestamp) < OP_CAN_SEND_TIMEOUT) {
-        block_msg = true;
-        break;
-      }
-    }
-
+  block_msg = should_block_msg(canfd_tx_entries2, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
   } else if (bus_num == 2) {
-    //block_msg = is_lka_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg || is_ccnc_msg;
-
-    for (int i = 0; i < CANFD_TX_ENTRIES_SIZE; i++) {
-      if (canfd_tx_entries[i].addr == 0) {
-        break;
-      }
-      if (addr == canfd_tx_entries[i].addr && (now - canfd_tx_entries[i].timestamp) < OP_CAN_SEND_TIMEOUT) {
-        block_msg = true;
-        break;
-      }
-    }
+  block_msg = should_block_msg(canfd_tx_entries1, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
   }
 
   if (add_addr_to_list(&addr_list, addr)) {

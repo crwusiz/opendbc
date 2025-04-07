@@ -61,10 +61,6 @@ class CarController(CarControllerBase):
     self.angle_limit_counter = 0
     self.turningSignalTimer = 0
 
-    self.prev_curvature = 0
-    self.prev_filtered_curvature = 0
-    self.prev_curvature_rate = 0
-
     self.hyundai_jerk = HyundaiJerk()
 
   def update(self, CC, CS, now_nanos):
@@ -93,14 +89,15 @@ class CarController(CarControllerBase):
                                                            CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
       current_torque = abs(CS.out.steeringTorque)
+      curvature = abs(actuators.curvature)
+      angle_from_center = abs(self.apply_angle_last)
       torque_threshold = self.params.ANGLE_STEER_THRESHOLD
       min_torque = self.params.ANGLE_MIN_TORQUE
       max_torque = self.params.ANGLE_MAX_TORQUE
-      speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [1.0, 1.4, 1.8])
 
-      # Define torque values at different curvature breakpoints factoring in speed.
-      scaled_torque = [0.25 * max_torque * speed_multiplier, 0.50 * max_torque * speed_multiplier,
-                       0.65 * max_torque * speed_multiplier, 0.75 * max_torque * speed_multiplier, max_torque]
+      speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [1.0, 1.2, 1.4])
+      scaled_torque = [min(factor * max_torque * speed_multiplier, max_torque)
+                       for factor in self.params.ANGLE_PARAMS['TORQUE_FACTOR']]
 
       dynamic_up_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [2.0, 1.5, 1.0]))
       dynamic_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
@@ -109,33 +106,35 @@ class CarController(CarControllerBase):
       if current_torque > torque_threshold:
         torque_diff = current_torque - torque_threshold
         available_reduction = self.lkas_max_torque - min_torque
-        reduction_factor = np.max([dynamic_down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'],
+        reduction_factor = np.max([dynamic_down_rate,
+                                   torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'],
                                    available_reduction / self.params.ANGLE_PARAMS['OVERRIDE_CYCLES']])
         self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, min_torque)
 
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
+        target_torque = float(np.interp(curvature,
+                                        self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
 
         # Near-center adjustment
-        angle_from_center = abs(self.apply_angle_last)
-        near_center = self.params.ANGLE_PARAMS['NEAR_CENTER_THRESHOLD']
-
-        if angle_from_center < near_center:
-          max_torque_scale = float(np.interp(angle_from_center, [0, near_center], self.params.ANGLE_PARAMS['MAX_TORQUE_RANGE']))
+        if angle_from_center < self.params.ANGLE_PARAMS['NEAR_CENTER_THRESHOLD']:
+          max_torque_scale = float(np.interp(angle_from_center,
+                                             [0, self.params.ANGLE_PARAMS['NEAR_CENTER_THRESHOLD']],
+                                             self.params.ANGLE_PARAMS['MAX_TORQUE_RANGE']))
           target_torque = min(target_torque, max_torque * max_torque_scale)
 
         # Torque ramping logic
-        if self.frame % 20 == 0:
-          if self.lkas_max_torque > target_torque:
-            torque_diff = self.lkas_max_torque - target_torque
-            reduction_factor = np.max([dynamic_down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
-            self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, target_torque)
-          else:
-            torque_diff = torque_threshold - current_torque
-            increase_factor = np.max([dynamic_up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
-            self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
+        if self.lkas_max_torque > target_torque:
+          torque_diff = self.lkas_max_torque - target_torque
+          reduction_factor = np.max([dynamic_down_rate,
+                                     torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
+          self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, target_torque)
+        else:
+          torque_diff = target_torque - self.lkas_max_torque
+          increase_factor = np.min([dynamic_up_rate,
+                                    torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
+          self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
 
     # Disable steering while turning blinker on and speed below 60 kph
     if CS.out.leftBlinker or CS.out.rightBlinker:

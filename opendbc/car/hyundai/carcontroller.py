@@ -93,7 +93,7 @@ class CarController(CarControllerBase):
                                                            CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
       current_torque = abs(CS.out.steeringTorque)
-      torque_threshold = self.params.STEER_THRESHOLD
+      torque_threshold = self.params.ANGLE_STEER_THRESHOLD
       min_torque = self.params.ANGLE_MIN_TORQUE
       max_torque = self.params.ANGLE_MAX_TORQUE
       speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [1.0, 1.4, 1.8])
@@ -102,26 +102,8 @@ class CarController(CarControllerBase):
       scaled_torque = [0.25 * max_torque * speed_multiplier, 0.50 * max_torque * speed_multiplier,
                        0.65 * max_torque * speed_multiplier, 0.75 * max_torque * speed_multiplier, max_torque]
 
-      lookahead_time = np.interp(CS.out.vEgoRaw, [0, 15, 30], [0.3, 0.6, 1.2])
-      predicted_curvature = np.interp(abs(actuators.curvature) + (CS.out.vEgoRaw * lookahead_time * 0.3),
-                                      self.params.ANGLE_PARAMS['PREDICTED_CURVATURE_BP'],
-                                      self.params.ANGLE_PARAMS['CURVATURE_BP'])
-      self.prev_curvature = predicted_curvature
-
-      curvature_rate = (abs(predicted_curvature - self.prev_curvature) / DT_CTRL) * 0.6 + self.prev_curvature_rate * 0.4
-      self.prev_curvature_rate = curvature_rate
-
-      torque_up_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [2.0, 1.5, 1.0]))
-      torque_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
-
-      curve_up_rate = float(np.interp(curvature_rate, [0, 0.005, 0.02], [1.0, 2.5, 4.0]))
-      curve_down_rate = float(np.interp(curvature_rate, [0, 0.003, 0.015], [3.0, 2.0, 1.0]))
-
-      dynamic_up_rate = min(torque_up_rate, curve_up_rate)
-      dynamic_down_rate = max(torque_down_rate, curve_down_rate)
-
-      curvature_filtered = 0.7 * predicted_curvature + 0.3 * self.prev_filtered_curvature
-      self.prev_filtered_curvature = curvature_filtered
+      dynamic_up_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [2.0, 1.5, 1.0]))
+      dynamic_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
 
       # Override handling
       if current_torque > torque_threshold:
@@ -134,7 +116,7 @@ class CarController(CarControllerBase):
       # Normal torque adjustment
       else:
         # Curvature-based target calculation
-        target_torque = float(np.interp(curvature_filtered, self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
+        target_torque = float(np.interp(abs(actuators.curvature), self.params.ANGLE_PARAMS['CURVATURE_BP'], scaled_torque))
 
         # Near-center adjustment
         angle_from_center = abs(self.apply_angle_last)
@@ -145,14 +127,7 @@ class CarController(CarControllerBase):
           target_torque = min(target_torque, max_torque * max_torque_scale)
 
         # Torque ramping logic
-        if self.lkas_max_torque > target_torque:
-          torque_diff = self.lkas_max_torque - target_torque
-          reduction_factor = np.max([dynamic_down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
-          self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, target_torque)
-        else:
-          torque_diff = torque_threshold - current_torque
-          increase_factor = np.max([dynamic_up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
-          self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
+
 
     # Disable steering while turning blinker on and speed below 60 kph
     if CS.out.leftBlinker or CS.out.rightBlinker:

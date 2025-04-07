@@ -20,8 +20,8 @@ class CarControllerParams:
     # seen changing at 0.2 deg/frame down, 0.1 deg/frame up at 100Hz
     #([5, 25], [0.3, 0.15]),
     #([5, 25], [0.36, 0.26]),
-    ([0, 5., 25.], [1.2, 0.8, 0.2]),
-    ([0, 5., 25.], [1.8, 1.2, 0.3]),
+    ([0, 5., 25.], [1.0, 0.6, 0.2]),
+    ([0, 5., 25.], [1.5, 0.9, 0.3]),
   )
 
   # Stock LFA system is seen sending 250 max, but for LKAS events it's 175 max.
@@ -30,9 +30,9 @@ class CarControllerParams:
   ANGLE_MIN_TORQUE = 25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
   #ANGLE_TORQUE_UP_RATE = 1  # Indicates how fast the torque ramps up after user intervention.
   #ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
+  ANGLE_STEER_THRESHOLD = 200
   ANGLE_PARAMS = {
     'CURVATURE_BP': [0.0, 0.003, 0.01, 0.02, 0.03],
-    'PREDICTED_CURVATURE_BP': [0.0, 0.005, 0.015, 0.025, 0.04],
     'MAX_TORQUE_RANGE': [0.5, 1.0],
     'NEAR_CENTER_THRESHOLD': 1.0,
     'TORQUE_DIFF_SCALE': 10,

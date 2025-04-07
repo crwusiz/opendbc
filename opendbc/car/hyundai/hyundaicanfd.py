@@ -397,8 +397,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
       if hud.leadDistance > 0:
         values["FF_DISTANCE"] = hud.leadDistance
-        ff_type = 3 if hud.leadRadar == 1 else 9
-        values["FF_DETECT"] = ff_type if hud.leadRelSpeed > -0.1 else ff_type + 1
+        values["FF_DETECT"] = 4 if hud.leadRelSpeed > -0.1 else 3
         values["FF_LATERAL"] = hud.leadDPath
 
       if hud.leftLaneDepart or hud.rightLaneDepart:

@@ -161,6 +161,7 @@ class HyundaiExFlags(IntFlag):
   TPMS = 2 ** 4
   CCNC = 2 ** 5
   CCNC_HDA2 = 2 ** 6
+  STEER_TOUCH = 2 ** 7
 
 class Footnote(Enum):
   CANFD = CarFootnote(

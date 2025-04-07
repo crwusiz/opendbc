@@ -75,6 +75,16 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
     values["STEERING_COL_TORQUE"] += 100
   ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
+  if frame % 10 == 0:
+    if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
+      values = CS.steer_touch_info
+      if frame % 1000 < 40:
+        values["CHECKSUM_"] = 0
+        values["TOUCH_DETECT"] = 3
+        values["TOUCH1"] = 50
+        values["TOUCH2"] = 50
+      ret.append(packer.make_can_msg("STEER_TOUCH_2AF", CAN.CAM, values))
+
   if angle_control:
     if camerascc:
       lfa_values |= {
@@ -387,7 +397,9 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
       if hud.leadDistance > 0:
         values["FF_DISTANCE"] = hud.leadDistance
-        values["FF_DETECT"] = 4 if hud.leadRelSpeed > -0.1 else 3
+        ff_type = 3 if hud.leadRadar == 1 else 9
+        values["FF_DETECT"] = ff_type if hud.leadRelSpeed > -0.1 else ff_type + 1
+        values["FF_LATERAL"] = hud.leadDPath
 
       if hud.leftLaneDepart or hud.rightLaneDepart:
         values["VIBRATE"] = 1
@@ -418,6 +430,17 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         "HDA_MODE2": 1,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
+
+    if frame % 20 == 0 and CS.hda_info_4a3 is not None:
+      values = CS.hda_info_4a3
+      values["SIGNAL_0"] = 5
+      values["NEW_SIGNAL_1"] = 4
+      values["SPEED_LIMIT"] = 80
+      values["NEW_SIGNAL_3"] = 154
+      values["NEW_SIGNAL_4"] = 9
+      values["NEW_SIGNAL_5"] = 0
+      values["NEW_SIGNAL_6"] = 256
+      ret.append(packer.make_can_msg("HDA_INFO_4A3", CAN.CAM, values))
 
     return ret
 

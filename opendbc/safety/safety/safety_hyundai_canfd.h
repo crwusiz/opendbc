@@ -99,18 +99,27 @@ CanFdTxEntry canfd_tx_entries[CANFD_TX_ENTRIES_SIZE] = {
   [8]  = { .addr = 0x12A,  .timestamp = 0 },  // LFA
   [9]  = { .addr = 0xCB,   .timestamp = 0 },  // LFA_ALT
   [10] = { .addr = 0x1E0,  .timestamp = 0 },  // LFAHDA_CLUSTER
-  [11] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
-  [12] = { .addr = 0x110,  .timestamp = 0 },  // LKAS_ALT
-  [13] = { .addr = 0x50,   .timestamp = 0 },  // LKAS
-  [14] = { .addr = 0x362,  .timestamp = 0 },  // CAM_0x362
-  [15] = { .addr = 0x2A4,  .timestamp = 0 },  // CAM_0x2A4
-  [16] = { .addr = 0x51,   .timestamp = 0 },  // ADRV_0x51
+  [11] = { .addr = 0x110,  .timestamp = 0 },  // LKAS_ALT
+  [12] = { .addr = 0x50,   .timestamp = 0 },  // LKAS
+  [13] = { .addr = 0x362,  .timestamp = 0 },  // CAM_0x362
+  [14] = { .addr = 0x2A4,  .timestamp = 0 },  // CAM_0x2A4
+  [15] = { .addr = 0x51,   .timestamp = 0 },  // ADRV_0x51
   //[] = { .addr = 0x1BA,  .timestamp = 0 },  // BLINDSPOTS_REAR_CORNERS
   //[] = { .addr = 0x1E5,  .timestamp = 0 },  // BLINDSPOTS_FRONT_CORNER_1
   //[] = { .addr = 0x1B5,  .timestamp = 0 },  // CCNC_0x1B5
   //[] = { .addr = 0x1FA,  .timestamp = 0 },  // CLUSTER_SPEED_LIMIT
-  //[] = { .addr = 0x4A3,  .timestamp = 0 },  // HDA_INFO_0x4A3
-  //[] = { .addr = 0x4B4,  .timestamp = 0 },  // HDA_INFO_0x4B4
+};
+
+typedef struct {
+  int addr;
+  uint32_t timestamp;
+} CanFdTxEntry2;
+
+CanFdTxEntry canfd_tx_entries2[CANFD_TX_ENTRIES_SIZE] = {
+  [0] = { .addr = 0x4A3,  .timestamp = 0 },  // HDA_INFO_0x4A3
+  [1] = { .addr = 0x2AF,  .timestamp = 0 },  // STEER_TOUCH_2AF
+  [2] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
+  [3] = { .addr = 0x7C4,  .timestamp = 0 },  // VEHICLE DIAGNOSTICS
 };
 
 static uint8_t hyundai_canfd_get_counter(const CANPacket_t *to_push) {
@@ -334,6 +343,16 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
     }
   }
 
+  for (int i = 0; i < CANFD_TX_ENTRIES_SIZE; i++) {
+    if (canfd_tx_entries2[i].addr == 0) {
+      break;
+    }
+    if (addr == canfd_tx_entries2[i].addr) {
+      canfd_tx_entries2[i].timestamp = tx ? microsecond_timer_get() : 0;
+      break;
+    }
+  }
+
   return tx;
 }
 
@@ -415,22 +434,17 @@ static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   uint32_t now = microsecond_timer_get();
   static AddrList addr_list = {{0}, 0};
 
-  // LKAS for cars with LKAS and LFA messages, LFA for cars with no LKAS messages
-  //int lfa_block_addr = hyundai_canfd_lka_steering_alt ? 0x362 : 0x2a4;
-  //bool is_lka_msg = ((addr == hyundai_canfd_get_lka_addr()) || (addr == lfa_block_addr)) && hyundai_canfd_lka_steering;
-  //bool is_lfa_msg = ((addr == 0x12a) && !hyundai_canfd_lka_steering);
-
-  // HUD icons
-  //bool is_lfahda_msg = ((addr == 0x1e0) && !hyundai_canfd_lka_steering);
-
-  // CCNC messages
-  bool is_ccnc_msg = (addr == 0x161) || (addr == 0x162);
-
-  // SCC_CONTROL and ADRV_0x160 for camera SCC cars, we send our own longitudinal commands and to show FCA light
-  //bool is_scc_msg = (((addr == 0x1a0) || (!is_ccnc_msg && (addr == 0x160))) && hyundai_longitudinal && !hyundai_canfd_lka_steering);
-
   if (bus_num == 0) {
-    block_msg = ((is_ccnc_msg) && (((addr) == 0xEA) || ((addr) == 0x7C4))); // mdps || vehicle diagnostics
+    for (int i = 0; i < CANFD_TX_ENTRIES_SIZE; i++) {
+      if (canfd_tx_entries2[i].addr == 0) {
+        break;
+      }
+      if (addr == canfd_tx_entries2[i].addr && (now - canfd_tx_entries2[i].timestamp) < OP_CAN_SEND_TIMEOUT) {
+        block_msg = true;
+        break;
+      }
+    }
+
   } else if (bus_num == 2) {
     //block_msg = is_lka_msg || is_lfa_msg || is_lfahda_msg || is_scc_msg || is_ccnc_msg;
 
@@ -478,8 +492,10 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x160, 1, 16, false},  // ADRV_0x160
     {0x161, 0, 32, false},  // CCNC_0x161
     {0x162, 0, 32, false},  // CCNC_0x162
-    //{0x4A3, 2,  8, false},  // HDA_INFO_0x4a3
+    {0x4A3, 2,  8, false},  // HDA_INFO_0x4a3
     //{0x4B4, 2,  8, false},  // HDA_INFO_0x4b4
+    {0xEA,  2, 24, false},  // MDPS
+    {0x2AF, 2,  8, false},  // STEER_TOUCH_2AF
   };
 
   static const CanMsg HYUNDAI_CANFD_LFA_STEERING_TX_MSGS[] = {

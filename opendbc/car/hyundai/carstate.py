@@ -63,6 +63,7 @@ class CarState(CarStateBase):
     self.lfa_alt_info = {}
     self.lfahda_cluster_info = {}
     self.mdps_info = {}
+    self.steer_touch_info = {}
 
     self.ccnc_info_161 = None
     self.ccnc_info_162 = None
@@ -364,6 +365,9 @@ class CarState(CarStateBase):
       self.lfahda_cluster_info = copy.copy(cp_cam.vl["LFAHDA_CLUSTER"])
       self.mdps_info = copy.copy(cp.vl["MDPS"])
 
+      if self.CP.exFlags & HyundaiExFlags.STEER_TOUCH:
+        self.steer_touch_info = copy.copy(cp.vl["STEER_TOUCH_2AF"])
+
       if self.CP.exFlags & HyundaiExFlags.CCNC.value:
         if "CCNC_0x161" in cp_cam.vl:
           self.ccnc_info_161 = copy.copy(cp_cam.vl.get("CCNC_0x161", {}))
@@ -483,6 +487,11 @@ class CarState(CarStateBase):
         ("CRUISE_BUTTONS", 50)
       ]
 
+    if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
+      pt_messages += [
+        ("STEER_TOUCH_2AF", 10),
+      ]
+
     if CP.enableBsm:
       if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
         pass
@@ -505,11 +514,11 @@ class CarState(CarStateBase):
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
       pt_messages.append(("CLUSTER_SPEED_LIMIT", 10))
 
-    #if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-    #  pt_messages += [
-    #    ("HDA_INFO_0x4a3", 5),
+    if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
+      pt_messages += [
+        ("HDA_INFO_0x4a3", 5),
     #    ("HDA_INFO_0x4b4", 10),
-    #  ]
+      ]
 
     cam_messages = []
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:

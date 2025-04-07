@@ -127,7 +127,15 @@ class CarController(CarControllerBase):
           target_torque = min(target_torque, max_torque * max_torque_scale)
 
         # Torque ramping logic
-
+        if self.frame % 20 == 0:
+          if self.lkas_max_torque > target_torque:
+            torque_diff = self.lkas_max_torque - target_torque
+            reduction_factor = np.max([dynamic_down_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
+            self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, target_torque)
+          else:
+            torque_diff = torque_threshold - current_torque
+            increase_factor = np.max([dynamic_up_rate, torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE']])
+            self.lkas_max_torque = min(self.lkas_max_torque + increase_factor, target_torque)
 
     # Disable steering while turning blinker on and speed below 60 kph
     if CS.out.leftBlinker or CS.out.rightBlinker:

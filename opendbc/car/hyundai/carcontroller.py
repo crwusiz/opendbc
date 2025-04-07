@@ -81,11 +81,17 @@ class CarController(CarControllerBase):
 
     # angle control
     else:
+      new_angle = actuators.steeringAngleDeg
+      adjusted_alpha = float(np.interp(CS.out.vEgoRaw,
+                                       self.params.ANGLE_PARAMS['SMOOTHING_ANGLE_VEGO_MATRIX'],
+                                       self.params.ANGLE_PARAMS['SMOOTHING_ANGLE_ALPHA_MATRIX']))
+      new_angle = (new_angle * adjusted_alpha + (1 - adjusted_alpha) * self.apply_angle_last)
+
       # Reset apply_angle_last if the driver is intervening
       if CS.out.steeringPressed:
         self.apply_angle_last = actuators.steeringAngleDeg
 
-      self.apply_angle_last = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw,
+      self.apply_angle_last = apply_std_steer_angle_limits(new_angle, self.apply_angle_last, CS.out.vEgoRaw,
                                                            CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
       current_torque = abs(CS.out.steeringTorque)

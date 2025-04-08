@@ -394,7 +394,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         i: (31 if i == -1 else 13 - abs(i + 15)) if i < 0 else 15 + i
         for i in range(-15, 16)
       }
-      values["LANELINE_CURVATURE"] = curvature.get(max(-15, min(int(disp_angle / 3), 15)), 14) if lat_active else 15
+      values["LANELINE_CURVATURE"] = curvature.get(max(-15, min(round(disp_angle / 3), 15)), 14) if lat_active else 15
 
       def get_lane_value(depart, visible, frame):
         if depart:
@@ -414,7 +414,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
       if hud.leadDistance > 0:
         values["FF_DISTANCE"] = hud.leadDistance
         values["FF_DETECT"] = 4 if hud.leadRelSpeed > -0.1 else 3
-        values["FF_LATERAL"] = hud.leadDPath
 
       if hud.leftLaneDepart or hud.rightLaneDepart:
         values["VIBRATE"] = 1

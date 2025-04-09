@@ -1,4 +1,3 @@
-import numpy as np
 import re
 from dataclasses import dataclass, field
 from enum import Enum, IntFlag

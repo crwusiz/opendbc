@@ -408,8 +408,8 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
     if frame % 5 == 0 and CS.ccnc_info_162 is not None and ccnc:
       values = CS.ccnc_info_162
-      for f in {"FAULT_LSS", "FAULT_HDA", "FAULT_DAS", "FAULT_LFA", "FAULT_DAW", "FAULT_FCA", "FAULT_LCA"}:
-        values[f] = 0
+      #for f in {"FAULT_LSS", "FAULT_HDA", "FAULT_DAS", "FAULT_LFA", "FAULT_DAW", "FAULT_FCA", "FAULT_LCA"}:
+      #  values[f] = 0
 
       if hud.leadDistance > 0:
         values["FF_DISTANCE"] = hud.leadDistance

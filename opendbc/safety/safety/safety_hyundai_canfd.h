@@ -104,6 +104,7 @@ CanFdTxEntry canfd_tx_entries1[CANFD_TX_ENTRIES_SIZE] = {
   [13] = { .addr = 0x362,  .timestamp = 0 },  // CAM_0x362
   [14] = { .addr = 0x2A4,  .timestamp = 0 },  // CAM_0x2A4
   [15] = { .addr = 0x51,   .timestamp = 0 },  // ADRV_0x51
+  [16] = { .addr = 0,      .timestamp = 0 },
   //[] = { .addr = 0x1BA,  .timestamp = 0 },  // BLINDSPOTS_REAR_CORNERS
   //[] = { .addr = 0x1E5,  .timestamp = 0 },  // BLINDSPOTS_FRONT_CORNER_1
   //[] = { .addr = 0x1B5,  .timestamp = 0 },  // CCNC_0x1B5
@@ -115,6 +116,7 @@ CanFdTxEntry canfd_tx_entries2[CANFD_TX_ENTRIES_SIZE] = {
   [1] = { .addr = 0x2AF,  .timestamp = 0 },  // STEER_TOUCH_2AF
   [2] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
   [3] = { .addr = 0x7C4,  .timestamp = 0 },  // VEHICLE DIAGNOSTICS
+  [4] = { .addr = 0,      .timestamp = 0 },
 };
 
 static void update_canfd_entry(CanFdTxEntry *entries, int size, int addr, bool tx) {

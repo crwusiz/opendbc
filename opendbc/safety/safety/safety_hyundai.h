@@ -28,15 +28,15 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
 #define HYUNDAI_COMMON_TX_MSGS(scc_bus) \
   {0x340, 0,       8, .check_relay = true},   /* LKAS11 Bus 0                              */ \
   {0x4F1, scc_bus, 4, .check_relay = false},  /* CLU11 Bus 0 (radar-SCC) or 2 (camera-SCC) */ \
-  {0x485, 0,       4, .check_relay = false},  /* LFAHDA_MFC Bus 0                          */ \
+  {0x485, 0,       4, .check_relay = true},   /* LFAHDA_MFC Bus 0                          */ \
 
 #define HYUNDAI_LONG_COMMON_TX_MSGS(scc_bus) \
-  HYUNDAI_COMMON_TX_MSGS(scc_bus)                                                            \
-  {0x420, 0,       8, .check_relay = false},           /* SCC11 Bus 0                     */ \
-  {0x421, 0,       8, .check_relay = (scc_bus) == 0},  /* SCC12 Bus 0                     */ \
-  {0x50A, 0,       8, .check_relay = false},           /* SCC13 Bus 0                     */ \
-  {0x389, 0,       8, .check_relay = false},           /* SCC14 Bus 0                     */ \
-  {0x4A2, 0,       2, .check_relay = false},           /* FRT_RADAR11 Bus 0               */ \
+  HYUNDAI_COMMON_TX_MSGS(scc_bus) \
+  {0x420, 0,       8, .check_relay = true},   /* SCC11 Bus 0       */ \
+  {0x421, 0,       8, .check_relay = true},   /* SCC12 Bus 0       */ \
+  {0x50A, 0,       8, .check_relay = true},   /* SCC13 Bus 0       */ \
+  {0x389, 0,       8, .check_relay = true},   /* SCC14 Bus 0       */ \
+  {0x4A2, 0,       2, .check_relay = false},  /* FRT_RADAR11 Bus 0 */ \
 
   /*
   {0x251, 2, 8}, // MDPS12 Bus 2
@@ -374,7 +374,6 @@ const safety_hooks hyundai_hooks = {
   .init = hyundai_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
-  .fwd = hyundai_fwd_hook,
   .get_counter = hyundai_get_counter,
   .get_checksum = hyundai_get_checksum,
   .compute_checksum = hyundai_compute_checksum,
@@ -384,7 +383,6 @@ const safety_hooks hyundai_legacy_hooks = {
   .init = hyundai_legacy_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
-  .fwd = hyundai_fwd_hook,
   .get_counter = hyundai_get_counter,
   .get_checksum = hyundai_get_checksum,
   .compute_checksum = hyundai_compute_checksum,

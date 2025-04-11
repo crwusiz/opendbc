@@ -268,23 +268,6 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
   return tx;
 }
 
-static bool hyundai_fwd_hook(int bus_num, int addr) {
-  bool block_msg = false;
-
-  if (bus_num == 2) {
-    // Stock LKAS11 messages
-    bool is_lkas_11 = (addr == 0x340);
-    // LFA and HDA cluster icons
-    bool is_lfahda_mfc = (addr == 0x485);
-    // Stock SCC messages, blocking when doing openpilot longitudinal on camera SCC cars
-    bool is_scc_msg = (addr == 0x420) || (addr == 0x421) || (addr == 0x50A) || (addr == 0x389);
-
-    block_msg = is_lkas_11 || is_lfahda_mfc || (is_scc_msg && hyundai_longitudinal && hyundai_camera_scc);
-  }
-
-  return block_msg;
-}
-
 static safety_config hyundai_init(uint16_t param) {
   static const CanMsg HYUNDAI_LONG_TX_MSGS[] = {
     HYUNDAI_LONG_COMMON_TX_MSGS(0)
@@ -374,7 +357,6 @@ const safety_hooks hyundai_hooks = {
   .init = hyundai_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
-  .fwd = hyundai_fwd_hook,
   .get_counter = hyundai_get_counter,
   .get_checksum = hyundai_get_checksum,
   .compute_checksum = hyundai_compute_checksum,
@@ -384,7 +366,6 @@ const safety_hooks hyundai_legacy_hooks = {
   .init = hyundai_legacy_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
-  .fwd = hyundai_fwd_hook,
   .get_counter = hyundai_get_counter,
   .get_checksum = hyundai_get_checksum,
   .compute_checksum = hyundai_compute_checksum,

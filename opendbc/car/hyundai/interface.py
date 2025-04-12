@@ -26,7 +26,7 @@ class CarInterface(CarInterfaceBase):
   RadarInterface = RadarInterface
 
   @staticmethod
-  def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, experimental_long, docs) -> structs.CarParams:
+  def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, alpha_long, docs) -> structs.CarParams:
     ret.brand = "hyundai"
 
     camera_scc = Params().get_bool("CameraSccEnable")
@@ -163,11 +163,11 @@ class CarInterface(CarInterfaceBase):
 
     # Common longitudinal control setup
 
-    ret.experimentalLongitudinalAvailable = True  # candidate not in (CANFD_UNSUPPORTED_LONGITUDINAL_CAR | CANFD_RADAR_SCC_CAR)
+    ret.alphaLongitudinalAvailable = True  # candidate not in (CANFD_UNSUPPORTED_LONGITUDINAL_CAR | CANFD_RADAR_SCC_CAR)
     ret.pcmCruise = Params().get_bool("PcmCruiseEnable")
 
     ret.radarUnavailable = RADAR_START_ADDR not in fingerprint[1] or Bus.radar not in DBC[ret.carFingerprint]
-    ret.openpilotLongitudinalControl = (experimental_long and ret.experimentalLongitudinalAvailable) or camera_scc
+    ret.openpilotLongitudinalControl = (alpha_long and ret.alphaLongitudinalAvailable) or camera_scc
     ret.startingState = True
     ret.vEgoStarting = 0.1
     ret.startAccel = 1.0

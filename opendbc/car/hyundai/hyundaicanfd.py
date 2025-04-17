@@ -415,8 +415,17 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         values["FF_DISTANCE"] = hud.leadDistance
         values["FF_DETECT"] = 4 if hud.leadRelSpeed > -0.1 else 3
 
-      #for f in {"LF_DETECT", "LR_DETECT", "RF_DETECT", "RR_DETECT"}:
-      #  values[f] = 4 if hud.leadRelSpeed > -0.1 else 3
+      sensors = [
+        ('lf', 'LF_DETECT'),
+        ('rf', 'RF_DETECT'),
+        ('lr', 'LR_DETECT'),
+        ('rr', 'RR_DETECT')
+      ]
+
+      for sensor_key, detect_key in sensors:
+        distance = getattr(CS, f"{sensor_key}_distance")
+        if distance > 0:
+          values[detect_key] = 3 if distance > 30 else 4
 
       if hud.leftLaneDepart or hud.rightLaneDepart:
         values["VIBRATE"] = 1

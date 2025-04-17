@@ -91,6 +91,11 @@ class CarState(CarStateBase):
     self.MainMode_ACC = False
     self.LFA_ICON = 0
 
+    self.lf_distance = 0
+    self.rf_distance = 0
+    self.lr_distance = 0
+    self.rr_distance = 0
+
   def update(self, can_parsers) -> structs.CarState:
     cp = can_parsers[Bus.pt]
     cp_cam = can_parsers[Bus.cam]
@@ -379,6 +384,10 @@ class CarState(CarStateBase):
           self.ccnc_info_161 = copy.copy(cp_cam.vl.get("CCNC_0x161", {}))
         if "CCNC_0x162" in cp_cam.vl:
           self.ccnc_info_162 = copy.copy(cp_cam.vl.get("CCNC_0x162", {}))
+          self.lf_distance = cp_cam.vl["CCNC_0x162"]["LF_DETECT_DISTANCE"]
+          self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DETECT_DISTANCE"]
+          self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DETECT_DISTANCE"]
+          self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DETECT_DISTANCE"]
       if "ADRV_0x160" in cp_cam.vl:
         self.adrv_info_160 = copy.copy(cp_cam.vl.get("ADRV_0x160", {}))
       if "ADRV_0x200" in cp_cam.vl:

@@ -100,7 +100,6 @@ class CarController(CarControllerBase):
       current_torque = abs(CS.out.steeringTorque)
       curvature = abs(actuators.curvature)
       angle_from_center = abs(self.apply_angle_last)
-      torque_threshold = self.params.ANGLE_STEER_THRESHOLD
       min_torque = self.params.ANGLE_MIN_TORQUE
       max_torque = self.params.ANGLE_MAX_TORQUE
 
@@ -112,8 +111,8 @@ class CarController(CarControllerBase):
       dynamic_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
 
       # Override handling
-      if current_torque > torque_threshold:
-        torque_diff = current_torque - torque_threshold
+      if current_torque > max_torque:
+        torque_diff = current_torque - max_torque
         available_reduction = self.lkas_max_torque - min_torque
         reduction_factor = np.max([dynamic_down_rate,
                                    torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'],

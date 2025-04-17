@@ -25,11 +25,10 @@ class CarControllerParams:
 
   # Stock LFA system is seen sending 250 max, but for LKAS events it's 175 max.
   # 250 can at least achieve 4 m/s^2, 80 corresponds to ~2.5 m/s^2
-  ANGLE_MAX_TORQUE = 250  # The maximum amount of torque that will be allowed
+  ANGLE_MAX_TORQUE = 240  # The maximum amount of torque that will be allowed
   ANGLE_MIN_TORQUE = 25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
   #ANGLE_TORQUE_UP_RATE = 1  # Indicates how fast the torque ramps up after user intervention.
   #ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
-  ANGLE_STEER_THRESHOLD = 250
   ANGLE_PARAMS = {
     'SMOOTHING_ANGLE_VEGO_MATRIX': [0, 8.5, 11, 13.8, 22.22],
     'SMOOTHING_ANGLE_ALPHA_MATRIX': [0.05, 0.1, 0.3, 0.6, 1],

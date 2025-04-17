@@ -12,17 +12,17 @@
 #define HYUNDAI_CANFD_LKA_STEERING_COMMON_TX_MSGS(a_can, e_can)     \
   HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(e_can)                        \
   {0x50,  a_can, 16, .check_relay = (a_can) == 0},  /* LKAS */      \
-  {0x2A4, a_can, 24, .check_relay = (a_can) == 0},  /* CAM_0x2A4 */ \
+  {0x2A4, a_can, 24, .check_relay = false},         /* CAM_0x2A4 */ \
 
 #define HYUNDAI_CANFD_LKA_STEERING_ALT_COMMON_TX_MSGS(a_can, e_can) \
   HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(e_can)                        \
   HYUNDAI_CANFD_CRUISE_BUTTON_ALT_TX_MSGS(e_can)                    \
   {0x110, a_can, 32, .check_relay = (a_can) == 0},  /* LKAS_ALT */  \
-  {0x362, a_can, 32, .check_relay = (a_can) == 0},  /* CAM_0x362 */ \
+  {0x362, a_can, 32, .check_relay = false},         /* CAM_0x362 */ \
 
 #define HYUNDAI_CANFD_LFA_STEERING_COMMON_TX_MSGS(e_can)                 \
   {0x12A, e_can, 16, .check_relay = (e_can) == 0},  /* LFA */            \
-  {0x1E0, e_can, 16, .check_relay = (e_can) == 0},  /* LFAHDA_CLUSTER */ \
+  {0x1E0, e_can, 16, .check_relay = false},         /* LFAHDA_CLUSTER */ \
 
 #define HYUNDAI_CANFD_LFA_STEERING_ALT_TX_MSGS(e_can)               \
   {0xCB, e_can, 24, .check_relay = (e_can) == 0},  /* LFA_ALT */    \
@@ -52,12 +52,12 @@
 // *** Addresses checked in rx hook ***
 // EV, ICE, HYBRID: ACCELERATOR (0x35), ACCELERATOR_BRAKE_ALT (0x100), ACCELERATOR_ALT (0x105)
 #define HYUNDAI_CANFD_COMMON_RX_CHECKS(pt_bus)                                                                       \
-  {.msg = {{0x35, (pt_bus), 32, .max_counter = 0xffU, .frequency = 100U},                                            \
+  {.msg = {{ 0x35, (pt_bus), 32, .max_counter = 0xffU, .frequency = 100U},                                           \
            {0x100, (pt_bus), 32, .max_counter = 0xffU, .frequency = 100U},                                           \
            {0x105, (pt_bus), 32, .max_counter = 0xffU, .frequency = 100U}}},                                         \
   {.msg = {{0x175, (pt_bus), 24, .max_counter = 0xffU, .frequency = 50U}, { 0 }, { 0 }}},                            \
-  {.msg = {{0xa0, (pt_bus), 24, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},                            \
-  {.msg = {{0xea, (pt_bus), 24, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},                            \
+  {.msg = {{ 0xa0, (pt_bus), 24, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},                           \
+  {.msg = {{ 0xea, (pt_bus), 24, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},                           \
   {.msg = {{0x125, (pt_bus), 16, .ignore_checksum = true, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},  \
 
 #define HYUNDAI_CANFD_STD_BUTTONS_RX_CHECKS(pt_bus)                                                               \
@@ -104,10 +104,6 @@ CanFdTxEntry canfd_tx_entries1[CANFD_TX_ENTRIES_SIZE] = {
   [13] = { .addr = 0x362,  .timestamp = 0 },  // CAM_0x362
   [14] = { .addr = 0x2A4,  .timestamp = 0 },  // CAM_0x2A4
   [15] = { .addr = 0x51,   .timestamp = 0 },  // ADRV_0x51
-  //[] = { .addr = 0x1BA,  .timestamp = 0 },  // BLINDSPOTS_REAR_CORNERS
-  //[] = { .addr = 0x1E5,  .timestamp = 0 },  // BLINDSPOTS_FRONT_CORNER_1
-  //[] = { .addr = 0x1B5,  .timestamp = 0 },  // CCNC_0x1B5
-  //[] = { .addr = 0x1FA,  .timestamp = 0 },  // CLUSTER_SPEED_LIMIT
 };
 
 CanFdTxEntry canfd_tx_entries2[CANFD_TX_ENTRIES_SIZE] = {
@@ -465,7 +461,6 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x161, 0, 32, .check_relay = false},  // CCNC_0x161
     {0x162, 0, 32, .check_relay = false},  // CCNC_0x162
     {0x4A3, 2,  8, .check_relay = false},  // HDA_INFO_0x4a3
-    //{0x4B4, 2,  8, .check_relay = false},  // HDA_INFO_0x4b4
     {0xEA,  2, 24, .check_relay = false},  // MDPS
     {0x2AF, 2,  8, .check_relay = false},  // STEER_TOUCH_2AF
   };
@@ -476,7 +471,6 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(0, false)
   };
 
-  // ADRV_0x160 is checked for radar liveness
   static const CanMsg HYUNDAI_CANFD_LFA_STEERING_LONG_TX_MSGS[] = {
     HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(2)
     HYUNDAI_CANFD_CRUISE_BUTTON_ALT_TX_MSGS(2)
@@ -484,17 +478,16 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(0, true)
     HYUNDAI_CANFD_LFA_STEERING_ALT_TX_MSGS(0)
     {0x7D0, 0,  8, .check_relay = false},  // tester present for radar ECU disable
-    {0x160, 1, 16, .check_relay = true},   // ADRV_0x160
+    {0x160, 1, 16, .check_relay = false},  // ADRV_0x160
   };
 
-  // ADRV_0x160 is checked for relay malfunction
 #define HYUNDAI_CANFD_LFA_STEERING_CAMERA_SCC_TX_MSGS(longitudinal) \
     HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(2)                          \
     HYUNDAI_CANFD_LFA_STEERING_COMMON_TX_MSGS(0)                    \
     HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(0, (longitudinal))     \
-    {0x160, 0, 16, .check_relay = (longitudinal)}, /* ADRV_0x160 */ \
-    {0x161, 0, 32, .check_relay = (longitudinal)}, /* CCNC_0x161 */ \
-    {0x162, 0, 32, .check_relay = (longitudinal)}, /* CCNC_0x162 */ \
+    {0x160, 0, 16, .check_relay = false},  /* ADRV_0x160 */         \
+    {0x161, 0, 32, .check_relay = false},  /* CCNC_0x161 */         \
+    {0x162, 0, 32, .check_relay = false},  /* CCNC_0x162 */         \
 
   hyundai_common_init(param);
 

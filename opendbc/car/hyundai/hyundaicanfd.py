@@ -383,7 +383,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
       alerts_disable_map = {
         "ALERTS_2": [1, 2, 5],
         "ALERTS_3": [17, 26],
-        "ALERTS_5": [1, 2, 4, 5],
+        "ALERTS_5": [1, 4, 5],
       }
 
       for key, reset_values in alerts_disable_map.items():

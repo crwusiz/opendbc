@@ -58,7 +58,7 @@
   {.msg = {{0x175, (pt_bus), 24, .max_counter = 0xffU, .frequency = 50U}, { 0 }, { 0 }}},                            \
   {.msg = {{0xa0,  (pt_bus), 24, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},                           \
   {.msg = {{0xea,  (pt_bus), 24, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},                           \
-  {.msg = {{x125,  (pt_bus), 16, .ignore_checksum = true, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},  \
+  {.msg = {{0x125, (pt_bus), 16, .ignore_checksum = true, .max_counter = 0xffU, .frequency = 100U}, { 0 }, { 0 }}},  \
 
 #define HYUNDAI_CANFD_STD_BUTTONS_RX_CHECKS(pt_bus)                                                               \
   HYUNDAI_CANFD_COMMON_RX_CHECKS(pt_bus)                                                                          \

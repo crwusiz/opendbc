@@ -34,10 +34,6 @@
 #define HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(e_can, longitudinal)   \
   {0x1A0, e_can, 32, .check_relay = (longitudinal)},  /* SCC_CONTROL */ \
 
-#define HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS_DUAL(e1, e2) \
-  HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(e1, true)          \
-  HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(e2, true)          \
-
 #define HYUNDAI_CANFD_ADRV_TX_MSGS(e_can)                       \
   {0x51,  e_can, 32, .check_relay = false},  /* ADRV_0x51 */    \
   {0x1EA, e_can, 32, .check_relay = false},  /* ADRV_0x1ea */   \
@@ -452,9 +448,10 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     HYUNDAI_CANFD_LKA_STEERING_COMMON_TX_MSGS(1, 1)
     HYUNDAI_CANFD_LKA_STEERING_ALT_COMMON_TX_MSGS(1, 1)
     HYUNDAI_CANFD_LFA_STEERING_COMMON_TX_MSGS_DUAL(0, 1)
-    HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS_DUAL(0, 1)
     HYUNDAI_CANFD_ADRV_TX_MSGS_DUAL(0, 1)
     HYUNDAI_CANFD_LFA_STEERING_ALT_TX_MSGS(0)
+    HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(0, false)
+    HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(1, false)
     {0x730, 1,  8, .check_relay = false},  // tester present for ADAS ECU disable
     {0x160, 0, 16, .check_relay = false},  // ADRV_0x160
     {0x160, 1, 16, .check_relay = false},  // ADRV_0x160

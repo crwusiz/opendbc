@@ -405,9 +405,6 @@ struct CarControl {
     torqueOutputCan @8: Float32;   # value sent over can to the car
     speed @6: Float32;  # m/s
 
-    jerk @9: Float32;  # m/s^3
-    aTargetNow @10: Float32;  # m/s^2
-
     enum LongControlState @0xe40f3a917d908282{
       off @0;
       pid @1;
@@ -441,8 +438,6 @@ struct CarControl {
 
     leadDistance @11: Float32;
     leadRelSpeed @12: Float32;
-    leadDPath @13: Float32;
-    leadRadar @14: Int16;
 
     enum VisualAlert {
       # these are the choices from the Honda

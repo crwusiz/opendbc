@@ -223,7 +223,7 @@ def create_lfahda_cluster(packer, CC, CAN):
   return packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)
 
 
-def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set_speed, hud, jerk_u, jerk_l):
+def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set_speed, hud):
   enabled = CC.enabled
   gas_override = CC.cruiseControl.override
   camerascc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
@@ -246,10 +246,8 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "aReqValue": a_val,
       "aReqRaw": a_raw,
       "VSetDis": set_speed,
-      #"JerkLowerLimit": jerk if enabled else 1,
-      #"JerkUpperLimit": 3.0,
-      "JerkLowerLimit": jerk_l if enabled else 1,
-      "JerkUpperLimit": jerk_u,
+      "JerkLowerLimit": jerk if enabled else 1,
+      "JerkUpperLimit": 3.0,
 
       "SET_ME_2": 4,
       "SET_ME_TMP_64": 100,

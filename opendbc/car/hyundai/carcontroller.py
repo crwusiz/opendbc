@@ -61,8 +61,6 @@ class CarController(CarControllerBase):
     self.angle_limit_counter = 0
     self.turningSignalTimer = 0
 
-    self.hyundai_jerk = HyundaiJerk()
-
     self.MainMode_ACC_trigger = 0
     self.LFA_trigger = 0
 
@@ -282,10 +280,8 @@ class CarController(CarControllerBase):
       else:
         can_sends.extend(hyundaicanfd.create_fca_warning_light(self.packer, self.CP, self.CAN, self.frame))
       if self.frame % 2 == 0:
-        self.hyundai_jerk.make_jerk(self.CP, CS, accel, actuators)
         can_sends.append(hyundaicanfd.create_acc_control(self.packer, self.CP, CC, CS, self.CAN, self.accel_last,
-                                                         accel, stopping, set_speed_in_units, hud_control,
-                                                         self.hyundai_jerk.jerk_u, self.hyundai_jerk.jerk_l))
+                                                         accel, stopping, set_speed_in_units, hud_control))
         self.accel_last = accel
     else:
       # button presses
@@ -323,32 +319,3 @@ class CarController(CarControllerBase):
         self.MainMode_ACC_trigger = trigger_start
       elif CC.latActive and CS.MainMode_ACC and CS.LFA_ICON == 0:
         self.LFA_trigger = trigger_start
-
-class HyundaiJerk:
-  def __init__(self):
-    self.jerk = 0.0
-    self.jerk_u = self.jerk_l = 0.0
-    self.cb_upper = self.cb_lower = 0.0
-    self.jerk_u_min = 0.5
-    self.jerk_max = 5.0
-
-  def make_jerk(self, CP, CS, accel, actuators):
-    if actuators.longControlState == LongCtrlState.stopping:
-      self.jerk = self.jerk_u_min / 2 - CS.out.aEgo
-    else:
-      self.jerk = actuators.jerk if actuators.longControlState == LongCtrlState.pid else 0.0
-
-    if actuators.longControlState == LongCtrlState.off:
-      self.jerk_u = self.jerk_max
-      self.jerk_l = self.jerk_max
-      self.cb_upper = self.cb_lower = 0.0
-    else:
-      if CP.flags & HyundaiFlags.CANFD:
-        self.jerk_u = min(max(self.jerk_u_min, self.jerk * 2.0), self.jerk_max)
-        self.jerk_l = min(max(1.0, -self.jerk * 4.0), self.jerk_max)
-        self.cb_upper = self.cb_lower = 0.0
-      else:
-        self.jerk_u = min(max(self.jerk_u_min, self.jerk * 2.0), self.jerk_max)
-        self.jerk_l = min(max(1.0, -self.jerk * 2.0), self.jerk_max)
-        self.cb_upper = np.clip(0.9 + accel * 0.2, 0, 1.2)
-        self.cb_lower = np.clip(0.8 + accel * 0.2, 0, 1.2)

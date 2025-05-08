@@ -204,6 +204,7 @@ struct CarState {
   steerFaultPermanent @36 :Bool;   # permanent EPS fault
   invalidLkasSetting @55 :Bool;    # stock LKAS is incorrectly configured (i.e. on or off)
   stockAeb @30 :Bool;
+  stockLkas @59 :Bool;
   stockFcw @31 :Bool;
   espDisabled @32 :Bool;
   accFaulted @42 :Bool;
@@ -243,7 +244,7 @@ struct CarState {
   cumLagMs @50 :Float32;
 
   # neokii
-  exState @59 :ExState;
+  exState @60 :ExState;
 
   struct ExState {
     vCruiseKph @0 :Float32;

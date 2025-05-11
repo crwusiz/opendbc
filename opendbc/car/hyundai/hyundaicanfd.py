@@ -5,6 +5,7 @@ from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 
 from openpilot.common.params import Params
 from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
+from opendbc.car.common.conversions import Conversions as CV
 
 def hyundai_crc8(data: bytes) -> int:
   poly = 0x2F
@@ -85,7 +86,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
       values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
 
   if frame % 1000 < 40:
-    values["STEERING_COL_TORQUE"] += 100
+    values["STEERING_COL_TORQUE"] += 220
   ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if frame % 10 == 0:
@@ -332,6 +333,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
   ccnc = CP.exFlags & HyundaiExFlags.CCNC
   nav_active = SpeedLimiter.instance().get_active()
   hdp_active = cruise_enabled and nav_active
+  set_speed_in_units = hud.setSpeed * (CV.MS_TO_KPH if CS.is_metric else CV.MS_TO_MPH)
 
   # messages needed to car happy after disabling
   # the ADAS Driving ECU to do longitudinal control
@@ -343,7 +345,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
       values |= {
         "SETSPEED": 6 if hdp_active else 3 if main_enabled else 0,
         "SETSPEED_HUD": 5 if hdp_active else 2 if cruise_enabled else 1,
-        "vSetDis": int(hud.setSpeed * 3.6 + 0.5),
+        "vSetDis": int(set_speed_in_units + 0.5),
 
         "DISTANCE": 4 if hdp_active else hud.leadDistanceBars,
         "DISTANCE_LEAD": 2 if cruise_enabled and hud.leadVisible else 0,
@@ -429,15 +431,11 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
       ret.append(packer.make_can_msg("CCNC_0x162", CAN.ECAN, values))
 
-    if frame % 2 == 0 and CS.adrv_info_160 is not None:
-      values = CS.adrv_info_160
-      values |= {
-        "NEW_SIGNAL_1": 0,  # steer_temp관련없음, 계기판에러
-        "SET_ME_9": 17,  # steer_temp관련없음, 계기판에러
-        "SET_ME_2": 0,  # 커멘트해도 steer_temp에러남, 2값은 콤마에서 찾은거니...
-        "DATA102": 0,  # steer_temp관련없음
-      }
-      ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
+    #if frame % 2 == 0 and CS.adrv_info_160 is not None:
+    #  values = CS.adrv_info_160
+    #  values |= {
+    #  }
+    #  ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
 
     if frame % 5 == 0 and CS.adrv_info_200 is not None:
       values = CS.adrv_info_200

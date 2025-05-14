@@ -223,7 +223,7 @@ class CAR(Platforms):
   HYUNDAI_AVANTE_CN7 = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("HYUNDAI AVANTE (CN7)", car_parts=CarParts.common([CarHarness.hyundai_k])),
-      HyundaiCarDocs("Hyundai Elantra 2021-23", video_link="https://youtu.be/_EdYQtV52-c", car_parts=CarParts.common([CarHarness.hyundai_k])),
+      HyundaiCarDocs("Hyundai Elantra 2021-23", video="https://youtu.be/_EdYQtV52-c", car_parts=CarParts.common([CarHarness.hyundai_k])),
     ],
     CarSpecs(mass=1270, wheelbase=2.72, steerRatio=12.9, tireStiffnessFactor=0.65),
     flags=HyundaiFlags.CHECKSUM_CRC8,
@@ -231,7 +231,7 @@ class CAR(Platforms):
   HYUNDAI_AVANTE_CN7_HEV = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("HYUNDAI AVANTE HYBRID (CN7)", car_parts=CarParts.common([CarHarness.hyundai_k])),
-      HyundaiCarDocs("Hyundai Elantra Hybrid 2021-23", video_link="https://youtu.be/_EdYQtV52-c", car_parts=CarParts.common([CarHarness.hyundai_k])),
+      HyundaiCarDocs("Hyundai Elantra Hybrid 2021-23", video="https://youtu.be/_EdYQtV52-c", car_parts=CarParts.common([CarHarness.hyundai_k])),
     ],
     CarSpecs(mass=1368, wheelbase=2.72, steerRatio=12.9, tireStiffnessFactor=0.65),
     flags=HyundaiFlags.CHECKSUM_CRC8 | HyundaiFlags.HYBRID,
@@ -255,7 +255,7 @@ class CAR(Platforms):
   HYUNDAI_SONATA_DN8 = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("HYUNDAI SONATA (DN8)", car_parts=CarParts.common([CarHarness.hyundai_a])),
-      HyundaiCarDocs("Hyundai Sonata 2020-23", "All", video_link="https://www.youtube.com/watch?v=ix63r9kE3Fw",
+      HyundaiCarDocs("Hyundai Sonata 2020-23", "All", video="https://www.youtube.com/watch?v=ix63r9kE3Fw",
                    car_parts=CarParts.common([CarHarness.hyundai_a])),
     ],
     CarSpecs(mass=1615, wheelbase=2.84, steerRatio=15.2, tireStiffnessFactor=0.65),
@@ -333,9 +333,9 @@ class CAR(Platforms):
   HYUNDAI_SANTAFE = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("HYUNDAI SANTAFE (TM)", car_parts=CarParts.common([CarHarness.hyundai_l])),
-      HyundaiCarDocs("Hyundai Santa Fe 2019-20", "All", video_link="https://youtu.be/bjDR0YjM__s",
+      HyundaiCarDocs("Hyundai Santa Fe 2019-20", "All", video="https://youtu.be/bjDR0YjM__s",
                      car_parts=CarParts.common([CarHarness.hyundai_d])),
-      HyundaiCarDocs("Hyundai Santa Fe 2021-23", "All", video_link="https://youtu.be/VnHzSTygTS4",
+      HyundaiCarDocs("Hyundai Santa Fe 2021-23", "All", video="https://youtu.be/VnHzSTygTS4",
                      car_parts=CarParts.common([CarHarness.hyundai_l])),
     ],
     CarSpecs(mass=1910, wheelbase=2.76, steerRatio=15.8, tireStiffnessFactor=0.82),
@@ -353,7 +353,7 @@ class CAR(Platforms):
   HYUNDAI_PALISADE = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("HYUNDAI PALISADE (LX2)", car_parts=CarParts.common([CarHarness.hyundai_h])),
-      HyundaiCarDocs("Hyundai Palisade 2020-22", "All", video_link="https://youtu.be/TAnDqjF4fDY?t=456", car_parts=CarParts.common([CarHarness.hyundai_h])),
+      HyundaiCarDocs("Hyundai Palisade 2020-22", "All", video="https://youtu.be/TAnDqjF4fDY?t=456", car_parts=CarParts.common([CarHarness.hyundai_h])),
     ],
     CarSpecs(mass=2060, wheelbase=2.90, steerRatio=15.8, tireStiffnessFactor=0.63),
     flags=HyundaiFlags.MANDO_RADAR | HyundaiFlags.CHECKSUM_CRC8,
@@ -419,7 +419,7 @@ class CAR(Platforms):
   HYUNDAI_KONA_SX2_EV = HyundaiCanFDPlatformConfig(
     [
       HyundaiCarDocs("HYUNDAI KONA EV (SX2)", car_parts=CarParts.common([CarHarness.hyundai_r])),
-      HyundaiCarDocs("Hyundai Kona Electric (with HDA II, Korea only) 2023", video_link="https://www.youtube.com/watch?v=U2fOCmcQ8hw",
+      HyundaiCarDocs("Hyundai Kona Electric (with HDA II, Korea only) 2023", video="https://www.youtube.com/watch?v=U2fOCmcQ8hw",
                      car_parts=CarParts.common([CarHarness.hyundai_r])),
     ],
     HYUNDAI_KONA.specs,
@@ -572,9 +572,9 @@ class CAR(Platforms):
   KIA_SORENTO = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("KIA SORENTO (UM)", car_parts=CarParts.common([CarHarness.hyundai_e])),
-      HyundaiCarDocs("Kia Sorento 2018", "Advanced Smart Cruise Control & LKAS", video_link="https://www.youtube.com/watch?v=Fkh3s6WHJz8",
+      HyundaiCarDocs("Kia Sorento 2018", "Advanced Smart Cruise Control & LKAS", video="https://www.youtube.com/watch?v=Fkh3s6WHJz8",
                      car_parts=CarParts.common([CarHarness.hyundai_e])),
-      HyundaiCarDocs("Kia Sorento 2019", video_link="https://www.youtube.com/watch?v=Fkh3s6WHJz8",
+      HyundaiCarDocs("Kia Sorento 2019", video="https://www.youtube.com/watch?v=Fkh3s6WHJz8",
                      car_parts=CarParts.common([CarHarness.hyundai_e])),
     ],
     CarSpecs(mass=1885, wheelbase=2.81, steerRatio=15.8),
@@ -589,7 +589,7 @@ class CAR(Platforms):
   KIA_STINGER = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("KIA STINGER (CK)", car_parts=CarParts.common([CarHarness.hyundai_c])),
-      HyundaiCarDocs("Kia Stinger 2018-20", video_link="https://www.youtube.com/watch?v=MJ94qoofYw0",
+      HyundaiCarDocs("Kia Stinger 2018-20", video="https://www.youtube.com/watch?v=MJ94qoofYw0",
                      car_parts=CarParts.common([CarHarness.hyundai_c])),
       HyundaiCarDocs("Kia Stinger 2022-23", "All", car_parts=CarParts.common([CarHarness.hyundai_k])),
     ],
@@ -599,10 +599,10 @@ class CAR(Platforms):
   KIA_NIRO_EV = HyundaiPlatformConfig(
     [
       HyundaiCarDocs("KIA NIRO EV (DE)", car_parts=CarParts.common([CarHarness.hyundai_c])),
-      HyundaiCarDocs("Kia Niro EV 2019", "All", video_link="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_h])),
-      HyundaiCarDocs("Kia Niro EV 2020", "All", video_link="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_f])),
-      HyundaiCarDocs("Kia Niro EV 2021", "All", video_link="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_c])),
-      HyundaiCarDocs("Kia Niro EV 2022", "All", video_link="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_h])),
+      HyundaiCarDocs("Kia Niro EV 2019", "All", video="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_h])),
+      HyundaiCarDocs("Kia Niro EV 2020", "All", video="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_f])),
+      HyundaiCarDocs("Kia Niro EV 2021", "All", video="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_c])),
+      HyundaiCarDocs("Kia Niro EV 2022", "All", video="https://www.youtube.com/watch?v=lT7zcG6ZpGo", car_parts=CarParts.common([CarHarness.hyundai_h])),
     ],
     CarSpecs(mass=1748, wheelbase=2.70, steerRatio=13.7, tireStiffnessFactor=0.385),
     flags=HyundaiFlags.MANDO_RADAR | HyundaiFlags.EV,

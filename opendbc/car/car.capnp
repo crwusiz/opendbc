@@ -245,7 +245,7 @@ struct CarState {
   cumLagMs @50 :Float32;
 
   # neokii
-  exState @60 :ExState;
+  exState @61 :ExState;
 
   struct ExState {
     vCruiseKph @0 :Float32;

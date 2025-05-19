@@ -4,14 +4,16 @@ from opendbc.car.hyundai.values import (HyundaiFlags, CAR, DBC, CAMERA_SCC_CAR, 
                                         CANFD_UNSUPPORTED_LONGITUDINAL_CAR, UNSUPPORTED_LONGITUDINAL_CAR, Buttons,
                                         HyundaiExFlags, HyundaiSafetyFlags)
 from opendbc.car.hyundai.radar_interface import RADAR_START_ADDR
-from opendbc.car.interfaces import CarInterfaceBase
+from opendbc.car.interfaces import CarInterfaceBase, ACCEL_MIN, ACCEL_MAX
 from opendbc.car.disable_ecu import disable_ecu
 from opendbc.car.hyundai.carcontroller import CarController
 from opendbc.car.hyundai.carstate import CarState
 from opendbc.car.hyundai.radar_interface import RadarInterface
 
 import copy
+import numpy as np
 from openpilot.common.params import Params
+from openpilot.common.conversions import Conversions as CV
 
 ButtonType = structs.CarState.ButtonEvent.Type
 Ecu = structs.CarParams.Ecu
@@ -24,6 +26,13 @@ class CarInterface(CarInterfaceBase):
   CarState = CarState
   CarController = CarController
   RadarInterface = RadarInterface
+
+  @staticmethod
+  def get_pid_accel_limits(CP, current_speed, cruise_speed):
+    v_current_kph = current_speed * CV.MS_TO_KPH
+    gas_max_bp = [0., 10., 30., 70., 130., 150.]
+    gas_max_v = [ACCEL_MAX, 1.5, 1.0, 0.5, 0.15, 0.1]
+    return ACCEL_MIN, np.interp(v_current_kph, gas_max_bp, gas_max_v)
 
   @staticmethod
   def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, alpha_long, docs) -> structs.CarParams:

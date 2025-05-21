@@ -191,12 +191,14 @@ def create_acc_cancel(packer, CP, CS, CAN):
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "ACCMode",
-      "VSetDis",
-      "CRUISE_STANDSTILL",
+      "NEW_SIGNAL_1",
       "MainMode_ACC",
+      "ACCMode",
+      "ZEROS_9",
+      "CRUISE_STANDSTILL",
       "ZEROS_5",
       "DISTANCE_SETTING",
+      "VSetDis",
     ]}
   else:
     values = {s: cruise_info_copy[s] for s in [

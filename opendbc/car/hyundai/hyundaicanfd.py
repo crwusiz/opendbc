@@ -284,7 +284,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "ACC_ObjDist": 1,
       "SET_ME_2": 4,
       "SET_ME_TMP_64": 100,
-      "DISTANCE_SETTING": hud.leadDistanceBars, # + 5,
+      "DISTANCE_SETTING": hud.leadDistanceBars,
       "CRUISE_STANDSTILL": 1 if stopping and CS.out.cruiseState.standstill else 0,
     }
 
@@ -342,8 +342,8 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
   ret = []
   if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-    if frame % 5 == 0 and CS.ccnc_info_161 is not None and ccnc:
-      values = CS.ccnc_info_161
+    if frame % 5 == 0 and CS.ccnc_msg_161 is not None and ccnc:
+      values = CS.ccnc_msg_161
       values |= {
         "SETSPEED": 6 if hdp_active else 3 if main_enabled else 0,
         "SETSPEED_HUD": 5 if hdp_active else 2 if cruise_enabled else 1,
@@ -367,9 +367,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         "LKA_ICON": 4 if lat_active else 3,
         "FCA_ALT_ICON": 0,
         "DAW_ICON": 0,
-
-        "LANELINE_LEFT_POSITION": 15,
-        "LANELINE_RIGHT_POSITION": 15,
 
         "LCA_LEFT_ARROW": 2 if CS.out.leftBlinker else 0,
         "LCA_RIGHT_ARROW": 2 if CS.out.rightBlinker else 0,
@@ -395,6 +392,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         for i in range(-15, 16)
       }
       values["LANELINE_CURVATURE"] = curvature.get(max(-15, min(round(disp_angle / 3), 15)), 14) if lat_active else 15
+      values["LANELINE_CURVATURE_DIRECTION"] = 1 if disp_angle / 3 < 0 and lat_active else 0
 
       def get_lane_value(depart, visible, frame):
         if depart:
@@ -404,10 +402,42 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
       values["LANELINE_LEFT"] = get_lane_value(hud.leftLaneDepart, hud.leftLaneVisible, frame)
       values["LANELINE_RIGHT"] = get_lane_value(hud.rightLaneDepart, hud.rightLaneVisible, frame)
 
+      if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
+        ccnc_msg_1b5 = CS.ccnc_msg_1b5
+        leftlanequal = ccnc_msg_1b5["LEFT_QUAL"]
+        rightlanequal = ccnc_msg_1b5["RIGHT_QUAL"]
+        leftlaneraw = ccnc_msg_1b5["LEFT_POSITION"]
+        rightlaneraw = ccnc_msg_1b5["RIGHT_POSITION"]
+        leftlane = meters_to_ui_units(leftlaneraw)
+        rightlane = meters_to_ui_units(rightlaneraw)
+
+        if leftlanequal not in (2, 3):
+          leftlane = 0
+        if rightlanequal not in (2, 3):
+          rightlane = 0
+
+        if leftlaneraw == -2.0248375:
+          leftlane = 30 - rightlane
+        if rightlaneraw == 2.0248375:
+          rightlane = 30 - leftlane
+
+        if leftlaneraw == rightlaneraw == 0:
+          leftlane = 15
+          rightlane = 15
+        elif leftlaneraw == 0:
+          leftlane = 30 - rightlane
+        elif rightlaneraw == 0:
+          rightlane = 30 - leftlane
+
+        leftlane, rightlane = normalize_lane_lines(leftlane, rightlane)
+
+        values["LANELINE_LEFT_POSITION"] = leftlane
+        values["LANELINE_RIGHT_POSITION"] = rightlane
+
       ret.append(packer.make_can_msg("CCNC_0x161", CAN.ECAN, values))
 
-    if frame % 5 == 0 and CS.ccnc_info_162 is not None and ccnc:
-      values = CS.ccnc_info_162
+    if frame % 5 == 0 and CS.ccnc_msg_162 is not None and ccnc:
+      values = CS.ccnc_msg_162
       for f in {"FAULT_FCA", "FAULT_LSS", "FAULT_DAS"}:
         values[f] = 0
 
@@ -433,29 +463,29 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
       ret.append(packer.make_can_msg("CCNC_0x162", CAN.ECAN, values))
 
-    #if frame % 2 == 0 and CS.adrv_info_160 is not None:
-    #  values = CS.adrv_info_160
+    #if frame % 2 == 0 and CS.adrv_msg_160 is not None:
+    #  values = CS.adrv_msg_160
     #  values |= {
     #  }
     #  ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
 
-    if frame % 5 == 0 and CS.adrv_info_200 is not None:
-      values = CS.adrv_info_200
+    if frame % 5 == 0 and CS.adrv_msg_200 is not None:
+      values = CS.adrv_msg_200
       values |= {
         "TauGapSet": hud.leadDistanceBars,
       }
       ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))
 
-    if frame % 5 == 0 and CS.adrv_info_1ea is not None:
-      values = CS.adrv_info_1ea
+    if frame % 5 == 0 and CS.adrv_msg_1ea is not None:
+      values = CS.adrv_msg_1ea
       values |= {
-        "HDA_MODE1": 8,
-        "HDA_MODE2": 1,
+        "HDA_MODE1": 0x8,
+        "HDA_MODE2": 0x1,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 
-    if frame % 20 == 0 and CS.hda_info_4a3 is not None:
-      values = CS.hda_info_4a3
+    if frame % 20 == 0 and CS.hda_msg_4a3 is not None:
+      values = CS.hda_msg_4a3
       values |= {
         "SIGNAL_0": 5,
         "NEW_SIGNAL_1": 4,
@@ -465,7 +495,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         "NEW_SIGNAL_5": 0,
         "NEW_SIGNAL_6": 256,
       }
-      ret.append(packer.make_can_msg("HDA_INFO_4A3", CAN.CAM, values))
+      ret.append(packer.make_can_msg("hda_msg_4a3", CAN.CAM, values))
 
     return ret
 
@@ -474,30 +504,42 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
     ret.extend(create_fca_warning_light(packer, CP, CAN, frame))
     if frame % 5 == 0:
       values = {
-        'HDA_MODE1': 8,
-        'HDA_MODE2': 1,
-        'SET_ME_FF': 255,
+        'HDA_MODE1': 0x8,
+        'HDA_MODE2': 0x1,
+        'SET_ME_FF': 0xFF,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 
       values = {
-        'SET_ME_E1': 225,
-        'TauGapSet' : 1,
-        'NEW_SIGNAL_2': 3,
+        'SET_ME_E1': 0xE1,
+        'TauGapSet' : 0x1,
+        'NEW_SIGNAL_2': 0x3,
       }
       ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))
 
     if frame % 20 == 0:
       values = {
-        'SET_ME_15': 21,
+        'SET_ME_15': 0x15,
       }
       ret.append(packer.make_can_msg("ADRV_0x345", CAN.ECAN, values))
 
     if frame % 100 == 0:
       values = {
-        'SET_ME_22': 34,
-        'SET_ME_41': 65,
+        'SET_ME_22': 0x22,
+        'SET_ME_41': 0x41,
       }
       ret.append(packer.make_can_msg("ADRV_0x1da", CAN.ECAN, values))
 
     return ret
+
+def meters_to_ui_units(meters: float, nominal_m: float = 1.7, center_ui: int = 15, scale_per_m: float = 15/1.7) -> int:
+  value = abs(int(round(center_ui + (meters - nominal_m) * scale_per_m)))
+  return value
+
+def normalize_lane_lines(left_ui: float, right_ui: float, total_ui: int = 30) -> tuple[int, int]:
+  total_input = left_ui + right_ui
+  if total_input == 0:
+    return total_ui // 2, total_ui // 2
+  left_scaled = round((left_ui / total_input) * total_ui)
+  right_scaled = total_ui - left_scaled
+  return left_scaled, right_scaled

@@ -69,12 +69,13 @@ class CarState(CarStateBase):
     self.mdps_info = {}
     self.steer_touch_info = {}
 
-    self.ccnc_info_161 = None
-    self.ccnc_info_162 = None
-    self.adrv_info_200 = None
-    self.adrv_info_1ea = None
-    self.adrv_info_160 = None
-    self.hda_info_4a3 = None
+    self.ccnc_msg_161 = None
+    self.ccnc_msg_162 = None
+    self.ccnc_msg_1b5 = None
+    self.adrv_msg_200 = None
+    self.adrv_msg_1ea = None
+    self.adrv_msg_160 = None
+    self.hda_msg_4a3 = None
 
     self.cruise_buttons_msg = None
     self.lfa_block_msg = None
@@ -401,22 +402,25 @@ class CarState(CarStateBase):
 
       if self.CP.exFlags & HyundaiExFlags.CCNC.value:
         if "CCNC_0x161" in cp_cam.vl:
-          self.ccnc_info_161 = copy.copy(cp_cam.vl.get("CCNC_0x161", {}))
+          self.ccnc_msg_161 = copy.copy(cp_cam.vl.get("CCNC_0x161", {}))
         if "CCNC_0x162" in cp_cam.vl:
-          self.ccnc_info_162 = copy.copy(cp_cam.vl.get("CCNC_0x162", {}))
+          self.ccnc_msg_162 = copy.copy(cp_cam.vl.get("CCNC_0x162", {}))
           self.ff_distance = cp_cam.vl["CCNC_0x162"]["FF_DISTANCE"]
           self.lf_distance = cp_cam.vl["CCNC_0x162"]["LF_DISTANCE"]
           self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DISTANCE"]
           self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DISTANCE"]
           self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DISTANCE"]
+        if "CCNC_0x1B5" in cp_cam.vl:
+          self.ccnc_msg_1b5 = copy.copy(cp_cam.vl.get("CCNC_0x1B5", {}))
+
       if "ADRV_0x160" in cp_cam.vl:
-        self.adrv_info_160 = copy.copy(cp_cam.vl.get("ADRV_0x160", {}))
+        self.adrv_msg_160 = copy.copy(cp_cam.vl.get("ADRV_0x160", {}))
       if "ADRV_0x200" in cp_cam.vl:
-        self.adrv_info_200 = copy.copy(cp_cam.vl.get("ADRV_0x200", {}))
+        self.adrv_msg_200 = copy.copy(cp_cam.vl.get("ADRV_0x200", {}))
       if "ADRV_0x1ea" in cp_cam.vl:
-        self.adrv_info_1ea = copy.copy(cp_cam.vl.get("ADRV_0x1ea", {}))
+        self.adrv_msg_1ea = copy.copy(cp_cam.vl.get("ADRV_0x1ea", {}))
       if "HDA_INFO_0x4a3" in cp.vl:
-        self.hda_info_4a3 = copy.copy(cp.vl.get("HDA_INFO_0x4a3", {}))
+        self.hda_msg_4a3 = copy.copy(cp.vl.get("HDA_INFO_0x4a3", {}))
 
     # Manual Speed Limit Assist is a feature that replaces non-adaptive cruise control on EV CAN FD platforms.
     # It limits the vehicle speed, overridable by pressing the accelerator past a certain point.
@@ -578,6 +582,7 @@ class CarState(CarStateBase):
         cam_messages += [
           ("CCNC_0x161", 20),
           ("CCNC_0x162", 20),
+          ("CCNC_0x1B5", 20),
         ]
 
     if not CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI:

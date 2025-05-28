@@ -264,6 +264,7 @@ class CarState(CarStateBase):
                         *create_button_events(self.lda_button, prev_lda_button, {1: ButtonType.lkas})]
 
     ret.blockPcmEnable = not self.recent_button_interaction()
+    ret.blockPcmEnable = False
 
     # low speed steer alert hysteresis logic (only for cars with steer cut off above 10 m/s)
     if ret.vEgo < (self.CP.minSteerSpeed + 2.) and self.CP.minSteerSpeed > 10.:
@@ -457,6 +458,7 @@ class CarState(CarStateBase):
                         *create_button_events(self.lda_button, prev_lda_button, {1: ButtonType.lkas})]
 
     ret.blockPcmEnable = not self.recent_button_interaction()
+    ret.blockPcmEnable = False
 
     if self.CP.exFlags & HyundaiExFlags.TPMS:
       tpms = ret.exState.tpms

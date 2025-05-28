@@ -512,7 +512,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
 
       values = {
         'SET_ME_E1': 0xE1,
-        'TauGapSet' : 0x1,
+        'TauGapSet': 0x1,
         'NEW_SIGNAL_2': 0x3,
       }
       ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))

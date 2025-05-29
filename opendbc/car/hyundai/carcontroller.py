@@ -275,8 +275,7 @@ class CarController(CarControllerBase):
       if camera_scc:
         self.canfd_toggle_adas(CC, CS)
       if lka_steering:
-        can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame,
-                                                           hud_control, self.apply_angle_last))
+        can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, hud_control))
       else:
         can_sends.extend(hyundaicanfd.create_fca_warning_light(self.packer, self.CP, self.CAN, self.frame))
       if self.frame % 2 == 0:

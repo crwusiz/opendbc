@@ -328,7 +328,7 @@ def create_fca_warning_light(packer, CP, CAN, frame):
   return ret
 
 
-def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
+def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
   main_enabled = CS.out.cruiseState.available
   cruise_enabled = CC.enabled
   lat_active = CC.latActive
@@ -387,12 +387,10 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud, disp_angle):
         if values.get(key) in reset_values:
           values[key] = 0
 
-      curvature = {
-        i: (31 if i == -1 else 13 - abs(i + 15)) if i < 0 else 15 + i
-        for i in range(-15, 16)
-      }
-      values["LANELINE_CURVATURE"] = curvature.get(max(-15, min(round(disp_angle / 3), 15)), 14) if lat_active else 15
-      values["LANELINE_CURVATURE_DIRECTION"] = 1 if disp_angle / 3 < 0 and lat_active else 0
+      curvature = round(CS.out.steeringAngleDeg / 3)
+
+      values["LANELINE_CURVATURE"] = (min(abs(curvature), 15) + (-1 if curvature < 0 else 0)) if lat_active else 0
+      values["LANELINE_CURVATURE_DIRECTION"] = 1 if curvature < 0 and lat_active else 0
 
       def get_lane_value(depart, visible, frame):
         if depart:

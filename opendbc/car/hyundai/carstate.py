@@ -101,6 +101,11 @@ class CarState(CarStateBase):
     self.lr_distance = 0
     self.rr_distance = 0
 
+    self.left_qual = 0
+    self.right_qual = 0
+    self.left_position = 0
+    self.right_position = 0
+
   def recent_button_interaction(self) -> bool:
     # On some newer model years, the CANCEL button acts as a pause/resume button based on the PCM state
     # To avoid re-engaging when openpilot cancels, check user engagement intention via buttons
@@ -410,8 +415,12 @@ class CarState(CarStateBase):
           self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DISTANCE"]
           self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DISTANCE"]
           self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DISTANCE"]
-        #if "CCNC_0x1B5" in cp_cam.vl:
-        #  self.ccnc_msg_1b5 = copy.copy(cp_cam.vl.get("CCNC_0x1B5", {}))
+        if "CCNC_0x1B5" in cp_cam.vl:
+          self.ccnc_msg_1b5 = copy.copy(cp_cam.vl.get("CCNC_0x1B5", {}))
+          self.left_qual = cp_cam.vl["CCNC_0x1B5"]["LEFT_QUAL"]
+          self.right_qual = cp_cam.vl["CCNC_0x1B5"]["RIGHT_QUAL"]
+          self.left_position = cp_cam.vl["CCNC_0x1B5"]["LEFT_POSITION"]
+          self.right_position = cp_cam.vl["CCNC_0x1B5"]["RIGHT_POSITION"]
 
       if "ADRV_0x160" in cp_cam.vl:
         self.adrv_msg_160 = copy.copy(cp_cam.vl.get("ADRV_0x160", {}))
@@ -582,7 +591,7 @@ class CarState(CarStateBase):
         cam_messages += [
           ("CCNC_0x161", 20),
           ("CCNC_0x162", 20),
-          #("CCNC_0x1B5", 20),
+          ("CCNC_0x1B5", 20),
         ]
 
     if not CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI:

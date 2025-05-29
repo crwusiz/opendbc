@@ -100,6 +100,7 @@ CanFdTxEntry canfd_tx_entries1[CANFD_TX_ENTRIES_SIZE] = {
   [13] = { .addr = 0x362,  .timestamp = 0 },  // CAM_0x362
   [14] = { .addr = 0x2A4,  .timestamp = 0 },  // CAM_0x2A4
   [15] = { .addr = 0x51,   .timestamp = 0 },  // ADRV_0x51
+  [16] = { .addr = 0x1B5,  .timestamp = 0 },  // CCNC_0x1B5
 };
 
 CanFdTxEntry canfd_tx_entries2[CANFD_TX_ENTRIES_SIZE] = {

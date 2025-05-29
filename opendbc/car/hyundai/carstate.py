@@ -410,8 +410,8 @@ class CarState(CarStateBase):
           self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DISTANCE"]
           self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DISTANCE"]
           self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DISTANCE"]
-        if "CCNC_0x1B5" in cp_cam.vl:
-          self.ccnc_msg_1b5 = copy.copy(cp_cam.vl.get("CCNC_0x1B5", {}))
+        #if "CCNC_0x1B5" in cp_cam.vl:
+        #  self.ccnc_msg_1b5 = copy.copy(cp_cam.vl.get("CCNC_0x1B5", {}))
 
       if "ADRV_0x160" in cp_cam.vl:
         self.adrv_msg_160 = copy.copy(cp_cam.vl.get("ADRV_0x160", {}))
@@ -582,7 +582,7 @@ class CarState(CarStateBase):
         cam_messages += [
           ("CCNC_0x161", 20),
           ("CCNC_0x162", 20),
-          ("CCNC_0x1B5", 20),
+          #("CCNC_0x1B5", 20),
         ]
 
     if not CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI:

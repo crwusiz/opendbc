@@ -241,7 +241,6 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
 
   if camerascc:
     values = CS.cruise_info
-    values.update({s: CS.cruise_info[s] for s in ["ACC_ObjDist", "ACC_ObjRelSpd"]})
     values |= {
       "ACCMode": 0 if not enabled else (2 if gas_override else 1),
       "MainMode_ACC": 1,
@@ -252,14 +251,15 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "JerkLowerLimit": jerk if enabled else 1,
       "JerkUpperLimit": 3.0,
 
-      "SET_ME_2": 4,
-      "SET_ME_TMP_64": 100,
+      #"ACC_ObjDist": 1,
+      "SET_ME_2": 0x4,
+      "SET_ME_TMP_64": 0x64,
       "DISTANCE_SETTING": hud.leadDistanceBars,
-      "ZEROS_5": 0,
-
-      "TARGET_DISTANCE": CS.out.vEgo * 1.0 + 4.0,
       "CRUISE_STANDSTILL": 1 if stopping and CS.out.aEgo > -0.1 else 0,
 
+      "TARGET_DISTANCE": CS.out.vEgo + 4.0,
+      "ZEROS_5": 0,
+      "ZEROS_9": 0,  # 전방주의(24)... 포함. 여러가지 알람이 있을듯..
       "NEW_SIGNAL_2": 0,  # 이것이 켜지면 가속을 안하는듯함.
       "NEW_SIGNAL_4": 9 if hud.leadVisible else 0,
       "NEW_SIGNAL_1": 0,  # 눈이 묻어 레이더오류시... 2가 됨. 이때 가속을 안함...
@@ -281,12 +281,18 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "JerkLowerLimit": jerk if enabled else 1,
       "JerkUpperLimit": 3.0,
 
-      "ACC_ObjDist": 1,
-      "SET_ME_2": 4,
-      "SET_ME_TMP_64": 100,
+      "ObjValid": 0,
+      "OBJ_STATUS": 2,
+      "SET_ME_2": 0x4,
+      "SET_ME_3": 0x3,
+      "SET_ME_TMP_64": 0x64,
       "DISTANCE_SETTING": hud.leadDistanceBars,
       "CRUISE_STANDSTILL": 1 if stopping and CS.out.cruiseState.standstill else 0,
     }
+
+    # fixes auto regen stuck on max for hybrids, should probably apply to all cars
+    values.update(
+      {"ACC_ObjDist": 1} if CS.cruise_info is None else {s: CS.cruise_info[s] for s in ["ACC_ObjDist", "ACC_ObjRelSpd"]})
 
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 
@@ -318,11 +324,11 @@ def create_fca_warning_light(packer, CP, CAN, frame):
 
   if frame % 2 == 0:
     values = {
-      'AEB_SETTING': 1,  # show AEB disabled icon
-      'SET_ME_2': 2,
-      'SET_ME_FF': 255,
-      'SET_ME_FC': 252,
-      'SET_ME_9': 9,
+      'AEB_SETTING': 0x1,  # show AEB disabled icon
+      'SET_ME_2': 0x2,
+      'SET_ME_FF': 0xFF,
+      'SET_ME_FC': 0xFC,
+      'SET_ME_9': 0x9,
     }
     ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
   return ret
@@ -507,6 +513,8 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
         'HDA_MODE1': 0x8,
         'HDA_MODE2': 0x1,
         'SET_ME_FF': 0xFF,
+        'SET_ME_TMP_F': 0xF,
+        'SET_ME_TMP_F_2': 0xf,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 

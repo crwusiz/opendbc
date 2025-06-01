@@ -253,6 +253,7 @@ struct CarState {
     autoHold @2 : Int32;
     tpms @3 :Tpms;
     navLimitSpeed @4 :Int16;
+    wrongButtonPress @5 :Bool;
   }
 
   struct Tpms {

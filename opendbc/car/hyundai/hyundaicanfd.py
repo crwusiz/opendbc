@@ -408,17 +408,16 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
 
       """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
-        ccnc_msg_1b5 = CS.ccnc_msg_1b5
-        leftlanequal = ccnc_msg_1b5["LEFT_QUAL"]
-        rightlanequal = ccnc_msg_1b5["RIGHT_QUAL"]
-        leftlaneraw = ccnc_msg_1b5["LEFT_POSITION"]
-        rightlaneraw = ccnc_msg_1b5["RIGHT_POSITION"]
-        leftlane = meters_to_ui_units(leftlaneraw)
-        rightlane = meters_to_ui_units(rightlaneraw)
+        msg_1b5 = CS.ccnc_msg_1b5
+        leftlaneraw, rightlaneraw = msg_1b5["LEFT_POSITION"], msg_1b5["RIGHT_POSITION"]
 
-        if leftlanequal not in (2, 3):
+        scale_per_m = 15 / 1.7
+        leftlane = abs(int(round(15 + (leftlaneraw - 1.7) * scale_per_m)))
+        rightlane = abs(int(round(15 + (rightlaneraw - 1.7) * scale_per_m)))
+
+        if msg_1b5["LEFT_QUAL"] not in (2, 3):
           leftlane = 0
-        if rightlanequal not in (2, 3):
+        if msg_1b5["RIGHT_QUAL"] not in (2, 3):
           rightlane = 0
 
         if leftlaneraw == -2.0248375:
@@ -427,14 +426,18 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
           rightlane = 30 - leftlane
 
         if leftlaneraw == rightlaneraw == 0:
-          leftlane = 15
-          rightlane = 15
+          leftlane = rightlane = 15
         elif leftlaneraw == 0:
           leftlane = 30 - rightlane
         elif rightlaneraw == 0:
           rightlane = 30 - leftlane
 
-        leftlane, rightlane = normalize_lane_lines(leftlane, rightlane)
+        total = leftlane + rightlane
+        if total == 0:
+          leftlane = rightlane = 15
+        else:
+          leftlane = round((leftlane / total) * 30)
+          rightlane = 30 - leftlane
 
         values["LANELINE_LEFT_POSITION"] = leftlane
         values["LANELINE_RIGHT_POSITION"] = rightlane
@@ -539,15 +542,3 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
       ret.append(packer.make_can_msg("ADRV_0x1da", CAN.ECAN, values))
 
     return ret
-
-def meters_to_ui_units(meters: float, nominal_m: float = 1.7, center_ui: int = 15, scale_per_m: float = 15/1.7) -> int:
-  value = abs(int(round(center_ui + (meters - nominal_m) * scale_per_m)))
-  return value
-
-def normalize_lane_lines(left_ui: float, right_ui: float, total_ui: int = 30) -> tuple[int, int]:
-  total_input = left_ui + right_ui
-  if total_input == 0:
-    return total_ui // 2, total_ui // 2
-  left_scaled = round((left_ui / total_input) * total_ui)
-  right_scaled = total_ui - left_scaled
-  return left_scaled, right_scaled

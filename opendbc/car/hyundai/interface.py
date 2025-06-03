@@ -1,4 +1,5 @@
 from opendbc.car import Bus, get_safety_config, structs
+from opendbc.car.carlog import carlog
 from opendbc.car.hyundai.hyundaicanfd import CanBus
 from opendbc.car.hyundai.values import (HyundaiFlags, CAR, DBC, CAMERA_SCC_CAR, CANFD_RADAR_SCC_CAR,
                                         CANFD_UNSUPPORTED_LONGITUDINAL_CAR, UNSUPPORTED_LONGITUDINAL_CAR, Buttons,
@@ -43,6 +44,10 @@ class CarInterface(CarInterfaceBase):
     if camera_scc:
       ret.flags |= HyundaiFlags.CAMERA_SCC.value
 
+    # "LKA steering" if LKAS or LKAS_ALT messages are seen coming from the camera.
+    # Generally means our LKAS message is forwarded to another ECU (commonly ADAS ECU)
+    # that finally retransmits our steering command in LFA or LFA_ALT to the MDPS.
+    # "LFA steering" if camera directly sends LFA to the MDPS
     cam_can = CanBus(None, fingerprint).CAM if camera_scc == 0 else 1
     lka_steering = any((0x50 in fingerprint[cam_can], 0x110 in fingerprint[cam_can], Params().get_bool("IsHda2")))
     CAN = CanBus(None, fingerprint, lka_steering)
@@ -80,6 +85,11 @@ class CarInterface(CarInterfaceBase):
         # no LKA steering
         if not ret.flags & HyundaiFlags.RADAR_SCC:
           ret.flags |= HyundaiFlags.CANFD_CAMERA_SCC.value
+
+          # sanity check SCC_CONTROL isn't on E-CAN (powertrain bus)
+          if 0x1a0 in fingerprint[CAN.ECAN]:
+            carlog.error('dashcamOnly: invalid CAN topology. Incorrect harness?')
+            ret.dashcamOnly = True
 
       if 0x1cf not in fingerprint[CAN.ECAN]:
         ret.flags |= HyundaiFlags.CANFD_ALT_BUTTONS.value

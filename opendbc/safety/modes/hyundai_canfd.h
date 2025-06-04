@@ -331,6 +331,80 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   return tx;
 }
 
+#define MAX_ADDR_LIST_SIZE 128
+
+typedef struct {
+  int addrs[MAX_ADDR_LIST_SIZE];
+  int count;
+} AddrList;
+
+static AddrList addr_lists[3] = {0};
+
+static bool add_addr_to_list(AddrList *list, int addr) {
+  if (list->count >= MAX_ADDR_LIST_SIZE) {
+    return false; // List is full
+  }
+
+  for (int i = 0; i < list->count; i++) {
+    if (list->addrs[i] == addr) {
+      return false; // Already exists
+    }
+  }
+
+  list->addrs[list->count++] = addr;
+  return true;
+}
+
+static void print_number(uint32_t num, uint8_t base) {
+  const char digits[] = "0123456789abcdef";
+  char buffer[11];
+  unsigned int idx = 0;
+
+  if (num == 0) {
+    buffer[idx++] = '0';
+  } else {
+    while (num > 0 && idx < (sizeof(buffer) - 1)) {
+      buffer[idx++] = digits[num % base];
+      num /= base;
+    }
+  }
+  buffer[idx] = '\0';
+
+  for (int i = idx-1; i >= 0; i--) {
+    char ch[2] = {buffer[i], '\0'};
+    print(ch);
+  }
+}
+
+static void print_addr_list(const AddrList *list, int bus_num, uint32_t now) {
+  static uint32_t last_print_time = 0;
+  const uint32_t PRINT_INTERVAL = 10000000U;
+
+  if ((now - last_print_time) < PRINT_INTERVAL) {
+    return;
+  }
+  last_print_time = now;
+
+  print("Debug: Bus Addr List - ");
+  print("Bus=");
+  print_number((uint32_t)bus_num, 10);
+  print(", ts=");
+  print_number(now, 10);
+  print(", Addrs=[");
+
+  for (int j = 0; j < list->count; j++) {
+    print_number((uint32_t)list->addrs[j], 10);
+    print("(0x");
+    print_number((uint32_t)list->addrs[j], 16);
+    print(")");
+
+    if (j < (list->count - 1)) {
+      print(", ");
+    }
+  }
+  print("]\n");
+}
+
 static bool should_block_msg(CanFdTxEntry *entries, int size, int addr, uint32_t now, uint32_t timeout) {
   for (int i = 0; i < size; i++) {
     if (entries[i].addr == 0) break;
@@ -346,12 +420,15 @@ static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   bool block_msg = false;
   uint32_t OP_CAN_SEND_TIMEOUT = 100000;
   uint32_t now = microsecond_timer_get();
-  static AddrList addr_list = {{0}, 0};
 
   if (bus_num == 0) {
-  block_msg = should_block_msg(tx_bus_0, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
+    block_msg = should_block_msg(tx_bus_0, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
   } else if (bus_num == 2) {
-  block_msg = should_block_msg(tx_bus_2, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
+    block_msg = should_block_msg(tx_bus_2, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
+  }
+
+  if (add_addr_to_list(&addr_lists[bus_num], addr)) {
+    print_addr_list(&addr_lists[bus_num], bus_num, now);
   }
 
   return block_msg;

@@ -261,7 +261,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "ZEROS_5": 0,
       "ZEROS_9": 0,  # 전방주의(24)... 포함. 여러가지 알람이 있을듯..
       "NEW_SIGNAL_2": 0,  # 이것이 켜지면 가속을 안하는듯함.
-      "NEW_SIGNAL_4": 9 if hud.leadVisible else 0,
+      #"NEW_SIGNAL_4": 9 if hud.leadVisible else 0,
       "NEW_SIGNAL_1": 0,  # 눈이 묻어 레이더오류시... 2가 됨. 이때 가속을 안함...
     }
 

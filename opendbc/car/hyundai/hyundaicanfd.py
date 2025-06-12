@@ -409,15 +409,15 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
       """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
         msg_1b5 = CS.ccnc_msg_1b5
-        leftlaneraw, rightlaneraw = msg_1b5["LEFT_POSITION"], msg_1b5["RIGHT_POSITION"]
+        leftlaneraw, rightlaneraw = msg_1b5["LeftLnPosVal"], msg_1b5["RightLnPosVal"]
 
         scale_per_m = 15 / 1.7
         leftlane = abs(int(round(15 + (leftlaneraw - 1.7) * scale_per_m)))
         rightlane = abs(int(round(15 + (rightlaneraw - 1.7) * scale_per_m)))
 
-        if msg_1b5["LEFT_QUAL"] not in (2, 3):
+        if msg_1b5["LeftLnQualSta"] not in (2, 3):
           leftlane = 0
-        if msg_1b5["RIGHT_QUAL"] not in (2, 3):
+        if msg_1b5["RightLnQualSta"] not in (2, 3):
           rightlane = 0
 
         if leftlaneraw == -2.0248375:

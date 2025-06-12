@@ -479,9 +479,9 @@ class CarState(CarStateBase):
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC.value:
         ret.exState.navLimitSpeed = cp_cam.vl["CCNC_0x162"]["SPEEDLIMIT"]
       elif self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-        ret.exState.navLimitSpeed = cp_cam.vl["CLUSTER_SPEED_LIMIT"]["SPEED_LIMIT_1"]
+        ret.exState.navLimitSpeed = cp_cam.vl["FR_CMR_02_100ms"]["ISLW_SpdNaviMainDis"]
       else:
-        ret.exState.navLimitSpeed = cp.vl["CLUSTER_SPEED_LIMIT"]["SPEED_LIMIT_1"]
+        ret.exState.navLimitSpeed = cp.vl["FR_CMR_02_100ms"]["ISLW_SpdNaviMainDis"]
 
     self.canfd_buttons = cp.vl[self.cruise_btns_msg_canfd]
 
@@ -553,7 +553,7 @@ class CarState(CarStateBase):
       pt_messages.append(("ESP_STATUS", 0))
 
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-      pt_messages.append(("CLUSTER_SPEED_LIMIT", 10))
+      pt_messages.append(("FR_CMR_02_100ms", 10))
 
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
       pt_messages += [
@@ -586,7 +586,7 @@ class CarState(CarStateBase):
         ]
 
     if not CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI:
-      cam_messages.append(("CLUSTER_SPEED_LIMIT", 10))
+      cam_messages.append(("FR_CMR_02_100ms", 10))
 
     if CP.enableBsm:
       if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:

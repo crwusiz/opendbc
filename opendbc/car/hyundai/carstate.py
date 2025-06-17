@@ -555,7 +555,7 @@ class CarState(CarStateBase):
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
       pt_messages.append(("FR_CMR_02_100ms", 10))
 
-    if CP.flags & HyundaiFlags.MSG_4A3:
+    if CP.flags & HyundaiExFlags.MSG_4A3:
       pt_messages += [
         ("HDA_INFO_0x4a3", 5),
       ]

@@ -15,7 +15,7 @@ class CarControllerParams:
 
   ANGLE_LIMITS: AngleSteeringLimits = AngleSteeringLimits(
     # LKAS angle command is unlimited, but LFA is limited to 176.7 deg (but does not fault if requesting above)
-    180,  # deg
+    175,  # deg
     # seen changing at 0.2 deg/frame down, 0.1 deg/frame up at 100Hz
     #([5, 25], [0.3, 0.15]),
     #([5, 25], [0.36, 0.26]),
@@ -163,6 +163,7 @@ class HyundaiExFlags(IntFlag):
   CCNC = 2 ** 5
   CCNC_HDA2 = 2 ** 6
   STEER_TOUCH = 2 ** 7
+  MSG_4A3 = 2 ** 8
 
 class Footnote(Enum):
   CANFD = CarFootnote(

@@ -1155,8 +1155,10 @@ FW_VERSIONS = {
   },
   CAR.KIA_EV3: {  # (SV1)
     (Ecu.fwdRadar, 0x7d0, None): [
+      b'\xf1\x00SV1__               1.00 1.02 99110EV700          ',
     ],
     (Ecu.fwdCamera, 0x7c4, None): [
+      b'\xf1\x00SV11.011.031.012471000HKP_SV124_40712099211EV000',
     ],
   },
 

@@ -248,12 +248,10 @@ struct CarState {
   exState @61 :ExState;
 
   struct ExState {
-    vCruiseKph @0 :Float32;
-    vCluRatio @1 :Float32;
-    autoHold @2 : Int32;
-    tpms @3 :Tpms;
-    navLimitSpeed @4 :Int16;
-    wrongButtonPress @5 :Bool;
+    vCluRatio @0 :Float32;
+    autoHold @1 : Int32;
+    tpms @2 :Tpms;
+    navLimitSpeed @3 :Int16;
   }
 
   struct Tpms {

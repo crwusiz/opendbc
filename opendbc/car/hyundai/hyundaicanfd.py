@@ -255,7 +255,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "SET_ME_2": 0x4,
       "SET_ME_TMP_64": 0x64,
       "DISTANCE_SETTING": hud.leadDistanceBars,
-      "CRUISE_STANDSTILL": 1 if stopping and CS.out.aEgo > -0.1 else 0,
+      "CRUISE_STANDSTILL": 1 if stopping and CS.out.aEgo > -0.3 else 0,
 
       "TARGET_DISTANCE": CS.out.vEgo + 4.0,
       "ZEROS_5": 0,

@@ -84,15 +84,13 @@ FW_VERSIONS = {
       b'\xf1\x00CN7 MDPS C 1.00 1.02 56310/BY050 4CNHC102',
       b'\xf1\x00CN7 MDPS C 1.00 1.03 56310/BY050 4CNHC103',
       b'\xf1\x00CN7 MDPS C 1.00 1.03 56310BY0500 4CNHC103',
-      b'\xf1\x00CN7 MDPS C 1.00 1.04 56310BY050\x00 4CNHC104',
+      b'\xf1\x00CN7 MDPS C 1.00 1.04 56310BY0500 4CNHC104',
     ],
   },
   CAR.HYUNDAI_SONATA_DN8: {  # (DN8)
     (Ecu.fwdRadar, 0x7d0, None): [
-      b'\xf1\x00DN8_ SCC F-CU-      1.00 1.00 99110-L0000         ',
       b'\xf1\x00DN8_ SCC F-CUP      1.00 1.00 99110-L0000         ',
       b'\xf1\x00DN8_ SCC F-CUP      1.00 1.02 99110-L1000         ',
-      b'\xf1\x00DN8_ SCC FHCU-      1.00 1.00 99110-L0000         ',
       b'\xf1\x00DN8_ SCC FHCUP      1.00 1.00 99110-L0000         ',
       b'\xf1\x00DN8_ SCC FHCUP      1.00 1.01 99110-L1000         ',
       b'\xf1\x00DN8_ SCC FHCUP      1.00 1.02 99110-L1000         ',
@@ -228,8 +226,6 @@ FW_VERSIONS = {
       b'\xf1\x00OSev SCC F-CUP      1.00 1.00 99110-K4100         ',
       b'\xf1\x00OSev SCC F-CUP      1.00 1.01 99110-K4000         ',
       b'\xf1\x00OSev SCC FNCUP      1.00 1.01 99110-K4000         ',
-      # 2022
-      b'\xf1\x00YB__ FCA -----      1.00 1.01 99110-K4500      \x00\x00\x00',
     ],
   },
   CAR.HYUNDAI_KONA_HEV: {  # (OS)
@@ -308,7 +304,7 @@ FW_VERSIONS = {
       b'\xf1\x00AE  MDPS C 1.00 1.05 56310/G2501 4AEHC105',
       b'\xf1\x00AE  MDPS C 1.00 1.07 56310/G2501 4AEHC107',
       #
-      b'\xf1\x00AE  MDPS C 1.00 1.01 56310G2510\x00 4APHC101',
+      b'\xf1\x00AE  MDPS C 1.00 1.01 56310G25100 4APHC101',
     ],
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\x00AEP MFC  AT EUR LHD 1.00 1.01 95740-G2600 190819',
@@ -402,13 +398,8 @@ FW_VERSIONS = {
       b'\xf1\x00TM  MDPS C 1.00 1.02 56310-CLAC0 4TSHC102',
       b'\xf1\x00TM  MDPS C 1.00 1.02 56310-CLEC0 4TSHC102',
       b'\xf1\x00TM  MDPS C 1.00 1.02 56310-GA000 4TSHA100',
-      b'\xf1\x00TM  MDPS C 1.00 1.02 56310GA000\x00 4TSHA100',
       b'\xf1\x00TM  MDPS R 1.00 1.05 57700-CL000 4TSHP105',
       b'\xf1\x00TM  MDPS R 1.00 1.06 57700-CL000 4TSHP106',
-      #
-      b'\xf1\x00TM  MDPS C 1.00 1.02 56310-CLAC0 4TSHC102',
-      b'\xf1\x00TM  MDPS C 1.00 1.02 56310-CLEC0 4TSHC102',
-      b'\xf1\x00TM  MDPS C 1.00 1.02 56310CLEC0\x00 4TSHC102',
     ],
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\x00TMA MFC  AT USA LHD 1.00 1.03 99211-S2500 220414',
@@ -425,17 +416,14 @@ FW_VERSIONS = {
   },
   CAR.HYUNDAI_PALISADE: {  # (LX2)
     (Ecu.fwdRadar, 0x7d0, None): [
-      b'\xf1\x00LX2 SCC FHCUP      1.00 1.04 99110-S8100         ',
       b'\xf1\x00LX2_ SCC F-CU-      1.00 1.05 99110-S8100         ',
       b'\xf1\x00LX2_ SCC F-CUP      1.00 1.00 99110-S8110         ',
       b'\xf1\x00LX2_ SCC F-CUP      1.00 1.04 99110-S8100         ',
       b'\xf1\x00LX2_ SCC F-CUP      1.00 1.05 99110-S8100         ',
-      b'\xf1\x00LX2_ SCC FHCU-      1.00 1.05 99110-S8100         ',
       b'\xf1\x00LX2_ SCC FHCUP      1.00 1.00 99110-S8110         ',
       b'\xf1\x00LX2_ SCC FHCUP      1.00 1.03 99110-S8100         ',
       b'\xf1\x00LX2_ SCC FHCUP      1.00 1.04 99110-S8100         ',
       b'\xf1\x00LX2_ SCC FHCUP      1.00 1.05 99110-S8100         ',
-      b'\xf1\x00ON__ FCA FHCU-      1.00 1.00 99110-S9110         ',
       b'\xf1\x00ON__ FCA FHCUP      1.00 1.00 99110-S9110         ',
       b'\xf1\x00ON__ FCA FHCUP      1.00 1.01 99110-S9110         ',
       b'\xf1\x00ON__ FCA FHCUP      1.00 1.02 99110-S9100         ',
@@ -718,7 +706,6 @@ FW_VERSIONS = {
   CAR.KIA_K3: {  # (BD)
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\x00BD  MDPS C 1.00 1.02 56310-XX000 4BD2C102',
-      b'\xf1\x00BD  MDPS C 1.00 1.08 56310/M6300 4BDDC108',
       b'\xf1\x00BD  MDPS C 1.00 1.08 56310M6300\x00 4BDDC108',
       b'\xf1\x00BDm MDPS C A.01 1.01 56310M7800\x00 4BPMC101',
       b'\xf1\x00BDm MDPS C A.01 1.03 56310M7800\x00 4BPMC103',
@@ -736,7 +723,6 @@ FW_VERSIONS = {
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00JF__ SCC F-CUP      1.00 1.00 96400-D4000         ',
       b'\xf1\x00JF__ SCC F-CUP      1.00 1.00 96400-D4100         ',
-      #
       b'\xf1\x00JF__ SCC F-CUP      1.00 1.00 96400-D4110         ',
     ],
     (Ecu.abs, 0x7d1, None): [
@@ -778,7 +764,6 @@ FW_VERSIONS = {
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\x00DL3 MDPS C 1.00 1.01 56310-L3110 4DLAC101',
       b'\xf1\x00DL3 MDPS C 1.00 1.01 56310-L3220 4DLAC101',
-      b'\xf1\x00DL3 MDPS C 1.00 1.01 56310L3220\x00 4DLAC101',
       b'\xf1\x00DL3 MDPS C 1.00 1.02 56310-L2220 4DLDC102',
       b'\xf1\x00DL3 MDPS C 1.00 1.02 56310L3220\x00 4DLAC102',
       b'\xf1\x00DL3 MDPS R 1.00 1.02 57700-L3000 4DLAP102',
@@ -867,7 +852,7 @@ FW_VERSIONS = {
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\000YG  MDPS C 1.00 1.00 99800F6563\000 4YGAC100',
       b'\xf1\000YG  MDPS C 1.00 1.00 E0000F6563\000 4YGSC100',
-      b'\xf1\000YG  MDPS C 1.01 99500F6563\000 4YGDC103',
+      b'\xf1\000YG  MDPS C 1.00 1.01 99500F6563\000 4YGDC103',
       b'\xf1\000YG  MDPS C 1.00 1.01 56310F6350\000 4YG7C101',
     ],
   },
@@ -931,8 +916,6 @@ FW_VERSIONS = {
     (Ecu.eps, 0x7d4, None): [
       b'\xf1\x00DE  MDPS C 1.00 1.01 56310G5520\x00 4DEPC101',
       b'\xf1\x00DE  MDPS C 1.00 1.09 56310G5301\x00 4DEHC109',
-      # 2022
-      b'\xf1\x00DE  MDPS C 1.00 1.01 56310G5520\x00 4DEPC101',
     ],
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\x00DEH MFC  AT USA LHD 1.00 1.00 95740-G5010 170117',
@@ -1162,7 +1145,8 @@ FW_VERSIONS = {
     ],
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\x00SV11.011.031.012471000HKP_SV124_40712099211EV000',
-    ],
+      b'\xf1\x00SV11.011.041.012473000HKP_SV124_40801099211EV000',
+],
   },
 
   # Genesis
@@ -1178,8 +1162,6 @@ FW_VERSIONS = {
       b'\xf1\x00IK__ SCC F-CUP      1.00 1.01 96400-G9100         ',
       b'\xf1\x00IK__ SCC F-CUP      1.00 1.02 96400-G9100         ',
       # 2020
-      b'\xf1\x00IK__ SCC F-CUP      1.00 1.02 96400-G9100         ',
-      b'\xf1\x00IK__ SCC F-CUP      1.00 1.02 96400-G9100         \xf1\xa01.02',
       b'\xf1\x00IK__ SCC FHCUP      1.00 1.02 96400-G9000         ',
       b'\xf1\x00IK__ SCC FHCUP      1.00 1.00 99110-G9300         ',
     ],

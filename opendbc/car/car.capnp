@@ -252,6 +252,12 @@ struct CarState {
     autoHold @1 : Int32;
     tpms @2 :Tpms;
     navLimitSpeed @3 :Int16;
+    vCruiseKph @4 :Float32;
+    cruiseMaxSpeed @5 :Float32;
+    applyMaxSpeed @6 :Float32;
+    targetSpeed @7 :Float32;
+    maxSpeed @8 :Float32;
+    curveSpeed @9 :Float32;
   }
 
   struct Tpms {

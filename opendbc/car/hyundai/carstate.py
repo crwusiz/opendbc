@@ -4,7 +4,7 @@ import math
 
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
-from opendbc.car import Bus, create_button_events, structs
+from opendbc.car import Bus, create_button_events, structs, DT_CTRL
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.hyundai.hyundaicanfd import CanBus
 from opendbc.car.hyundai.values import HyundaiFlags, CAR, DBC, Buttons, CarControllerParams, HyundaiExFlags
@@ -93,6 +93,7 @@ class CarState(CarStateBase):
     self.canfd_buttons = None
 
     self.MainMode_ACC = False
+    self.ACCMode = 0
     self.LFA_ICON = 0
 
     self.ff_distance = 0
@@ -100,6 +101,9 @@ class CarState(CarStateBase):
     self.rf_distance = 0
     self.lr_distance = 0
     self.rr_distance = 0
+
+    self.totalDistance = 0.0
+    self.speedLimitDistance = 0
 
   def recent_button_interaction(self) -> bool:
     # On some newer model years, the CANCEL button acts as a pause/resume button based on the PCM state
@@ -287,6 +291,16 @@ class CarState(CarStateBase):
 
     if self.CP.exFlags & HyundaiExFlags.NAVI:
       ret.exState.navLimitSpeed = cp.vl["Navi_HU"]["SpeedLim_Nav_Clu"]
+      speedLimit = cp.vl["Navi_HU"]["SpeedLim_Nav_Clu"]
+      speedLimitCam = cp.vl["Navi_HU"]["SpeedLim_Nav_Cam"]
+      ret.speedLimit = speedLimit if speedLimit < 255 and speedLimitCam == 1 else 0
+      speed_limit_cam = speedLimitCam == 1
+    else:
+      ret.speedLimit = 0
+      ret.speedLimitDistance = 0
+      speed_limit_cam = False
+
+    self.update_speed_limit(ret, speed_limit_cam)
 
     if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON and not self.CP.openpilotLongitudinalControl:
       prev_lfa_btn = self.lfa_btn
@@ -303,6 +317,16 @@ class CarState(CarStateBase):
       CruiseStateManager.instance().update(ret, self.main_buttons)
 
     return ret
+
+  def update_speed_limit(self, ret, speed_limit_cam):
+    self.totalDistance += ret.vEgo * DT_CTRL
+    if ret.speedLimit > 0 and not ret.gasPressed and speed_limit_cam:
+      if self.speedLimitDistance <= self.totalDistance:
+        self.speedLimitDistance = self.totalDistance + ret.speedLimit * 6
+      self.speedLimitDistance = max(self.totalDistance + 1, self.speedLimitDistance)
+    else:
+      self.speedLimitDistance = self.totalDistance
+    ret.speedLimitDistance = self.speedLimitDistance - self.totalDistance
 
   def update_canfd(self, can_parsers) -> structs.CarState:
     cp = can_parsers[Bus.pt]
@@ -379,6 +403,7 @@ class CarState(CarStateBase):
       ret.cruiseState.standstill = False
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
         self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
+        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["ACCMode"]
         self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["LFA_ICON"]
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
@@ -390,6 +415,7 @@ class CarState(CarStateBase):
       self.cruise_info = copy.copy(cp_cruise_info.vl["SCC_CONTROL"])
       ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["ACCMode"] not in (1, 2)
 
+    speed_limit_cam = False
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
       self.cruise_info = copy.copy(cp_cam.vl["SCC_CONTROL"])
       self.lfa_info = copy.copy(cp_cam.vl["LFA"])
@@ -421,6 +447,13 @@ class CarState(CarStateBase):
         self.adrv_msg_1ea = copy.copy(cp_cam.vl.get("ADRV_0x1ea", {}))
       if "HDA_INFO_0x4a3" in cp.vl:
         self.hda_msg_4a3 = copy.copy(cp.vl.get("HDA_INFO_0x4a3", {}))
+        speedLimit = self.hda_msg_4a3["SPEED_LIMIT"]
+        if not self.is_metric:
+          speedLimit *= CV.MPH_TO_KPH
+        ret.speedLimit = speedLimit if speedLimit < 255 else 0
+        if int(self.hda_msg_4a3["NEW_SIGNAL_4"]) == 17:
+          speed_limit_cam = True
+        self.update_speed_limit(ret, speed_limit_cam)
 
     # Manual Speed Limit Assist is a feature that replaces non-adaptive cruise control on EV CAN FD platforms.
     # It limits the vehicle speed, overridable by pressing the accelerator past a certain point.

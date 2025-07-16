@@ -256,7 +256,7 @@ struct CarState {
     cruiseMaxSpeed @5 :Float32;
     applyMaxSpeed @6 :Float32;
     targetSpeed @7 :Float32;
-    maxSpeed @8 :Float32;
+    limitSpeed @8 :Float32;
     curveSpeed @9 :Float32;
   }
 

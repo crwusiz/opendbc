@@ -25,7 +25,7 @@
   {0x1E0, e_can, 16, .check_relay = (e_can) == 0},  /* LFAHDA_CLUSTER */ \
 
 #define HYUNDAI_CANFD_LFA_STEERING_ALT_TX_MSGS(e_can)               \
-  {0xCB, e_can, 24, .check_relay = (e_can) == 0},  /* LFA_ALT */    \
+  {0xCB, e_can, 24, .check_relay = (e_can) == 0},  /* ADAS_CMD_35_10ms */    \
 
 #define HYUNDAI_CANFD_LFA_STEERING_COMMON_TX_MSGS_DUAL(e1, e2) \
   HYUNDAI_CANFD_LFA_STEERING_COMMON_TX_MSGS(e1)                \
@@ -93,7 +93,7 @@ CanFdTxEntry tx_bus_2[CANFD_TX_ENTRIES_SIZE] = {
   [6]  = { .addr = 0x200,  .timestamp = 0 },  // ADRV_0x200
   [7]  = { .addr = 0x345,  .timestamp = 0 },  // ADRV_0x345
   [8]  = { .addr = 0x12A,  .timestamp = 0 },  // LFA
-  [9]  = { .addr = 0xCB,   .timestamp = 0 },  // LFA_ALT
+  [9]  = { .addr = 0xCB,   .timestamp = 0 },  // ADAS_CMD_35_10ms
   [10] = { .addr = 0x1E0,  .timestamp = 0 },  // LFAHDA_CLUSTER
   [11] = { .addr = 0x110,  .timestamp = 0 },  // LKAS_ALT
   [12] = { .addr = 0x50,   .timestamp = 0 },  // LKAS
@@ -104,7 +104,7 @@ CanFdTxEntry tx_bus_2[CANFD_TX_ENTRIES_SIZE] = {
 
 CanFdTxEntry tx_bus_0[CANFD_TX_ENTRIES_SIZE] = {
   [0] = { .addr = 0x4A3,  .timestamp = 0 },  // HDA_INFO_0x4A3
-  [1] = { .addr = 0x2AF,  .timestamp = 0 },  // STEER_TOUCH_2AF
+  [1] = { .addr = 0x2AF,  .timestamp = 0 },  // HOD_FD_01_100ms
   [2] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
   [3] = { .addr = 0x7C4,  .timestamp = 0 },  // VEHICLE DIAGNOSTICS
 };
@@ -434,7 +434,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x162, 0, 32, .check_relay = false},  // CCNC_0x162
     {0x4A3, 2,  8, .check_relay = false},  // HDA_INFO_0x4a3
     {0xEA,  2, 24, .check_relay = false},  // MDPS
-    {0x2AF, 2,  8, .check_relay = false},  // STEER_TOUCH_2AF
+    {0x2AF, 2,  8, .check_relay = false},  // HOD_FD_01_100ms
   };
 
   static const CanMsg HYUNDAI_CANFD_LFA_STEERING_TX_MSGS[] = {

@@ -45,7 +45,7 @@ class CarInterface(CarInterfaceBase):
 
     # "LKA steering" if LKAS or LKAS_ALT messages are seen coming from the camera.
     # Generally means our LKAS message is forwarded to another ECU (commonly ADAS ECU)
-    # that finally retransmits our steering command in LFA or LFA_ALT to the MDPS.
+    # that finally retransmits our steering command in LFA or ADAS_CMD_35_10ms to the MDPS.
     # "LFA steering" if camera directly sends LFA to the MDPS
     cam_can = CanBus(None, fingerprint).CAM if camera_scc == 0 else 1
     lka_steering = any((0x50 in fingerprint[cam_can], 0x110 in fingerprint[cam_can], Params().get_bool("IsHda2")))
@@ -92,11 +92,11 @@ class CarInterface(CarInterfaceBase):
         if lka_steering:
           ret.exFlags |= HyundaiExFlags.CCNC_HDA2.value
         if 0x2af in fingerprint[CAN.ECAN]:
-          ret.exFlags |= HyundaiExFlags.STEER_TOUCH.value
+          ret.exFlags |= HyundaiExFlags.HOD.value
         if 0x4a3 in fingerprint[CAN.ECAN]:
           ret.exFlags |= HyundaiExFlags.MSG_4A3.value
 
-      if 0xCB in fingerprint[CAN.CAM]: # LFA_ALT
+      if 0xCB in fingerprint[CAN.CAM]: # ADAS_CMD_35_10ms
         ret.flags |= HyundaiFlags.CANFD_ANGLE_STEERING.value
 
       if 0x105 in fingerprint[CAN.ECAN]:

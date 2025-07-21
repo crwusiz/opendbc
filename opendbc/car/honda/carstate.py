@@ -30,7 +30,6 @@ def get_can_messages(CP, gearbox_msg):
     ("CAR_SPEED", 10),
     ("VSA_STATUS", 50),
     ("STEER_STATUS", 100),
-    ("STEER_MOTOR_TORQUE", 0),  # TODO: not on every car
     ("SCM_FEEDBACK", 10),  # FIXME: there are different frequencies for different arb IDs
     ("SCM_BUTTONS", 25),  # FIXME: there are different frequencies for different arb IDs
   ]
@@ -151,13 +150,11 @@ class CarState(CarStateBase):
 
     ret.espDisabled = cp.vl["VSA_STATUS"]["ESP_DISABLED"] != 0
 
-    ret.wheelSpeeds = self.get_wheel_speeds(
-      cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FL"],
-      cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FR"],
-      cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RL"],
-      cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"],
-    )
-    v_wheel = (ret.wheelSpeeds.fl + ret.wheelSpeeds.fr + ret.wheelSpeeds.rl + ret.wheelSpeeds.rr) / 4.0
+    fl = cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FL"]
+    fr = cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_FR"]
+    rl = cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RL"]
+    rr = cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"]
+    v_wheel = (fl + fr + rl + rr) / 4.0
 
     # blend in transmission speed at low speed, since it has more low speed accuracy
     v_weight = float(np.interp(v_wheel, v_weight_bp, v_weight_v))
@@ -180,7 +177,6 @@ class CarState(CarStateBase):
       ret.parkingBrake = cp.vl["EPB_STATUS"]["EPB_STATE"] != 0
 
     if self.CP.transmissionType == TransmissionType.manual:
-      ret.clutchPressed = cp.vl["GEARBOX_ALT_2"]["GEAR_MT"] == 0
       if cp.vl["GEARBOX_ALT_2"]["GEAR_MT"] == 14:
         ret.gearShifter = GearShifter.reverse
       else:
@@ -192,9 +188,7 @@ class CarState(CarStateBase):
     ret.gas = cp.vl["POWERTRAIN_DATA"]["PEDAL_GAS"]
     ret.gasPressed = ret.gas > 1e-5
 
-    ret.steeringTorque = cp.vl["STEER_STATUS"]["STEER_TORQUE_SENSOR"]
-    ret.steeringTorqueEps = cp.vl["STEER_MOTOR_TORQUE"]["MOTOR_TORQUE"]
-    ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD.get(self.CP.carFingerprint, 1200)
+    ret.steeringPressed = abs(cp.vl["STEER_STATUS"]["STEER_TORQUE_SENSOR"]) > STEER_THRESHOLD.get(self.CP.carFingerprint, 1200)
 
     if self.CP.carFingerprint in HONDA_BOSCH:
       # The PCM always manages its own cruise control state, but doesn't publish it

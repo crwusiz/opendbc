@@ -162,7 +162,7 @@ class HyundaiExFlags(IntFlag):
   TPMS = 2 ** 4
   CCNC = 2 ** 5
   CCNC_HDA2 = 2 ** 6
-  HOD = 2 ** 7
+  STEER_TOUCH = 2 ** 7
   MSG_4A3 = 2 ** 8
 
 class Footnote(Enum):

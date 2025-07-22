@@ -80,7 +80,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   values = CS.mdps_info
   if angle_control:
     if CS.lfa_alt_info is not None:
-      values["LKA_ANGLE_ACTIVE"] = CS.lfa_alt_info["ADAS_ActvACILvl2Sta"]
+      values["LKA_ANGLE_ACTIVE"] = CS.lfa_alt_info["LKAS_ANGLE_ACTIVE"]
   else:
     if CS.lfa_info is not None:
       values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
@@ -90,17 +90,17 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if frame % 10 == 0:
-    if CP.exFlags & HyundaiExFlags.HOD:
-      values = CS.hod_info
+    if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
+      values = CS.steer_touch_info
       if frame % 1000 < 40:
         values["TOUCH_DETECT"] = 3
         values["TOUCH1"] = 50
         values["TOUCH2"] = 50
         values["CHECKSUM_"] = 0
-        dat = packer.make_can_msg("HOD_FD_01_100ms", 0, values)[1]
+        dat = packer.make_can_msg("STEER_TOUCH_2AF", 0, values)[1]
         values["CHECKSUM_"] = hyundai_crc8(dat[1:8])
 
-      ret.append(packer.make_can_msg("HOD_FD_01_100ms", CAN.CAM, values))
+      ret.append(packer.make_can_msg("STEER_TOUCH_2AF", CAN.CAM, values))
 
   if angle_control:
     if camerascc:
@@ -110,17 +110,17 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         "STEER_REQ": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
         "LKA_AVAILABLE": 3 if lat_active else 0,
-        #"ADAS_StrAnglReqVal": 0,
-        #"ADAS_ActvACILvl2Sta": 0,
-        #"ADAS_ACIAnglTqRedcGainVal": 0,
+        #"LKAS_ANGLE_CMD": 0,
+        #"LKAS_ANGLE_ACTIVE": 0,
+        #"LKAS_ANGLE_MAX_TORQUE": 0,
       }
 
       values = {
-        "ADAS_StrAnglReqVal": apply_angle,
-        "ADAS_ActvACILvl2Sta": 2 if lat_active else 1,
-        "ADAS_ACIAnglTqRedcGainVal": angle_max_torque if lat_active else 0,
+        "LKAS_ANGLE_CMD": apply_angle,
+        "LKAS_ANGLE_ACTIVE": 2 if lat_active else 1,
+        "LKAS_ANGLE_MAX_TORQUE": angle_max_torque if lat_active else 0,
       }
-      ret.append(packer.make_can_msg("ADAS_CMD_35_10ms", CAN.ECAN, values))
+      ret.append(packer.make_can_msg("LFA_ALT", CAN.ECAN, values))
 
     else:
       lkas_values |= {
@@ -129,9 +129,9 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         "STEER_REQ": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
         "LKA_AVAILABLE": 3 if lat_active else 0,
-        "ADAS_StrAnglReqVal": apply_angle,
-        "ADAS_ActvACILvl2Sta": 2 if lat_active else 1,
-        "ADAS_ACIAnglTqRedcGainVal": angle_max_torque if lat_active else 0,
+        "LKAS_ANGLE_CMD": apply_angle,
+        "LKAS_ANGLE_ACTIVE": 2 if lat_active else 1,
+        "LKAS_ANGLE_MAX_TORQUE": angle_max_torque if lat_active else 0,
       }
 
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:

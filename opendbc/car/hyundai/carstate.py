@@ -67,7 +67,7 @@ class CarState(CarStateBase):
     self.lfa_alt_info = {}
     self.lfahda_cluster_info = {}
     self.mdps_info = {}
-    self.hod_info = {}
+    self.steer_touch_info = {}
 
     self.ccnc_msg_161 = None
     self.ccnc_msg_162 = None
@@ -416,12 +416,12 @@ class CarState(CarStateBase):
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
       self.cruise_info = copy.copy(cp_cam.vl["SCC_CONTROL"])
       self.lfa_info = copy.copy(cp_cam.vl["LFA"])
-      self.lfa_alt_info = copy.copy(cp_cam.vl["ADAS_CMD_35_10ms"])
+      self.lfa_alt_info = copy.copy(cp_cam.vl["LFA_ALT"])
       self.lfahda_cluster_info = copy.copy(cp_cam.vl["LFAHDA_CLUSTER"])
       self.mdps_info = copy.copy(cp.vl["MDPS"])
 
-      if self.CP.exFlags & HyundaiExFlags.HOD:
-        self.hod_info = copy.copy(cp.vl["HOD_FD_01_100ms"])
+      if self.CP.exFlags & HyundaiExFlags.STEER_TOUCH:
+        self.steer_touch_info = copy.copy(cp.vl["STEER_TOUCH_2AF"])
 
       if self.CP.exFlags & HyundaiExFlags.CCNC.value:
         if "CCNC_0x161" in cp_cam.vl:
@@ -558,9 +558,9 @@ class CarState(CarStateBase):
         ("CRUISE_BUTTONS", 50)
       ]
 
-    if CP.exFlags & HyundaiExFlags.HOD:
+    if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
       pt_messages += [
-        ("HOD_FD_01_100ms", 10),
+        ("STEER_TOUCH_2AF", 10),
       ]
 
     if CP.enableBsm:
@@ -599,7 +599,7 @@ class CarState(CarStateBase):
       cam_messages += [
         ("SCC_CONTROL", 50),
         ("LFA", 20),
-        ("ADAS_CMD_35_10ms", 100),
+        ("LFA_ALT", 100),
         ("LFAHDA_CLUSTER", 20),
       ]
       if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:

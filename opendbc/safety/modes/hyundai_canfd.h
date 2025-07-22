@@ -331,51 +331,6 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   return tx;
 }
 
-#define MAX_ADDR_LIST_SIZE 128
-
-typedef struct {
-  int addrs[MAX_ADDR_LIST_SIZE];
-  int count;
-} AddrList;
-
-static AddrList addr_lists[3] = {0};
-
-static bool add_addr_to_list(AddrList *list, int addr) {
-  if (list->count >= MAX_ADDR_LIST_SIZE) {
-    return false; // List is full
-  }
-
-  for (int i = 0; i < list->count; i++) {
-    if (list->addrs[i] == addr) {
-      return false; // Already exists
-    }
-  }
-
-  list->addrs[list->count++] = addr;
-  return true;
-}
-
-static void print_canfd_addr_list(const AddrList *list, int bus_num, uint32_t now) {
-  print("\nCANFD ADDR LIST (bus ");
-  puth(bus_num);
-  print(") @ ");
-  puth(now);
-  print(":\n");
-
-  for (int i = 0; i < list->count; i++) {
-    int addr = list->addrs[i];
-    puth(addr);       // decimal
-    print("(0x");
-    puthx(addr, 3);   // hex
-    print(")");
-    if (i < list->count - 1) {
-      print(", ");
-    }
-  }
-
-  print("\n");
-}
-
 static bool should_block_msg(CanFdTxEntry *entries, int size, int addr, uint32_t now, uint32_t timeout) {
   for (int i = 0; i < size; i++) {
     if (entries[i].addr == 0) break;
@@ -396,10 +351,6 @@ static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
     block_msg = should_block_msg(tx_bus_0, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
   } else if (bus_num == 2) {
     block_msg = should_block_msg(tx_bus_2, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
-  }
-
-  if (add_addr_to_list(&addr_lists[bus_num], addr)) {
-    print_canfd_addr_list(&addr_lists[bus_num], bus_num, now);
   }
 
   return block_msg;

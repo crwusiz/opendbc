@@ -67,7 +67,7 @@ class CarState(CarStateBase):
     self.lfa_alt_info = {}
     self.lfahda_cluster_info = {}
     self.mdps_info = {}
-    self.steer_touch_info = {}
+    self.hod_info = {}
 
     self.ccnc_msg_161 = None
     self.ccnc_msg_162 = None
@@ -365,12 +365,10 @@ class CarState(CarStateBase):
 
     ret.steeringRateDeg = cp.vl["STEERING_SENSORS"]["STEERING_RATE"]
     ret.steeringAngleDeg = cp.vl["STEERING_SENSORS"]["STEERING_ANGLE"]
-    ret.steeringTorque = cp.vl["MDPS"]["STEERING_COL_TORQUE"]
-    ret.steeringTorqueEps = cp.vl["MDPS"]["STEERING_OUT_TORQUE"]
+    ret.steeringTorque = cp.vl["MDPS"]["MDPS_StrTqSnsrVal"]
+    ret.steeringTorqueEps = cp.vl["MDPS"]["MDPS_OutTqVal"]
     ret.steeringPressed = self.update_steering_pressed(abs(ret.steeringTorque) > self.params.STEER_THRESHOLD, 5)
-    ret.steerFaultTemporary = cp.vl["MDPS"]["LKA_FAULT"] or cp.vl["MDPS"]["LKA_ANGLE_FAULT"] != 0
-    #if self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING:
-    #  ret.steerFaultTemporary = ret.steerFaultTemporary or cp.vl["MDPS"]["LKA_ANGLE_FAULT"] != 0
+    ret.steerFaultTemporary = cp.vl["MDPS"]["MDPS_LkaFailSta"] or cp.vl["MDPS"]["MDPS_ADAS_AciFltSig_Lv2"] != 0
 
     left_blinker_sig = cp.vl["BLINKERS"]["LEFT_LAMP"] or cp.vl["BLINKERS"]["LEFT_LAMP_ALT"]
     right_blinker_sig = cp.vl["BLINKERS"]["RIGHT_LAMP"] or cp.vl["BLINKERS"]["RIGHT_LAMP_ALT"]
@@ -393,18 +391,18 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = cp.vl["TCS"]["ACC_REQ"] == 1
       ret.cruiseState.standstill = False
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
-        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
-        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["ACCMode"]
+        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["SCC_MainOnOffSta"] == 1
+        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["SCC_OpSta"]
         self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["LFA_ICON"]
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
-      ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
-      ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["ACCMode"] in (1, 2)
-      ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["CRUISE_STANDSTILL"] == 1
-      ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["VSetDis"] * speed_factor
+      ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["SCC_MainOnOffSta"] == 1
+      ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["SCC_OpSta"] in (1, 2)
+      ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["SCC_InfoDis"] == 4
+      ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["SCC_VSetDis"] * speed_factor
 
       self.cruise_info = copy.copy(cp_cruise_info.vl["SCC_CONTROL"])
-      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["ACCMode"] not in (1, 2)
+      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["SCC_OpSta"] not in (1, 2)
 
     speed_limit_cam = False
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
@@ -414,8 +412,8 @@ class CarState(CarStateBase):
       self.lfahda_cluster_info = copy.copy(cp_cam.vl["LFAHDA_CLUSTER"])
       self.mdps_info = copy.copy(cp.vl["MDPS"])
 
-      if self.CP.exFlags & HyundaiExFlags.STEER_TOUCH:
-        self.steer_touch_info = copy.copy(cp.vl["STEER_TOUCH_2AF"])
+      if self.CP.exFlags & HyundaiExFlags.HOD:
+        self.hod_info = copy.copy(cp.vl["HANDS_ON_DETECTION"])
 
       if self.CP.exFlags & HyundaiExFlags.CCNC.value:
         if "CCNC_0x161" in cp_cam.vl:
@@ -552,9 +550,9 @@ class CarState(CarStateBase):
         ("CRUISE_BUTTONS", 50)
       ]
 
-    if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
+    if CP.exFlags & HyundaiExFlags.HOD:
       pt_messages += [
-        ("STEER_TOUCH_2AF", 10),
+        ("HANDS_ON_DETECTION", 10),
       ]
 
     if CP.enableBsm:

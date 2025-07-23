@@ -86,7 +86,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
       values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
 
   if frame % 1000 < 40:
-    values["STEERING_COL_TORQUE"] += 220
+    values["MDPS_OutTqVal"] += 220
   ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if frame % 10 == 0:
@@ -97,10 +97,10 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         values["TOUCH1"] = 50
         values["TOUCH2"] = 50
         values["CHECKSUM_"] = 0
-        dat = packer.make_can_msg("STEER_TOUCH_2AF", 0, values)[1]
+        dat = packer.make_can_msg("HANDS_ON_DETECTION", 0, values)[1]
         values["CHECKSUM_"] = hyundai_crc8(dat[1:8])
 
-      ret.append(packer.make_can_msg("STEER_TOUCH_2AF", CAN.CAM, values))
+      ret.append(packer.make_can_msg("HANDS_ON_DETECTION", CAN.CAM, values))
 
   if angle_control:
     if camerascc:
@@ -191,27 +191,27 @@ def create_acc_cancel(packer, CP, CS, CAN):
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "NEW_SIGNAL_1",
-      "MainMode_ACC",
-      "ACCMode",
-      "ZEROS_9",
-      "CRUISE_STANDSTILL",
-      "ZEROS_5",
-      "DISTANCE_SETTING",
-      "VSetDis",
+      "SCC_SysFlrSta",
+      "SCC_MainOnOffSta",
+      "SCC_OpSta",
+      "SCC_TakeoverReq",
+      "SCC_InfoDis",
+      "SCC_DrvAlrtDis",
+      "SCC_HeadwayDstSetVal",
+      "SCC_VSetDis",
     ]}
   else:
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "ACCMode",
-      "VSetDis",
-      "CRUISE_STANDSTILL",
+      "SCC_OpSta",
+      "SCC_VSetDis",
+      "SCC_InfoDis",
     ]}
   values.update({
-    "ACCMode": 4,
-    "aReqRaw": 0.0,
-    "aReqValue": 0.0,
+    "SCC_OpSta": 4,
+    "SCC_AccelReqRawVal": 0.0,
+    "SCC_AccelReqVal": 0.0,
   })
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 
@@ -242,57 +242,55 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
   if camerascc:
     values = CS.cruise_info
     values |= {
-      "ACCMode": 0 if not enabled else (2 if gas_override else 1),
-      "MainMode_ACC": 1,
-      "StopReq": 1 if stopping else 0,
-      "aReqValue": a_val,
-      "aReqRaw": a_raw,
-      "VSetDis": set_speed,
-      "JerkLowerLimit": jerk if enabled else 1,
-      "JerkUpperLimit": 3.0,
+      "SCC_OpSta": 0 if not enabled else (2 if gas_override else 1),
+      "SCC_MainOnOffSta": 1,
+      "SCC_VehStpReq": 1 if stopping else 0,
+      "SCC_AccelReqVal": a_val,
+      "SCC_AccelReqRawVal": a_raw,
+      "SCC_VSetDis": set_speed,
+      "SCC_JrkUppLimVal": jerk if enabled else 1,
+      "SCC_JrkLwrLimVal": 3.0,
 
-      #"ACC_ObjDist": 1,
-      "SET_ME_2": 0x4,
+      "SCC_ObjDstVal": 1,
+      "SCC_NSCCOnOffSta": 2,
       "SET_ME_TMP_64": 0x64,
-      "DISTANCE_SETTING": hud.leadDistanceBars,
-      "CRUISE_STANDSTILL": 1 if stopping and CS.out.aEgo > -0.3 else 0,
+      "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
+      "SCC_InfoDis": 1 if stopping and CS.out.aEgo > -0.3 else 0,
 
-      "TARGET_DISTANCE": CS.out.vEgo + 4.0,
-      "ZEROS_5": 0,
-      "ZEROS_9": 0,  # 전방주의(24)... 포함. 여러가지 알람이 있을듯..
-      "NEW_SIGNAL_2": 0,  # 이것이 켜지면 가속을 안하는듯함.
-      #"NEW_SIGNAL_4": 9 if hud.leadVisible else 0,
-      "NEW_SIGNAL_1": 0,  # 눈이 묻어 레이더오류시... 2가 됨. 이때 가속을 안함...
+      "SCC_TrgtDstVal": CS.out.vEgo + 4.0,
+      "SCC_DrvAlrtDis": 0,
+      "SCC_TakeoverReq": 0,
+      "SCC_AccelLimBandUppVal": 0,
+      "SCC_SysFlrSta": 0,
     }
 
     hud_lead_info = 0
     if hud.leadVisible:
-      hud_lead_info = 1 if values["ACC_ObjRelSpd"] > 0 else 2
-    values["HUD_LEAD_INFO"] = hud_lead_info
+      hud_lead_info = 1 if values["SCC_ObjRelSpdVal"] > 0 else 2
+    values["SCC_ObjSta"] = hud_lead_info
 
   else:
     values = {
-      "ACCMode": 0 if not enabled else (2 if gas_override else 1),
-      "MainMode_ACC": 1,
-      "StopReq": 1 if stopping else 0,
-      "aReqValue": a_val,
-      "aReqRaw": a_raw,
-      "VSetDis": set_speed,
-      "JerkLowerLimit": jerk if enabled else 1,
-      "JerkUpperLimit": 3.0,
+      "SCC_OpSta": 0 if not enabled else (2 if gas_override else 1),
+      "SCC_MainOnOffSta": 1,
+      "SCC_VehStpReq": 1 if stopping else 0,
+      "SCC_AccelReqVal": a_val,
+      "SCC_AccelReqRawVal": a_raw,
+      "SCC_VSetDis": set_speed,
+      "SCC_JrkUppLimVal": jerk if enabled else 1,
+      "SCC_JrkLwrLimVal": 3.0,
 
-      "ObjValid": 0,
-      "OBJ_STATUS": 2,
-      "SET_ME_2": 0x4,
-      "SET_ME_3": 0x3,
+      "SCC_ObjSta": 2,
+      "SCC_NSCCOnOffSta": 2,
+      "SCC_ObjRelSpdVal": 0,
       "SET_ME_TMP_64": 0x64,
-      "DISTANCE_SETTING": hud.leadDistanceBars,
-      "CRUISE_STANDSTILL": 1 if stopping and CS.out.cruiseState.standstill else 0,
+      "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
+      "SCC_InfoDis": 1 if stopping and CS.out.cruiseState.standstill else 0,
     }
 
     # fixes auto regen stuck on max for hybrids, should probably apply to all cars
     values.update(
-      {"ACC_ObjDist": 1} if CS.cruise_info is None else {s: CS.cruise_info[s] for s in ["ACC_ObjDist", "ACC_ObjRelSpd"]})
+      {"SCC_ObjDstVal": 1} if CS.cruise_info is None else {s: CS.cruise_info[s] for s in ["SCC_ObjDstVal", "SCC_ObjRelSpdVal"]})
 
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 

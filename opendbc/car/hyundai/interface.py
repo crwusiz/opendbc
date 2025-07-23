@@ -92,7 +92,7 @@ class CarInterface(CarInterfaceBase):
         if lka_steering:
           ret.exFlags |= HyundaiExFlags.CCNC_HDA2.value
         if 0x2af in fingerprint[CAN.ECAN]:
-          ret.exFlags |= HyundaiExFlags.STEER_TOUCH.value
+          ret.exFlags |= HyundaiExFlags.HOD.value
         if 0x4a3 in fingerprint[CAN.ECAN]:
           ret.exFlags |= HyundaiExFlags.MSG_4A3.value
 

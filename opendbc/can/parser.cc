@@ -279,9 +279,10 @@ void CANParser::UpdateValid(uint64_t nanos) {
     char time_buffer[20];
     std::strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now_c));
 
-    const bool missing = state.last_seen_nanos == 0;
-    const bool timed_out = (nanos - state.last_seen_nanos) > state.check_threshold;
-    if (state.check_threshold > 0 && (missing || timed_out) && !bus_timeout && error_print_count++ < 20) {
+    const bool missing = state.timestamps.empty();
+    const bool timed_out = !missing && state.timeout_threshold > 0 &&
+                          ((nanos - state.timestamps.back()) > state.timeout_threshold);
+    if (state.timeout_threshold > 0 && (missing || timed_out) && !bus_timeout && error_print_count++ < 20) {
       const char* status = missing ? "NOT SEEN" : "TIMED OUT";
       const char* log_file = missing ? "/data/can_missing.log" : "/data/can_timeout.log";
 

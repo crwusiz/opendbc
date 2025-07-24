@@ -1,25 +1,13 @@
 import copy
 import numpy as np
 from opendbc.car import CanBusBase
+from opendbc.car.crc import CRC16_XMODEM
 from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 
 from openpilot.common.params import Params
 from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
 from opendbc.car.common.conversions import Conversions as CV
 
-def hyundai_crc8(data: bytes) -> int:
-  poly = 0x2F
-  crc = 0xFF
-
-  for byte in data:
-    crc ^= byte
-    for _ in range(8):
-      if crc & 0x80:
-        crc = ((crc << 1) ^ poly) & 0xFF
-      else:
-        crc = (crc << 1) & 0xFF
-
-  return crc ^ 0xFF
 
 class CanBus(CanBusBase):
   def __init__(self, CP, fingerprint=None, lka_steering=None) -> None:
@@ -540,3 +528,35 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
       ret.append(packer.make_can_msg("ADRV_0x1da", CAN.ECAN, values))
 
     return ret
+
+
+def hkg_can_fd_checksum(address: int, sig, d: bytearray) -> int:
+  crc = 0
+  for i in range(2, len(d)):
+    crc = ((crc << 8) ^ CRC16_XMODEM[(crc >> 8) ^ d[i]]) & 0xFFFF
+  crc = ((crc << 8) ^ CRC16_XMODEM[(crc >> 8) ^ ((address >> 0) & 0xFF)]) & 0xFFFF
+  crc = ((crc << 8) ^ CRC16_XMODEM[(crc >> 8) ^ ((address >> 8) & 0xFF)]) & 0xFFFF
+  if len(d) == 8:
+    crc ^= 0x5F29
+  elif len(d) == 16:
+    crc ^= 0x041D
+  elif len(d) == 24:
+    crc ^= 0x819D
+  elif len(d) == 32:
+    crc ^= 0x9F5B
+  return crc
+
+
+def hyundai_crc8(data: bytes) -> int:
+  poly = 0x2F
+  crc = 0xFF
+
+  for byte in data:
+    crc ^= byte
+    for _ in range(8):
+      if crc & 0x80:
+        crc = ((crc << 1) ^ poly) & 0xFF
+      else:
+        crc = (crc << 1) & 0xFF
+
+  return crc ^ 0xFF

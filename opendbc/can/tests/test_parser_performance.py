@@ -1,8 +1,7 @@
 import pytest
 import time
 
-from opendbc.can.parser import CANParser
-from opendbc.can.packer import CANPacker
+from opendbc.can import CANPacker, CANParser
 
 
 @pytest.mark.skip("TODO: varies too much between machines")
@@ -28,12 +27,12 @@ class TestParser:
           strings.append(can_msgs[i:i + n])
         t1 = time.process_time_ns()
         for m in strings:
-          parser.update_strings(m)
+          parser.update(m)
         t2 = time.process_time_ns()
       else:
         t1 = time.process_time_ns()
         for m in can_msgs:
-          parser.update_strings([m])
+          parser.update([m])
         t2 = time.process_time_ns()
 
       ets.append(t2 - t1)

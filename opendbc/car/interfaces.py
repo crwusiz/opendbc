@@ -308,7 +308,7 @@ class CarStateBase(ABC):
   def parse_wheel_speeds(self, cs, fl, fr, rl, rr, unit=CV.KPH_TO_MS):
     cs.vEgoRaw = float(np.mean([fl, fr, rl, rr]) * unit * self.CP.wheelSpeedFactor)
     cs.vEgo, cs.aEgo = self.update_speed_kf(cs.vEgoRaw)
-    cs.vEgoClu, cs.aEgoClu = self.update_speed_kf(cs.vEgoRaw)
+    cs.vEgoClu, cs.aEgoClu = self.update_clu_speed_kf(cs.vEgoCluster)
 
   def update_speed_kf(self, v_ego_raw):
     if abs(v_ego_raw - self.v_ego_kf.x[0][0]) > 2.0:  # Prevent large accelerations when car starts at non zero speed

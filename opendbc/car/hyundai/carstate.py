@@ -392,7 +392,7 @@ class CarState(CarStateBase):
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
       ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["SCC_MainOnOffSta"] == 1
       ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["SCC_OpSta"] in (1, 2)
-      ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["SCC_InfoDis"] == 4
+      ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["SCC_InfoDis"] == 1
       ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["SCC_VSetDis"] * speed_factor
 
       self.cruise_info = copy.copy(cp_cruise_info.vl["SCC_CONTROL"])

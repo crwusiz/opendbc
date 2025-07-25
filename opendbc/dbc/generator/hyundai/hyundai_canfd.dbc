@@ -76,23 +76,23 @@ BO_ 234 MDPS: 24 SFA
  SG_ MDPS_PaModeSta : 40|4@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_PaCanfltSta : 44|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_LkaPlgInSta : 46|2@1+ (1,0) [0|0] "" CGW_CCU,ICSC,RWA
- SG_ MDPS_LkaToiActvSta : 48|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
+ SG_ MDPS_LkaToiActvSta : 48|2@1+ (1,0) [0|16777215] "" CGW_CCU,RWA
  SG_ MDPS_LkaToiUnblSta : 50|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_LkaToiFltSta : 52|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
- SG_ MDPS_LkaFailSta : 54|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
+ SG_ MDPS_LkaFailSta : 54|2@1+ (1,0) [0|1] "" CGW_CCU,RWA
  SG_ MDPS_ResetOpSta : 59|2@1+ (1,0) [0|0] "" Vector__XXX
  SG_ MDPS_CurrModVal : 61|3@1+ (1,0) [0|0] "" CGW_CCU,RWA
- SG_ MDPS_OutTqVal : 64|12@1+ (0.1,-204.8) [0|0] "Nm" CGW_CCU,ESC,ICSC,RCU,RWA
+ SG_ MDPS_OutTqVal : 64|12@1+ (0.1,-204.8) [0|65535] "Nm" CGW_CCU,ESC,ICSC,RCU,RWA
  SG_ MDPS_VsmActResp : 76|2@1+ (1,0) [0|0] "" ESC,RCU,RWA
  SG_ Reprogram_State_MDPS : 78|2@1+ (1,0) [0|0] "" CGW_CCU
- SG_ MDPS_StrTqSnsrVal : 80|13@1+ (0.005,-20.48) [0|0] "Nm" CGW_CCU,ESC,ICSC,RCU,RWA,VPC_C
- SG_ MDPS_PaStrAnglVal : 96|16@1- (0.1,0) [0|0] "deg" CGW_CCU,RWA
+ SG_ MDPS_StrTqSnsrVal : 80|13@1+ (1,-4095) [0|4095] "" CGW_CCU,ESC,ICSC,RCU,RWA,VPC_C
+ SG_ MDPS_PaStrAnglVal : 96|16@1- (0.1,0) [0|255] "deg" CGW_CCU,RWA
  SG_ MDPS_LoamModSta : 112|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_HDPSpprtSWVer : 114|5@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_ADASAciActvSta : 120|4@1+ (1,0) [0|0] "" CGW_CCU,ESC,RWA,RWS
  SG_ MDPS_ADASAciPluginSta : 124|2@1+ (1,0) [0|0] "" RWA
  SG_ MDPS_ADAS_AciFltSig : 126|2@1+ (1,0) [0|0] "" CGW_CCU,ESC,RWA
- SG_ MDPS_EstStrAnglVal : 128|16@1- (0.1,0) [0|0] "deg" CGW_CCU,RWA,RWS
+ SG_ MDPS_EstStrAnglVal : 128|16@1- (0.1,0) [0|65535] "deg" CGW_CCU,RWA,RWS
  SG_ MDPS_ADASAciActvSta_Lv2 : 144|4@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_ADAS_AciFltSig_Lv2 : 148|3@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ MDPS_TpaPlugInSta : 152|2@1+ (1,0) [0|0] "" RWA,VPC_C

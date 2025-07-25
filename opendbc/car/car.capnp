@@ -268,6 +268,8 @@ struct CarState {
 
   speedLimit @62 :Float32;
   speedLimitDistance @63 :Float32;
+  vEgoClu @64 :Float32;
+  aEgoClu @65 :Float32;
 
   struct WheelSpeeds {
     # optional wheel speeds

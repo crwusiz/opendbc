@@ -78,8 +78,8 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if frame % 10 == 0:
-    if CP.exFlags & HyundaiExFlags.STEER_TOUCH:
-      values = CS.steer_touch_info
+    if CP.exFlags & HyundaiExFlags.HOD:
+      values = CS.hod_info
       if frame % 1000 < 40:
         values["TOUCH_DETECT"] = 3
         values["TOUCH1"] = 50

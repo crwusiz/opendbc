@@ -423,9 +423,9 @@ BO_ 437 FR_CMR_03_50ms: 32 FR_CMR
  SG_ RightLnHdingAnglVal : 115|10@1- (0.000976563,0) [-0.500000256|0.499023693] "rad" RR_C_RDR,CGW
  SG_ RightLnCvtrVal : 128|16@1- (1,0) [0|65535] "" CGW
  SG_ RightLnCrvtrDrvtvVal : 144|16@1- (1,0) [0|65535] "" CGW
- SG_ LEAD : 192|7@1+ (1,0) [0|127] "" Dummy
+ SG_ LEAD : 192|8@1+ (1,0) [0|255] "" XXX
  SG_ LEAD_SPEED : 200|12@1+ (0.05,-100) [-100|104.75] "m/s" XXX
- SG_ LEAD_DISTANCE : 212|12@1+ (0.05,0) [0|204.75] "m" Dummy
+ SG_ LEAD_DISTANCE : 212|12@1+ (0.05,0) [0|204.75] "m" XXX
 
 BO_ 442 BLINDSPOTS_REAR_CORNERS: 24 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -776,6 +776,7 @@ CM_ SG_ 272 LKA_AVAILABLE "Angle control cars: 3 when LKA is generally available
 CM_ SG_ 272 LKAS_ANGLE_CMD "tracks MDPS->STEERING_ANGLE when not engaged, not STEERING_SENSORS->STEERING_ANGLE";
 CM_ SG_ 272 ADAS_StrAnglReqVal "(LKAS) ADAS Steering Angle Request Value; Capped at 176.7; tracks MDPS->STEERING_ANGLE when not engaged, not STEERING_SENSORS->STEERING_ANGLE";
 CM_ SG_ 272 ADAS_ACIAnglTqRedcGainVal "(LKAS) ADAS AngleControlInterface Angle Torque Reduction Gain Value";
+CM_ BO_ 282 "Sent by the camera containing DAW (Driver Attention Warning) information and information about HBA (High Beam Assist).";
 CM_ SG_ 282 FR_CMR_Crc1Val "The data area for CRC calculation is based on the data length (DLC) of the message DB. The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID - CRC Polynomial (0x1021) , In";
 CM_ SG_ 282 FR_CMR_AlvCnt1Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
 CM_ SG_ 282 HBA_SysOptSta "HBA System Option Information to Lamp Controller";
@@ -845,6 +846,7 @@ CM_ SG_ 416 SCC_VehStpReq "A control request flag for vehicle stop. SCC expects 
 CM_ SG_ 416 SCC_EngStateReq "This signal indicates engine state request of SCC.  - 0x0 : SCC deactive or SCC off  - 0x1 : 'ISG Stop' Possible  - 0x2 : 'ISG Start or Maintain Engine Run' Request  - 0x3 : Reserved";
 CM_ SG_ 416 SCC_TrgtDstVal "This signal provides the target distance for SCC fallowing control. - SCC 거리 제어를 위한 목표 차간 거리 정보";
 CM_ SG_ 416 VSetDis "set speed in display units";
+CM_ BO_ 437 "Sent by the camera containing lane and lead information.";
 CM_ SG_ 437 FR_CMR_Crc3Val "The data area for CRC calculation is based on the data length (DLC) of the message DB. The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID - CRC Polynomial (0x1021) , In";
 CM_ SG_ 437 FR_CMR_AlvCnt3Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
 CM_ SG_ 437 LeftLnQualSta "This signal indicates the quality of left line.";
@@ -857,9 +859,10 @@ CM_ SG_ 437 RightLnDptSta "This signal indicates the lane departure status of ri
 CM_ SG_ 437 RightLnPosVal "This signal outputs the position of right line from camera center.";
 CM_ SG_ 437 RightLnHdingAnglVal "This signal outputs the heading angle of right line.";
 CM_ SG_ 437 RightLnCvtrVal "This signal outputs the curvature of right line.";
-CM_ SG_ 437 ID_CIPV "Valid Object = 1 to 127 - ID detected by front camera can vary depending on vehicle environment. - Additional logic would be required to apply this signal for ISG. - Confirmaiton by Autonomous Driving Engineering Team is required to use ID_CIPV signa";
+CM_ SG_ 437 ID_CIPV "Valid Object = 1 to 255 - ID detected by front camera can vary depending on vehicle environment. - Additional logic would be required to apply this signal for ISG.";
 CM_ SG_ 437 Relative_Velocity "+ : Preceding, - : Oncoming - Velocity detected by front camera can vary depending on vehicle environment. - Additional logic would be required to apply this signal for ISG. - Confirmaiton by Autonomous Driving Engineering Team is required to use ID_C";
 CM_ SG_ 480 NEW_SIGNAL_5 "todo: figure out why always set to 1";
+CM_ BO_ 506 "Sent by the camera containing speed limit information. ISLW stands for Intelligent Speed Limit Warning, and ISLA is Intelligent Speed Limit Assist. it also contains road sign information.";
 CM_ SG_ 506 FR_CMR_Crc2Val "The data area for CRC calculation is based on the data length (DLC) of the message DB.The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID - CRC Polynomial (0x1021) , In";
 CM_ SG_ 506 FR_CMR_AlvCnt2Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
 CM_ SG_ 506 ISLW_OptUsmSta "ISLW option information";
@@ -890,6 +893,7 @@ CM_ SG_ 506 ISLA_Cntry "This is a signal for categorizing countries";
 CM_ SG_ 506 ISLA_AddtnlSign "This is a signal for additional sign";
 CM_ SG_ 506 ISLA_SchoolZone "This is a signal for School Zone";
 CM_ SG_ 687 HOD_Dir_Status "This signal indicates the status of hands on/off";
+CM_ BO_ 698 "Sent by the camera containing information about vehicles in front of us. IFS stands for Intelligent Front-lighting System, and this signal provides the information necessary for it to operate.";
 CM_ SG_ 698 FR_CMR_Crc4Val "The data area for CRC calculation is based on the data length (DLC) of the message DB. The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID - CRC Polynomial (0x1021) , In";
 CM_ SG_ 698 FR_CMR_AlvCnt4Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
 CM_ SG_ 698 FR_CMR_Sta "This is IFS system status needed for operate the IFS function of headlamp highbeam";

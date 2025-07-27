@@ -164,6 +164,8 @@ class HyundaiExFlags(IntFlag):
   CCNC_HDA2 = 2 ** 6
   HOD = 2 ** 7
   MSG_4A3 = 2 ** 8
+  ACAN = 2 ** 9
+  RADAR_GROUP1 = 2 ** 10
 
 class Footnote(Enum):
   CANFD = CarFootnote(

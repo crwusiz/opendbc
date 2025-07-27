@@ -102,6 +102,12 @@ class CarInterface(CarInterfaceBase):
       if 0x105 in fingerprint[CAN.ECAN]:
         ret.flags |= HyundaiFlags.HYBRID.value
 
+      if 0x362 in fingerprint[CAN.ACAN]:
+        ret.exFlags |= HyundaiExFlags.ACAN.value
+
+      if 0x210 in fingerprint[CAN.ACAN]:
+        ret.exFlags |= HyundaiExFlags.RADAR_GROUP1.value
+
       # Some LKA steering cars have alternative messages for gear checks
       # ICE cars do not have 0x130; GEARS message on 0x40 or 0x70 instead
       if 0x130 not in fingerprint[CAN.ECAN]:

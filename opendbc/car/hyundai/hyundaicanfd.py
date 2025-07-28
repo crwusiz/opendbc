@@ -239,7 +239,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "SCC_JrkUppLimVal": jerk if enabled else 1,
       "SCC_JrkLwrLimVal": 3.0,
 
-      "SCC_ObjDstVal": 1,
+      #"SCC_ObjDstVal": 1,
       "SCC_NSCCOnOffSta": 2,
       "SET_ME_TMP_64": 0x64,
       "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
@@ -433,12 +433,8 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
 
     if frame % 5 == 0 and CS.ccnc_msg_162 is not None and ccnc:
       values = CS.ccnc_msg_162
-      for f in {"FAULT_FCA", "FAULT_LSS", "FAULT_DAS"}:
+      for f in {"FAULT_FCA", "FAULT_LSS", "FAULT_DAS", "FAULT_LFA"}:
         values[f] = 0
-
-      #if hud.leadDistance > 0:
-      #  values["FF_DISTANCE"] = hud.leadDistance
-      #  values["FF_DETECT"] = 4 if hud.leadRelSpeed > -0.1 else 3
 
       sensors = [
         ('ff', 'FF_DETECT'),

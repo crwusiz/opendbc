@@ -252,13 +252,13 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
   bool tx = true;
 
   // steering
-  const unsigned steer_addr = hyundai_canfd_lka_steering ? hyundai_canfd_get_lka_addr() : 0x12aU;
+  const unsigned int steer_addr = hyundai_canfd_lka_steering ? hyundai_canfd_get_lka_addr() : 0x12aU;
   if (msg->addr == steer_addr) {
     if (hyundai_canfd_angle_steering) {
       const int lkas_angle_active = (msg->data[9] >> 4) & 0x3U;
       const bool steer_angle_req = lkas_angle_active != 1;
 
-      int desired_angle = (msg->data[11]) << 6) | (msg->data[10]) >> 2);
+      int desired_angle = ((msg->data[11] << 6) | (msg->data[10] >> 2));
       desired_angle = to_signed(desired_angle, 14);
 
       if (steer_angle_cmd_checks(desired_angle, steer_angle_req, HYUNDAI_CANFD_ANGLE_STEERING_LIMITS)) {
@@ -321,17 +321,17 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
     }
   }
 
-  update_canfd_entry(tx_bus_2, CANFD_TX_ENTRIES_SIZE, addr, tx);
-  update_canfd_entry(tx_bus_0, CANFD_TX_ENTRIES_SIZE, addr, tx);
+  update_canfd_entry(tx_bus_2, CANFD_TX_ENTRIES_SIZE, msg->addr, tx);
+  update_canfd_entry(tx_bus_0, CANFD_TX_ENTRIES_SIZE, msg->addr, tx);
 
   return tx;
 }
 
 static bool should_block_msg(CanFdTxEntry *entries, int size, int addr, uint32_t now, uint32_t timeout) {
   for (int i = 0; i < size; i++) {
-    if (entries[i].msg->addr == 0) break;
+    if (entries[i].addr == 0) break;
 
-    if (entries[i].msg->addr == addr && (now - entries[i].timestamp) < timeout) {
+    if (entries[i].addr == addr && (now - entries[i].timestamp) < timeout) {
       return true;
     }
   }

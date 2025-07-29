@@ -133,8 +133,6 @@ static uint32_t hyundai_compute_checksum(const CANPacket_t *msg) {
 }
 
 static void hyundai_rx_hook(const CANPacket_t *msg) {
-  int bus = GET_BUS(msg);
-  int addr = GET_ADDR(msg);
 
   // SCC12 is on bus 2 for camera-based SCC cars, bus 0 on all others
   /*if ((msg->addr == 0x421U) && (((msg->bus == 0U) && !hyundai_camera_scc) || ((msg->bus == 2U) && hyundai_camera_scc))) {
@@ -199,7 +197,6 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
   const TorqueSteeringLimits HYUNDAI_STEERING_LIMITS_ALT_2 = HYUNDAI_LIMITS(170, 2, 3);
 
   bool tx = true;
-  int addr = GET_ADDR(msg);
 
   // FCA11: Block any potential actuation
   if (msg->addr == 0x38DU) {

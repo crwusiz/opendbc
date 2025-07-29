@@ -3,6 +3,7 @@ import numbers
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
+from opendbc.car.carlog import carlog
 from opendbc.can.dbc import DBC, Signal
 
 from datetime import datetime
@@ -71,6 +72,7 @@ class MessageState:
 
     # must have good counter and checksum to update data
     if checksum_failed or counter_failed:
+      carlog.warning(f"{hex(self.address)} {self.name} checks failed, {checksum_failed=} {counter_failed=}")
       return False
 
     if not self.vals:

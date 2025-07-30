@@ -54,6 +54,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
     "STEER_MODE": 0,
     "HAS_LANE_SAFETY": 0,  # hide LKAS settings
     "NEW_SIGNAL_2": 0,
+    "DAMP_FACTOR": 100,  # can potentially tuned for better perf [3, 200]
     "LKA_AVAILABLE": 0,
   }
 
@@ -68,7 +69,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   values = CS.mdps_info
   if angle_control:
     if CS.lfa_alt_info is not None:
-      values["LKA_ANGLE_ACTIVE"] = CS.lfa_alt_info["LKAS_ANGLE_ACTIVE"]
+      values["MDPS_ADASAciActvSta_Lv2"] = CS.lfa_alt_info["LKAS_ANGLE_ACTIVE"]
   else:
     if CS.lfa_info is not None:
       values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0

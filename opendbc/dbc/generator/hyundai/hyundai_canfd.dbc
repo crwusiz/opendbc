@@ -129,7 +129,7 @@ BO_ 272 LKAS_ALT: 32 XXX
  SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
  SG_ LKAS_ANGLE_CMD : 82|14@1- (0.1,0) [0|511] "deg" GW_RGW,MDPS,SFA
  SG_ LKAS_ANGLE_MAX_TORQUE : 96|8@1+ (1,0) [0|255] "" GW_RGW,MDPS,SFA
- SG_ NEW_SIGNAL_3 : 111|8@0+ (1,0) [0|255] "" XXX
+ SG_ DAMP_FACTOR : 104|8@1+ (1,0) [0|255] "" XXX
 
 BO_ 282 FR_CMR_01_10ms: 16 FR_CMR
  SG_ FR_CMR_Crc1Val : 0|16@1+ (1,0) [0|0] "" Dummy,IBU_HS,vBDM
@@ -180,7 +180,7 @@ BO_ 298 LFA: 16 ADRV
  SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
  SG_ LKAS_ANGLE_CMD : 82|14@1- (0.1,0) [0|511] "deg" XXX
  SG_ LKAS_ANGLE_MAX_TORQUE : 96|8@1+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_3 : 111|8@0+ (1,0) [0|255] "" XXX
+ SG_ DAMP_FACTOR : 104|8@1+ (1,0) [0|255] "" XXX
 
 BO_ 304 GEAR_SHIFTER: 16 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -770,13 +770,12 @@ CM_ SG_ 234 Reprogram_State_MDPS "Information regarding the reprogram state";
 CM_ SG_ 234 MDPS_StrTqSnsrVal "Steering torque sensor value Physical Value > 0: Left Direction (CCW) Physical Value < 0: Right Direction (CW) this signal has direction information. '+' Value means Counter clock wise rotation. '-' value means Clock wise rotation.";
 CM_ SG_ 234 MDPS_PaStrAnglVal "This value is used to inform PA of a compensated steering wheel angle by MDPS. The signal is signed 16bits. (PH) = (HEX) �� 0.1 (for 0 < HEX �� 32767)  or = (HEX - 65536) �� 0.1 (for HEX > 32767) [Deg] this signal has direction information. '+' V";
 CM_ BO_ 272 "Alternative LKAS message, used on cars such as 2023 Ioniq 6, 2nd gen Kona. Matches LKAS except size is 32 bytes";
-CM_ BO_ 298 "This message controls steering and alerts regarding lateral control. Formerly known as LFA.
-
 CM_ SG_ 272 LKA_AVAILABLE "Angle control cars: 3 when LKA is generally available, goes to 0 during changes with LFA";
 CM_ SG_ 272 LKAS_ANGLE_CMD "tracks MDPS->STEERING_ANGLE when not engaged, not STEERING_SENSORS->STEERING_ANGLE";
 CM_ SG_ 272 ADAS_StrAnglReqVal "(LKAS) ADAS Steering Angle Request Value; Capped at 176.7; tracks MDPS->STEERING_ANGLE when not engaged, not STEERING_SENSORS->STEERING_ANGLE";
 CM_ SG_ 272 ADAS_ACIAnglTqRedcGainVal "(LKAS) ADAS AngleControlInterface Angle Torque Reduction Gain Value";
 CM_ BO_ 282 "Sent by the camera containing DAW (Driver Attention Warning) information and information about HBA (High Beam Assist).";
+CM_ BO_ 298 "This message controls steering and alerts regarding lateral control. Formerly known as LFA.";
 CM_ SG_ 282 FR_CMR_Crc1Val "The data area for CRC calculation is based on the data length (DLC) of the message DB. The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID - CRC Polynomial (0x1021) , In";
 CM_ SG_ 282 FR_CMR_AlvCnt1Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
 CM_ SG_ 282 HBA_SysOptSta "HBA System Option Information to Lamp Controller";

@@ -25,8 +25,9 @@ def get_radar_can_parser(CP, radar_tracks, msg_start_addr, msg_count):
   print("\nRadarInterface: RadarTracks...\n")
 
   if CP.flags & HyundaiFlags.CANFD:
+    CAN = CanBus(CP)
     messages = [(f"RADAR_TRACK_{addr:x}", 20) for addr in range(msg_start_addr, msg_start_addr + msg_count)]
-    return CANParser('hyundai_canfd_radar_generated', messages, 1)
+    return CANParser('hyundai_canfd_radar_generated', messages, CAN.ACAN)
   else:
     messages = [(f"RADAR_TRACK_{addr:x}", 20) for addr in range(msg_start_addr, msg_start_addr + msg_count)]
     return CANParser('hyundai_kia_mando_front_radar_generated', messages, 1)
@@ -135,10 +136,10 @@ class RadarInterface(RadarInterfaceBase):
           self.pts[addr].measured = True
           self.pts[addr].dRel = math.cos(azimuth) * msg['LONG_DIST']
           self.pts[addr].yRel = 0.5 * -math.sin(azimuth) * msg['LONG_DIST']
-          self.pts[addr].vRel = math.cos(azimuth) * msg['REL_SPEED']
+          self.pts[addr].vRel = msg['REL_SPEED']
           self.pts[addr].vLead = self.pts[addr].vRel + self.v_ego
           self.pts[addr].aRel = msg['REL_ACCEL']
-          self.pts[addr].yvRel = math.sin(azimuth) * msg['REL_SPEED']
+          self.pts[addr].yvRel = 0.0
 
       else:
         del self.pts[addr]
@@ -198,7 +199,7 @@ class RadarInterface(RadarInterfaceBase):
           self.pts[ii].vRel = vRel
           self.pts[ii].vLead = self.vLead_filter.process(vLead)
           self.pts[ii].aRel = 0 #float('nan')
-          self.pts[ii].yvRel = float('nan')
+          self.pts[ii].yvRel = 0 #float('nan')
           self.pts[ii].measured = True
         else:
           if ii in self.pts:
@@ -221,7 +222,7 @@ class RadarInterface(RadarInterfaceBase):
           self.pts[ii].vRel = vRel
           self.pts[ii].vLead = self.vLead_filter.process(vLead)
           self.pts[ii].aRel = 0 #float('nan')
-          self.pts[ii].yvRel = float('nan')
+          self.pts[ii].yvRel = 0 #float('nan')
           self.pts[ii].measured = True
         else:
           if ii in self.pts:

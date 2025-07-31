@@ -143,7 +143,8 @@ def create_suppress_lfa(packer, CP, CC, CS, CAN):
   suppress_msg = "CAM_0x362" if lka_steering_alt else "CAM_0x2a4"
   msg_bytes = 32 if lka_steering_alt else 24
 
-  values = {f"BYTE{i}": lfa_block_msg[f"BYTE{i}"] for i in range(3, msg_bytes) if i != 7}
+  #values = {f"BYTE{i}": lfa_block_msg[f"BYTE{i}"] for i in range(3, msg_bytes) if i != 7}
+  values = lfa_block_msg
   values["COUNTER"] = lfa_block_msg["COUNTER"]
   values["SET_ME_0"] = 0
   values["SET_ME_0_2"] = 0
@@ -244,7 +245,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "SCC_NSCCOnOffSta": 2,
       "SET_ME_TMP_64": 0x64,
       "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
-      "SCC_InfoDis": 1 if stopping and CS.out.aEgo > -0.3 else 0,
+      "SCC_InfoDis": 4 if stopping and CS.out.aEgo > -0.3 else 0,
 
       "SCC_TrgtDstVal": CS.out.vEgo + 4.0,
       "SCC_DrvAlrtDis": 0,
@@ -274,7 +275,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "SCC_ObjRelSpdVal": 0,
       "SET_ME_TMP_64": 0x64,
       "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
-      "SCC_InfoDis": 1 if stopping and CS.out.cruiseState.standstill else 0,
+      "SCC_InfoDis": 4 if stopping and CS.out.cruiseState.standstill else 0,
     }
 
     # fixes auto regen stuck on max for hybrids, should probably apply to all cars

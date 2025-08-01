@@ -360,10 +360,10 @@ class CarState(CarStateBase):
 
     ret.steeringRateDeg = cp.vl["STEERING_SENSORS"]["STEERING_RATE"]
     ret.steeringAngleDeg = cp.vl["STEERING_SENSORS"]["STEERING_ANGLE"]
-    ret.steeringTorque = cp.vl["MDPS"]["MDPS_StrTqSnsrVal"]
-    ret.steeringTorqueEps = cp.vl["MDPS"]["MDPS_OutTqVal"]
+    ret.steeringTorque = cp.vl["MDPS"]["SteerTorqueSensor"]
+    ret.steeringTorqueEps = cp.vl["MDPS"]["OutTorque"]
     ret.steeringPressed = self.update_steering_pressed(abs(ret.steeringTorque) > self.params.STEER_THRESHOLD, 5)
-    ret.steerFaultTemporary = cp.vl["MDPS"]["MDPS_LkaFailSta"] or cp.vl["MDPS"]["MDPS_ADAS_AciFltSig_Lv2"] != 0
+    ret.steerFaultTemporary = cp.vl["MDPS"]["LKA_ToiFailStat"] or cp.vl["MDPS"]["ADAS_AciFault_Lv2"] != 0
 
     left_blinker_sig = cp.vl["BLINKERS"]["LEFT_LAMP"] or cp.vl["BLINKERS"]["LEFT_LAMP_ALT"]
     right_blinker_sig = cp.vl["BLINKERS"]["RIGHT_LAMP"] or cp.vl["BLINKERS"]["RIGHT_LAMP_ALT"]

@@ -306,7 +306,7 @@ class CarStateBase(ABC):
     pass
 
   def parse_wheel_speeds(self, cs, fl, fr, rl, rr, unit=CV.KPH_TO_MS):
-    cs.vEgoRaw = float(np.mean([fl, fr, rl, rr]) * unit * self.CP.wheelSpeedFactor)
+    cs.vEgoRaw = sum((fl, fr, rl, rr)) / 4 * unit * self.CP.wheelSpeedFactor
     cs.vEgo, cs.aEgo = self.update_speed_kf(cs.vEgoRaw)
     cs.vEgoClu, cs.aEgoClu = self.update_clu_speed_kf(cs.vEgoCluster)
 

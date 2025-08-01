@@ -1,9 +1,9 @@
 import numpy as np
 from opendbc.can import CANPacker
-from opendbc.car import (Bus, DT_CTRL, apply_driver_steer_torque_limits, apply_std_steer_angle_limits, common_fault_avoidance, make_tester_present_msg, structs)
+from opendbc.car import Bus, DT_CTRL, make_tester_present_msg, structs
+from opendbc.car.lateral import apply_driver_steer_torque_limits, apply_std_steer_angle_limits, common_fault_avoidance
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.hyundai import hyundaicanfd, hyundaican
-from opendbc.car.hyundai.carstate import CarState
 from opendbc.car.hyundai.hyundaicanfd import CanBus
 from opendbc.car.hyundai.values import HyundaiFlags, Buttons, CarControllerParams, CAR, CAN_GEARS
 from opendbc.car.interfaces import CarControllerBase, ACCEL_MIN, ACCEL_MAX
@@ -275,7 +275,7 @@ class CarController(CarControllerBase):
       if camera_scc:
         self.canfd_toggle_adas(CC, CS)
       if lka_steering:
-        can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, hud_control))
+        can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, set_speed_in_units, hud_control))
       else:
         can_sends.extend(hyundaicanfd.create_fca_warning_light(self.packer, self.CP, self.CAN, self.frame))
       if self.frame % 2 == 0:

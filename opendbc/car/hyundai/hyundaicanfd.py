@@ -323,14 +323,13 @@ def create_fca_warning_light(packer, CP, CAN, frame):
   return ret
 
 
-def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
+def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   main_enabled = CS.out.cruiseState.available
   cruise_enabled = CC.enabled
   lat_active = CC.latActive
   ccnc = CP.exFlags & HyundaiExFlags.CCNC
   nav_active = SpeedLimiter.instance().get_active()
   hdp_active = cruise_enabled and nav_active
-  set_speed_in_units = hud.setSpeed * (CV.MS_TO_KPH if CS.is_metric else CV.MS_TO_MPH)
 
   # messages needed to car happy after disabling
   # the ADAS Driving ECU to do longitudinal control
@@ -342,7 +341,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, hud):
       values |= {
         "SETSPEED": 6 if hdp_active else 3 if main_enabled else 0,
         "SETSPEED_HUD": 5 if hdp_active else 2 if cruise_enabled else 1,
-        "vSetDis": int(set_speed_in_units + 0.5),
+        "vSetDis": set_speed,
 
         "DISTANCE": 4 if hdp_active else hud.leadDistanceBars,
         "DISTANCE_LEAD": 2 if cruise_enabled and hud.leadVisible else 0,

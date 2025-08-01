@@ -386,18 +386,18 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = cp.vl["TCS"]["ACC_REQ"] == 1
       ret.cruiseState.standstill = False
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
-        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["SCC_MainOnOffSta"] == 1
-        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["SCC_OpSta"]
+        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainStat"] == 1
+        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["OperationStat"]
         self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["LFA_ICON"]
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
-      ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["SCC_MainOnOffSta"] == 1
-      ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["SCC_OpSta"] in (1, 2)
-      ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["SCC_InfoDis"] >= 4
-      ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["SCC_VSetDis"] * speed_factor
+      ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["MainStat"] == 1
+      ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["OperationStat"] in (1, 2)
+      ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["InfoDisplay"] >= 4
+      ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["VSetDis"] * speed_factor
 
       self.cruise_info = copy.copy(cp_cruise_info.vl["SCC_CONTROL"])
-      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["SCC_OpSta"] not in (1, 2)
+      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["OperationStat"] not in (1, 2)
 
     speed_limit_cam = False
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:

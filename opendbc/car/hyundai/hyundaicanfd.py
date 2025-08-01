@@ -181,27 +181,27 @@ def create_acc_cancel(packer, CP, CS, CAN):
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "SCC_SysFlrSta",
-      "SCC_MainOnOffSta",
-      "SCC_OpSta",
-      "SCC_TakeoverReq",
-      "SCC_InfoDis",
-      "SCC_DrvAlrtDis",
-      "SCC_HeadwayDstSetVal",
-      "SCC_VSetDis",
+      "SysFailStat",
+      "MainStat",
+      "OperationStat",
+      "TakeoverReq",
+      "InfoDisplay",
+      "AlertDisplay",
+      "DistanceGapSet",
+      "VSetDis",
     ]}
   else:
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "SCC_OpSta",
-      "SCC_VSetDis",
-      "SCC_InfoDis",
+      "OperationStat",
+      "VSetDis",
+      "InfoDisplay",
     ]}
   values.update({
-    "SCC_OpSta": 4,
-    "SCC_AccelReqRawVal": 0.0,
-    "SCC_AccelReqVal": 0.0,
+    "OperationStat": 4,
+    "AccelRequestRaw": 0.0,
+    "AccelRequest": 0.0,
   })
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 
@@ -232,55 +232,56 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
   if camerascc:
     values = CS.cruise_info
     values |= {
-      "SCC_OpSta": 0 if not enabled else (2 if gas_override else 1),
-      "SCC_MainOnOffSta": 1,
-      "SCC_VehStpReq": 1 if stopping else 0,
-      "SCC_AccelReqVal": a_val,
-      "SCC_AccelReqRawVal": a_raw,
-      "SCC_VSetDis": set_speed,
-      "SCC_JrkUppLimVal": jerk if enabled else 1,
-      "SCC_JrkLwrLimVal": 3.0,
+      "OperationStat": 0 if not enabled else (2 if gas_override else 1),
+      "MainStat": 1,
+      "StopReq": 1 if stopping else 0,
+      "AccelRequest": a_val,
+      "AccelRequestRaw": a_raw,
+      "VSetDis": set_speed,
+      "JerkUpperLimit": jerk if enabled else 1,
+      "JerkLowerLimit": 3.0,
 
-      #"SCC_ObjDstVal": 1,
-      "SCC_NSCCOnOffSta": 2,
+      #"ObjectDistance": 1,
+      "NSCC_MainStat": 2,
       "SET_ME_TMP_64": 0x64,
-      "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
-      "SCC_InfoDis": 4 if stopping and CS.out.aEgo > -0.3 else 0,
+      "DistanceGapSet": hud.leadDistanceBars,
+      "InfoDisplay": 4 if stopping and CS.out.aEgo > -0.3 else 0,
 
-      "SCC_TrgtDstVal": CS.out.vEgo + 4.0,
-      "SCC_DrvAlrtDis": 0,
-      "SCC_TakeoverReq": 0,
-      "SCC_AccelLimBandUppVal": 0,
-      "SCC_SysFlrSta": 0,
+      "TargetDistance": CS.out.vEgo + 4.0,
+      "AlertDisplay": 0,
+      "TakeoverReq": 0,
+      "AccelLimitBandUpper": 0,
+      "AccelLimitBandLower": 0,
+      "SysFailStat": 0,
     }
 
     hud_lead_info = 0
     if hud.leadVisible:
-      hud_lead_info = 1 if values["SCC_ObjRelSpdVal"] > 0 else 2
-    values["SCC_ObjSta"] = hud_lead_info
+      hud_lead_info = 1 if values["ObjectRelativeSpeed"] > 0 else 2
+    values["ObjectStat"] = hud_lead_info
 
   else:
     values = {
-      "SCC_OpSta": 0 if not enabled else (2 if gas_override else 1),
-      "SCC_MainOnOffSta": 1,
-      "SCC_VehStpReq": 1 if stopping else 0,
-      "SCC_AccelReqVal": a_val,
-      "SCC_AccelReqRawVal": a_raw,
-      "SCC_VSetDis": set_speed,
-      "SCC_JrkUppLimVal": jerk if enabled else 1,
-      "SCC_JrkLwrLimVal": 3.0,
+      "OperationStat": 0 if not enabled else (2 if gas_override else 1),
+      "MainStat": 1,
+      "StopReq": 1 if stopping else 0,
+      "AccelRequest": a_val,
+      "AccelRequestRaw": a_raw,
+      "VSetDis": set_speed,
+      "JerkUpperLimit": jerk if enabled else 1,
+      "JerkLowerLimit": 3.0,
 
-      "SCC_ObjSta": 2,
-      "SCC_NSCCOnOffSta": 2,
-      "SCC_ObjRelSpdVal": 0,
+      "ObjectStat": 2,
+      "NSCC_MainStat": 2,
+      "ObjectRelativeSpeed": 0,
       "SET_ME_TMP_64": 0x64,
-      "SCC_HeadwayDstSetVal": hud.leadDistanceBars,
-      "SCC_InfoDis": 4 if stopping and CS.out.cruiseState.standstill else 0,
+      "DistanceGapSet": hud.leadDistanceBars,
+      "InfoDisplay": 4 if stopping and CS.out.cruiseState.standstill else 0,
     }
 
     # fixes auto regen stuck on max for hybrids, should probably apply to all cars
     values.update(
-      {"SCC_ObjDstVal": 1} if CS.cruise_info is None else {s: CS.cruise_info[s] for s in ["SCC_ObjDstVal", "SCC_ObjRelSpdVal"]})
+      {"ObjectDistance": 1} if CS.cruise_info is None else {s: CS.cruise_info[s] for s in ["ObjectDistance", "ObjectRelativeSpeed"]})
 
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 

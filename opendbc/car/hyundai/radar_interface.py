@@ -182,11 +182,11 @@ class RadarInterface(RadarInterfaceBase):
 
     cpt = self.rcp.vl
     if self.canfd:
-      dRel = cpt["SCC_CONTROL"]['SCC_ObjDstVal']
-      vRel = cpt["SCC_CONTROL"]['SCC_ObjRelSpdVal']
+      dRel = cpt["SCC_CONTROL"]['ObjectDistance']
+      vRel = cpt["SCC_CONTROL"]['ObjectRelativeSpeed']
       new_pts = abs(dRel - self.dRel_last) > 3 or abs(vRel - self.vRel_last) > 1
       vLead = vRel + self.v_ego
-      valid = 0 < dRel < 150 #cpt["SCC_CONTROL"]['SCC_AccelLimBandLwrVal'] and dRel < 150
+      valid = 0 < dRel < 150 #cpt["SCC_CONTROL"]['AccelLimitBandLower'] and dRel < 150
       for ii in range(1):
         if valid:
           if ii not in self.pts or new_pts:

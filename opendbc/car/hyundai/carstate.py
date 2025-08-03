@@ -494,9 +494,9 @@ class CarState(CarStateBase):
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC.value:
         ret.exState.navLimitSpeed = cp_cam.vl["CCNC_0x162"]["SPEEDLIMIT"]
       elif self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-        ret.exState.navLimitSpeed = cp_cam.vl["FR_CMR_02_100ms"]["ISLW_SpdNaviMainDis"]
+        ret.exState.navLimitSpeed = cp_cam.vl["CLUSTER_SPEED_LIMIT"]["SpdNaviMainDis"]
       else:
-        ret.exState.navLimitSpeed = cp.vl["FR_CMR_02_100ms"]["ISLW_SpdNaviMainDis"]
+        ret.exState.navLimitSpeed = cp.vl["CLUSTER_SPEED_LIMIT"]["SpdNaviMainDis"]
 
     self.canfd_buttons = cp.vl[self.cruise_btns_msg_canfd]
 
@@ -523,147 +523,16 @@ class CarState(CarStateBase):
       msgs += [
         ("CRUISE_BUTTONS", 50)
       ]
-
-    if CP.exFlags & HyundaiExFlags.HOD:
-      msgs += [
-        ("HANDS_ON_DETECTION", 10),
-      ]
-
-    if CP.enableBsm:
-      if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
-        pass
-      else:
-        msgs += [
-          ("BLINDSPOTS_REAR_CORNERS", 20),
-        ]
-
-    if not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and not CP.openpilotLongitudinalControl:
-      msgs += [
-        ("SCC_CONTROL", 50),
-      ]
-
-    if CP.exFlags & HyundaiExFlags.TPMS:
-      msgs.append(("TPMS", 0))
-
-    if CP.exFlags & HyundaiExFlags.AUTOHOLD:
-      msgs.append(("ESP_STATUS", 0))
-
-    if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-      msgs.append(("FR_CMR_02_100ms", 10))
-
-    if CP.flags & HyundaiExFlags.MSG_4A3:
-      msgs += [
-        ("HDA_INFO_0x4a3", 5),
-      ]
-
-    cam_msgs = []
-    if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-      block_lfa_msg = "CAM_0x362" if CP.flags & HyundaiFlags.CANFD_LKA_STEERING_ALT else "CAM_0x2a4"
-      cam_msgs += [(block_lfa_msg, 20)]
-
-    if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-      cam_msgs += [
-        ("SCC_CONTROL", 50),
-        ("LFA", 20),
-        ("LFA_ALT", 100),
-        ("LFAHDA_CLUSTER", 20),
-      ]
-      if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:
-        cam_msgs += [
-          ("ADRV_0x200", 20),
-          ("ADRV_0x1ea", 20),
-          ("ADRV_0x160", 50),
-        ]
-      if CP.exFlags & HyundaiExFlags.CCNC:
-        cam_msgs += [
-          ("CCNC_0x161", 20),
-          ("CCNC_0x162", 20),
-          #("CCNC_0x1B5", 20),
-        ]
-
-    if not CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI:
-      cam_msgs.append(("FR_CMR_02_100ms", 10))
-
-    if CP.enableBsm:
-      if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
-        cam_msgs += [
-          ("BLINDSPOTS_REAR_CORNERS", 20),
-        ]
-
     return {
       Bus.pt: CANParser(DBC[CP.carFingerprint][Bus.pt], msgs, CanBus(CP).ECAN),
-      Bus.cam: CANParser(DBC[CP.carFingerprint][Bus.pt], cam_msgs, CanBus(CP).CAM),
+      Bus.cam: CANParser(DBC[CP.carFingerprint][Bus.pt], [], CanBus(CP).CAM),
     }
 
   def get_can_parsers(self, CP):
     if CP.flags & HyundaiFlags.CANFD:
       return self.get_can_parsers_canfd(CP)
 
-    msgs = []
-    if not CP.openpilotLongitudinalControl:
-      msgs += [
-        ("SCC11", 50),
-        ("SCC12", 50),
-      ]
-      if CP.flags & HyundaiFlags.USE_FCA.value:
-        msgs.append(("FCA11", 50))
-
-    if CP.enableBsm:
-      msgs.append(("LCA11", 50))
-
-    if CP.exFlags & HyundaiExFlags.TPMS:
-      msgs.append(("TPMS11", 0))
-
-    if CP.exFlags & HyundaiExFlags.AUTOHOLD:
-      msgs.append(("ESP11", 50))
-
-    if CP.exFlags & HyundaiExFlags.NAVI:
-      msgs.append(("Navi_HU", 5))
-
-    if CP.flags & (HyundaiFlags.HYBRID | HyundaiFlags.EV):
-      msgs.append(("E_EMS11", 50))
-    elif CP.flags & HyundaiFlags.FCEV:
-      msgs.append(("FCEV_ACCELERATOR", 100))
-    else:
-      msgs += [
-        ("EMS12", 100),
-        ("EMS16", 100),
-      ]
-
-    if CP.flags & (HyundaiFlags.HYBRID | HyundaiFlags.EV):
-      msgs.append(("ELECT_GEAR", 20))
-    elif CP.flags & HyundaiFlags.FCEV:
-      msgs.append(("EMS20", 100))
-    elif CP.flags & HyundaiFlags.CLUSTER_GEARS:
-      pass
-    elif CP.flags & HyundaiFlags.TCU_GEARS:
-      msgs.append(("TCU12", 100))
-    else:
-      msgs.append(("LVR12", 100))
-
-    if CP.flags & HyundaiFlags.HAS_LDA_BUTTON:
-      msgs.append(("BCM_PO_11", 50))
-
-    cam_msgs = [
-      ("LKAS11", 100)
-    ]
-
-    if CP.openpilotLongitudinalControl and CP.flags & HyundaiFlags.CAMERA_SCC:
-      cam_msgs += [
-        ("SCC11", 50),
-        ("SCC12", 50),
-      ]
-
-      if CP.exFlags & HyundaiExFlags.SCC13:
-        cam_msgs.append(("SCC13", 50))
-
-      if CP.exFlags & HyundaiExFlags.SCC14:
-        cam_msgs.append(("SCC14", 50))
-
-      if CP.flags & HyundaiFlags.USE_FCA.value:
-        cam_msgs.append(("FCA11", 50))
-
     return {
-      Bus.pt: CANParser(DBC[CP.carFingerprint][Bus.pt], msgs, 0),
-      Bus.cam: CANParser(DBC[CP.carFingerprint][Bus.pt], cam_msgs, 2),
+      Bus.pt: CANParser(DBC[CP.carFingerprint][Bus.pt], [], 0),
+      Bus.cam: CANParser(DBC[CP.carFingerprint][Bus.pt], [], 2),
     }

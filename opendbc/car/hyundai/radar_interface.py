@@ -36,7 +36,7 @@ def get_radar_can_parser_scc(CP):
   CAN = CanBus(CP)
   if CP.flags & HyundaiFlags.CANFD:
     messages = [("SCC_CONTROL", 50)]
-    bus = CAN.ACAN if CP.flags & HyundaiFlags.CANFD_LKA_STEERING else CAN.ECAN
+    bus = CAN.ECAN
   else:
     messages = [("SCC11", 50)]
     bus = CAN.ECAN

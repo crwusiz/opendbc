@@ -69,7 +69,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   values = CS.mdps_info
   if angle_control:
     if CS.lfa_alt_info is not None:
-      values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["LKAS_ANGLE_ACTIVE"]
+      values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
   else:
     if CS.lfa_info is not None:
       values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
@@ -99,15 +99,15 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         "STEER_REQ": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
         "LKA_AVAILABLE": 3 if lat_active else 0,
-        #"LKAS_ANGLE_CMD": 0,
-        #"LKAS_ANGLE_ACTIVE": 0,
-        #"LKAS_ANGLE_MAX_TORQUE": 0,
+        #"ADAS_AngleReq": 0,
+        #"ADAS_AngleActiveStat_Lv2": 0,
+        #"ADAS_ACIAnglTqRedcGainVal_TORQUE": 0,
       }
 
       values = {
-        "LKAS_ANGLE_CMD": apply_angle,
-        "LKAS_ANGLE_ACTIVE": 2 if lat_active else 1,
-        "LKAS_ANGLE_MAX_TORQUE": angle_max_torque if lat_active else 0,
+        "ADAS_AngleReq": apply_angle,
+        "ADAS_AngleActiveStat_Lv2": 2 if lat_active else 1,
+        "ADAS_ACIAnglTqRedcGainVal_TORQUE": angle_max_torque if lat_active else 0,
       }
       ret.append(packer.make_can_msg("LFA_ALT", CAN.ECAN, values))
 
@@ -118,9 +118,9 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         "STEER_REQ": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
         "LKA_AVAILABLE": 3 if lat_active else 0,
-        "LKAS_ANGLE_CMD": apply_angle,
-        "LKAS_ANGLE_ACTIVE": 2 if lat_active else 1,
-        "LKAS_ANGLE_MAX_TORQUE": angle_max_torque if lat_active else 0,
+        "ADAS_AngleReq": apply_angle,
+        "ADAS_AngleActiveStat_Lv2": 2 if lat_active else 1,
+        "ADAS_ACIAnglTqRedcGainVal_TORQUE": angle_max_torque if lat_active else 0,
       }
 
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:
@@ -397,15 +397,15 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
         msg_1b5 = CS.ccnc_msg_1b5
-        leftlaneraw, rightlaneraw = msg_1b5["LeftLnPosVal"], msg_1b5["RightLnPosVal"]
+        leftlaneraw, rightlaneraw = msg_1b5["LeftLnPosition"], msg_1b5["RightLnPosition"]
 
         scale_per_m = 15 / 1.7
         leftlane = abs(int(round(15 + (leftlaneraw - 1.7) * scale_per_m)))
         rightlane = abs(int(round(15 + (rightlaneraw - 1.7) * scale_per_m)))
 
-        if msg_1b5["LeftLnQualSta"] not in (2, 3):
+        if msg_1b5["LeftLnQualStat"] not in (2, 3):
           leftlane = 0
-        if msg_1b5["RightLnQualSta"] not in (2, 3):
+        if msg_1b5["RightLnQualStat"] not in (2, 3):
           rightlane = 0
 
         if leftlaneraw == -2.0248375:

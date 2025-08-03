@@ -13,7 +13,7 @@ from opendbc.car.hyundai.radar_interface import RadarInterface
 import copy
 import numpy as np
 from openpilot.common.params import Params
-from openpilot.common.conversions import Conversions as CV
+from openpilot.common.constants import CV
 
 ButtonType = structs.CarState.ButtonEvent.Type
 Ecu = structs.CarParams.Ecu

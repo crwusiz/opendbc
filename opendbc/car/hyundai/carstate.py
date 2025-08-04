@@ -523,9 +523,72 @@ class CarState(CarStateBase):
       msgs += [
         ("CRUISE_BUTTONS", 50)
       ]
+
+    if CP.exFlags & HyundaiExFlags.HOD:
+      msgs += [
+        ("HANDS_ON_DETECTION", 10),
+      ]
+
+    if CP.enableBsm:
+      if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
+        pass
+      else:
+        msgs += [
+          ("BLINDSPOTS_REAR_CORNERS", 20),
+        ]
+
+    if not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and not CP.openpilotLongitudinalControl:
+      msgs += [
+        ("SCC_CONTROL", 50),
+      ]
+
+    if CP.exFlags & HyundaiExFlags.TPMS:
+      msgs.append(("TPMS", 0))
+
+    if CP.exFlags & HyundaiExFlags.AUTOHOLD:
+      msgs.append(("ESP_STATUS", 0))
+
+    if CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI and not CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
+      msgs.append(("FR_CMR_02_100ms", 10))
+
+    if CP.flags & HyundaiExFlags.MSG_4A3:
+      msgs += [
+        ("HDA_INFO_0x4a3", 5),
+      ]
+
+    cam_msgs = []
+    if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
+      cam_msgs += [
+        ("SCC_CONTROL", 50),
+        ("LFA", 20),
+        ("LFA_ALT", 100),
+        ("LFAHDA_CLUSTER", 20),
+      ]
+      if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:
+        cam_msgs += [
+          ("ADRV_0x200", 20),
+          ("ADRV_0x1ea", 20),
+          ("ADRV_0x160", 50),
+        ]
+      if CP.exFlags & HyundaiExFlags.CCNC:
+        cam_msgs += [
+          ("CCNC_0x161", 20),
+          ("CCNC_0x162", 20),
+          #("CCNC_0x1B5", 20),
+        ]
+
+    if not CP.flags & HyundaiFlags.CANFD_LKA_STEERING and CP.exFlags & HyundaiExFlags.NAVI:
+      cam_msgs.append(("FR_CMR_02_100ms", 10))
+
+    if CP.enableBsm:
+      if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value and CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
+        cam_msgs += [
+          ("BLINDSPOTS_REAR_CORNERS", 20),
+        ]
+
     return {
       Bus.pt: CANParser(DBC[CP.carFingerprint][Bus.pt], msgs, CanBus(CP).ECAN),
-      Bus.cam: CANParser(DBC[CP.carFingerprint][Bus.pt], [], CanBus(CP).CAM),
+      Bus.cam: CANParser(DBC[CP.carFingerprint][Bus.pt], cam_msgs, CanBus(CP).CAM),
     }
 
   def get_can_parsers(self, CP):

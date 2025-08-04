@@ -101,13 +101,13 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         "LKA_AVAILABLE": 3 if lat_active else 0,
         #"ADAS_AngleReq": 0,
         #"ADAS_AngleActiveStat_Lv2": 0,
-        #"ADAS_ACIAnglTqRedcGainVal_TORQUE": 0,
+        #"ADAS_AngleTorqueGain": 0,
       }
 
       values = {
         "ADAS_AngleReq": apply_angle,
         "ADAS_AngleActiveStat_Lv2": 2 if lat_active else 1,
-        "ADAS_ACIAnglTqRedcGainVal_TORQUE": angle_max_torque if lat_active else 0,
+        "ADAS_AngleTorqueGain": angle_max_torque if lat_active else 0,
       }
       ret.append(packer.make_can_msg("LFA_ALT", CAN.ECAN, values))
 
@@ -120,7 +120,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
         "LKA_AVAILABLE": 3 if lat_active else 0,
         "ADAS_AngleReq": apply_angle,
         "ADAS_AngleActiveStat_Lv2": 2 if lat_active else 1,
-        "ADAS_ACIAnglTqRedcGainVal_TORQUE": angle_max_torque if lat_active else 0,
+        "ADAS_AngleTorqueGain": angle_max_torque if lat_active else 0,
       }
 
     if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:

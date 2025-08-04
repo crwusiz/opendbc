@@ -54,7 +54,7 @@ BO_ 80 LKAS: 16 XXX
  SG_ ADAS_AngleActiveStat_Lv2 : 77|2@0+ (1,0) [0|3] "" XXX
  SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
  SG_ ADAS_AngleReq : 82|14@1- (0.1,0) [0|511] "" XXX
- SG_ ADAS_ACIAnglTqRedcGainVal_TORQUE : 96|8@1+ (1,0) [0|255] "" XXX
+ SG_ ADAS_AngleTorqueGain : 96|8@1+ (1,0) [0|255] "" XXX
  SG_ VALUE104 : 104|8@1+ (1,0) [0|255] "" XXX
  SG_ DAMP_FACTOR : 111|8@1+ (1,0) [0|255] "" XXX
 

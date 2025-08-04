@@ -11,9 +11,6 @@ from datetime import datetime
 MAX_BAD_COUNTER = 5
 CAN_INVALID_CNT = 5
 
-error_print_count = 0
-
-
 def get_raw_value(dat: bytes | bytearray, sig: Signal) -> int:
   ret = 0
   i = sig.msb // 8
@@ -131,6 +128,8 @@ class CANParser:
     self.ts_nanos: dict[int | str, dict[str, int]] = {}
     self.addresses: set[int] = set()
     self.message_states: dict[int, MessageState] = {}
+    self.error_print_count = 0
+    self.start_time = datetime.now()
 
     for name_or_addr, freq in messages:
       if isinstance(name_or_addr, numbers.Number):
@@ -184,10 +183,12 @@ class CANParser:
     self.message_states[msg.address] = state
 
   def update_valid(self, nanos: int) -> None:
-    global error_print_count
-
     valid = True
     counters_valid = True
+
+    if not hasattr(self, 'start_time'):
+      self.start_time = datetime.now()
+
     for state in self.message_states.values():
       if state.counter_fail >= MAX_BAD_COUNTER:
         counters_valid = False
@@ -197,11 +198,13 @@ class CANParser:
       now = datetime.now()
       time_buffer = now.strftime("%Y-%m-%d %H:%M:%S")
 
+      elapsed_seconds = (now - self.start_time).total_seconds()
+
       missing = len(state.timestamps) == 0
       timed_out = (not missing and 0 < state.timeout_threshold < (nanos - state.timestamps[-1]))
 
       if (state.timeout_threshold > 0 and (missing or timed_out) and
-        not self.bus_timeout and error_print_count < 20):
+        not self.bus_timeout and self.error_print_count < 100 and elapsed_seconds >= 5):
 
         status = "NOT SEEN" if missing else "TIMED OUT"
         log_file = "/data/can_missing.log" if missing else "/data/can_timeout.log"
@@ -215,7 +218,7 @@ class CANParser:
         except Exception as e:
           print(f"Failed to write to log file {log_file}: {e}")
 
-        error_print_count += 1
+        self.error_print_count += 1
 
     self.can_invalid_cnt = 0 if valid else min(self.can_invalid_cnt + 1, CAN_INVALID_CNT)
     self.can_valid = self.can_invalid_cnt < CAN_INVALID_CNT and counters_valid

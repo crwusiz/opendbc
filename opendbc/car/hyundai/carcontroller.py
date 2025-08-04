@@ -261,7 +261,7 @@ class CarController(CarControllerBase):
 
     # prevent LFA from activating on LKA steering cars by sending "no lane lines detected" to ADAS ECU
     if self.frame % 5 == 0 and (lka_steering and not camera_scc):
-      can_sends.append(hyundaicanfd.create_suppress_lfa(self.packer, self.CP, CC, CS, self.CAN))
+      can_sends.extend(hyundaicanfd.create_suppress_lfa(self.packer, self.CP, CC, CS, self.CAN))
 
     # LFA and HDA icons
     if self.frame % 5 == 0 and (not lka_steering or lka_steering_long):

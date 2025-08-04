@@ -66,7 +66,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   # telling the ADAS ECU to forward our steering and disable stock LFA lane centering.
   ret = []
 
-  values = CS.mdps_info
+  values = copy.copy(CS.mdps_info)
   if angle_control:
     if CS.lfa_alt_info is not None:
       values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
@@ -80,7 +80,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
 
   if frame % 10 == 0:
     if CP.exFlags & HyundaiExFlags.HOD:
-      values = CS.hod_info
+      values = copy.copy(CS.hod_info)
       if frame % 1000 < 40:
         values["TOUCH_DETECT"] = 3
         values["TOUCH1"] = 50
@@ -137,20 +137,28 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
 
 def create_suppress_lfa(packer, CP, CC, CS, CAN):
   enabled = CC.enabled
-  lfa_block_msg = CS.lfa_block_msg
-  lka_steering_alt = CP.flags & HyundaiFlags.CANFD_LKA_STEERING_ALT
-
-  suppress_msg = "CAM_0x362" if lka_steering_alt else "CAM_0x2a4"
-  msg_bytes = 32 if lka_steering_alt else 24
-
+  #lfa_block_msg = CS.lfa_block_msg
+  #lka_steering_alt = CP.flags & HyundaiFlags.CANFD_LKA_STEERING_ALT
+  #suppress_msg = "CAM_0x362" if lka_steering_alt else "CAM_0x2a4"
+  #msg_bytes = 32 if lka_steering_alt else 24
   #values = {f"BYTE{i}": lfa_block_msg[f"BYTE{i}"] for i in range(3, msg_bytes) if i != 7}
-  values = lfa_block_msg
+
+  if CS.msg_0x362 is not None:
+    suppress_msg = "CAM_0x362"
+    lfa_block_msg = CS.msg_0x362
+  elif CS.msg_0x2a4 is not None:
+    suppress_msg = "CAM_0x2a4"
+    lfa_block_msg = CS.msg_0x2a4
+  else:
+    return []
+
+  values = copy.copy(lfa_block_msg)
   values["COUNTER"] = lfa_block_msg["COUNTER"]
   values["SET_ME_0"] = 0
   values["SET_ME_0_2"] = 0
   values["LEFT_LANE_LINE"] = 0 if enabled else 3
   values["RIGHT_LANE_LINE"] = 0 if enabled else 3
-  return packer.make_can_msg(suppress_msg, CAN.ACAN, values)
+  return [packer.make_can_msg(suppress_msg, CAN.ACAN, values)]
 
 
 def create_buttons(packer, CP, CAN, cnt, btn):
@@ -230,7 +238,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
     a_val = np.clip(accel, accel_last - jn, accel_last + jn)
 
   if camerascc:
-    values = CS.cruise_info
+    values = copy.copy(CS.cruise_info)
     values |= {
       "OperationStat": 0 if not enabled else (2 if gas_override else 1),
       "MainStat": 1,
@@ -337,7 +345,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   ret = []
   if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
     if frame % 5 == 0 and CS.ccnc_msg_161 is not None and ccnc:
-      values = CS.ccnc_msg_161
+      values = copy.copy(CS.ccnc_msg_161)
       values |= {
         "SETSPEED": 6 if hdp_active else 3 if main_enabled else 0,
         "SETSPEED_HUD": 5 if hdp_active else 2 if cruise_enabled else 1,
@@ -396,7 +404,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
       """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
-        msg_1b5 = CS.ccnc_msg_1b5
+        msg_1b5 = copy.copy(CS.ccnc_msg_1b5)
         leftlaneraw, rightlaneraw = msg_1b5["LeftLnPosition"], msg_1b5["RightLnPosition"]
 
         scale_per_m = 15 / 1.7
@@ -434,7 +442,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       ret.append(packer.make_can_msg("CCNC_0x161", CAN.ECAN, values))
 
     if frame % 5 == 0 and CS.ccnc_msg_162 is not None and ccnc:
-      values = CS.ccnc_msg_162
+      values = copy.copy(CS.ccnc_msg_162)
       for f in {"FAULT_FCA", "FAULT_LSS", "FAULT_DAS", "FAULT_LFA"}:
         values[f] = 0
 
@@ -463,14 +471,14 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     #  ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
 
     if frame % 5 == 0 and CS.adrv_msg_200 is not None:
-      values = CS.adrv_msg_200
+      values = copy.copy(CS.adrv_msg_200)
       values |= {
         "TauGapSet": hud.leadDistanceBars,
       }
       ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))
 
     if frame % 5 == 0 and CS.adrv_msg_1ea is not None:
-      values = CS.adrv_msg_1ea
+      values = copy.copy(CS.adrv_msg_1ea)
       values |= {
         "HDA_MODE1": 0x8,
         "HDA_MODE2": 0x1,
@@ -478,7 +486,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 
     if frame % 20 == 0 and CS.hda_msg_4a3 is not None:
-      values = CS.hda_msg_4a3
+      values = copy.copy(CS.hda_msg_4a3)
       values |= {
         "SIGNAL_0": 5,
         "NEW_SIGNAL_1": 4,

@@ -171,6 +171,7 @@ def get_car(can_recv: CanRecvCallable, can_send: CanSendCallable, set_obd_multip
   print(f"\nRecognition Car : {candidate}\n")
 
   Params().put("CarName", str(candidate))
+  Params().put("FingerPrints", str(fingerprints))
 
   CarInterface = interfaces[candidate]
   CP: CarParams = CarInterface.get_params(candidate, fingerprints, car_fw, alpha_long_allowed, is_release, docs=False)

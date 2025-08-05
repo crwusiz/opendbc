@@ -218,8 +218,8 @@ def create_acc_cancel(packer, CP, CS, CAN):
 def create_lfahda_cluster(packer, CC, CS, CAN):
   if CS.lfahda_cluster_info is not None:
     values = {}
-    values["HDA_ICON"] = 1 if CC.long_active else 0
-    values["LFA_ICON"] = 2 if CC.lat_active else 0
+    values["HDA_ICON"] = 1 if CC.longActive else 0
+    values["LFA_ICON"] = 2 if CC.latActive else 0
   else:
     return []
   return [packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)]
@@ -497,7 +497,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
         "NEW_SIGNAL_5": 0,
         "NEW_SIGNAL_6": 256,
       }
-      ret.append(packer.make_can_msg("hda_msg_4a3", CAN.CAM, values))
+      ret.append(packer.make_can_msg("HDA_0x4a3", CAN.CAM, values))
 
     return ret
 

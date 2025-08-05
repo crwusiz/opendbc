@@ -111,7 +111,7 @@ class CarState(CarStateBase):
     pt_bus = CanBus(CP).ECAN
     alt_bus = CanBus(CP).ACAN
 
-    fingerprints_str = Params().get("FingerPrints", encoding='utf-8')
+    fingerprints_str = Params().get("FingerPrints")
     fingerprints = ast.literal_eval(fingerprints_str)
 
     self.HDA_MSG_4A3 = True if 0x4a3 in fingerprints[pt_bus] else False
@@ -448,7 +448,7 @@ class CarState(CarStateBase):
         self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
         self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
         self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
-        self.hda_msg_4a3 = cp.vl["HDA_INFO_0x4a3"] if self.HDA_MSG_4A3 else None
+        self.hda_msg_4a3 = cp.vl["HDA_0x4a3"] if self.HDA_MSG_4A3 else None
         #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1B5"] if self.CCNC_MSG_1B5 else None
 
         if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
@@ -456,11 +456,12 @@ class CarState(CarStateBase):
           lane_info = cp_alt.vl["CAM_0x362"] if self.CAM_0x362 else None
           lane_info = cp_alt.vl["CAM_0x2a4"] if self.CAM_0x2a4 else lane_info
 
-        speedLimit = self.hda_msg_4a3["SPEED_LIMIT"]
-        ret.speedLimit = speedLimit if speedLimit < 255 else 0
-        if int(self.hda_msg_4a3["NEW_SIGNAL_4"]) == 17:
-          speed_limit_cam = True
-        self.update_speed_limit(ret, speed_limit_cam)
+        if self.HDA_MSG_4A3:
+          speedLimit = self.hda_msg_4a3["SPEED_LIMIT"]
+          ret.speedLimit = speedLimit if speedLimit < 255 else 0
+          if int(self.hda_msg_4a3["NEW_SIGNAL_4"]) == 17:
+            speed_limit_cam = True
+          self.update_speed_limit(ret, speed_limit_cam)
 
     # Manual Speed Limit Assist is a feature that replaces non-adaptive cruise control on EV CAN FD platforms.
     # It limits the vehicle speed, overridable by pressing the accelerator past a certain point.

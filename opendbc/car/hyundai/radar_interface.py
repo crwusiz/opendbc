@@ -18,6 +18,7 @@ RADAR_MSG_COUNT2 = 32
 
 # POC for parsing corner radars: https://github.com/commaai/openpilot/pull/24221/
 
+
 def get_radar_can_parser(CP, radar_tracks, msg_start_addr, msg_count):
   if not radar_tracks:
     return None

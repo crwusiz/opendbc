@@ -11,6 +11,7 @@ from datetime import datetime
 MAX_BAD_COUNTER = 5
 CAN_INVALID_CNT = 5
 
+
 def get_raw_value(dat: bytes | bytearray, sig: Signal) -> int:
   ret = 0
   i = sig.msb // 8
@@ -116,6 +117,7 @@ class VLDict(dict):
     if key not in self:
       self.parser._add_message(key)
     return super().__getitem__(key)
+
 
 class CANParser:
   def __init__(self, dbc_name: str, messages: list[tuple[str | int, int]], bus: int):

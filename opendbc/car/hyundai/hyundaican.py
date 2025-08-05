@@ -167,6 +167,7 @@ def create_scc_commands(packer, accel, upper_jerk, idx, hud_control, set_speed, 
     commands.append(packer.make_can_msg("SCC14", 0, scc14_values))
 
   # Only send FCA11 on cars where it exists on the bus
+  # On Camera SCC cars, FCA11 is not disabled, so we forward stock FCA11 back to the car forward hooks
   if use_fca:
     # note that some vehicles most likely have an alternate checksum/counter definition
     # https://github.com/commaai/opendbc/commit/9ddcdb22c4929baf310295e832668e6e7fcfa602
@@ -193,6 +194,8 @@ def create_acc_opt(packer, use_fca):
   }
   commands.append(packer.make_can_msg("SCC13", 0, scc13_values))
 
+  # TODO: this needs to be detected and conditionally sent on unsupported long cars
+  # On Camera SCC cars, FCA12 is not disabled, so we forward stock FCA12 back to the car forward hooks
   if use_fca:
     fca12_values = {
       "FCA_DrvSetState": 2,

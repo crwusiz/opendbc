@@ -167,6 +167,7 @@ def create_buttons(packer, CP, CAN, cnt, btn):
     "SET_ME_1": 1,
     "CRUISE_BUTTONS": btn,
   }
+
   bus = CAN.ECAN if CP.flags & HyundaiFlags.CANFD_LKA_STEERING else CAN.CAM
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 

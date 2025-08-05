@@ -43,7 +43,7 @@ class CanBus(CanBusBase):
 def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_torque, apply_angle, angle_max_torque):
   enabled = CC.enabled
   angle_control = CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING
-  camerascc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
+  camera_scc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
 
   common_values = {
     "LKA_MODE": 2,
@@ -92,7 +92,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
       ret.append(packer.make_can_msg("HANDS_ON_DETECTION", CAN.CAM, values))
 
   if angle_control:
-    if camerascc:
+    if camera_scc:
       lfa_values |= {
         "LKA_MODE": 0,  # TODO: not used by the stock system
         "TORQUE_REQUEST": 0,  # we don't use torque
@@ -183,10 +183,10 @@ def create_buttons_canfd_alt(packer, CP, CAN, cnt, btn):
 
 def create_acc_cancel(packer, CP, CS, CAN):
   cruise_info_copy = CS.cruise_info
-  camerascc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
+  camera_scc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
 
   # TODO: why do we copy different values here?
-  if camerascc:
+  if camera_scc:
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
@@ -215,20 +215,20 @@ def create_acc_cancel(packer, CP, CS, CAN):
   return packer.make_can_msg("SCC_CONTROL", CAN.ECAN, values)
 
 
-def create_lfahda_cluster(packer, CC, CAN):
-  enabled = CC.enabled
-
-  values = {
-    "HDA_ICON": 1 if enabled else 0,
-    "LFA_ICON": 2 if enabled else 0,
-  }
-  return packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)
+def create_lfahda_cluster(packer, CC, CS, CAN):
+  if CS.lfahda_cluster_info is not None:
+    values = {}
+    values["HDA_ICON"] = 1 if CC.long_active else 0
+    values["LFA_ICON"] = 2 if CC.lat_active else 0
+  else:
+    return []
+  return [packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)]
 
 
 def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set_speed, hud):
   enabled = CC.enabled
   gas_override = CC.cruiseControl.override
-  camerascc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
+  camera_scc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
 
   jerk = 5
   jn = jerk / 50
@@ -238,7 +238,7 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
     a_raw = accel
     a_val = np.clip(accel, accel_last - jn, accel_last + jn)
 
-  if camerascc:
+  if camera_scc:
     values = copy.copy(CS.cruise_info)
     values |= {
       "OperationStat": 0 if not enabled else (2 if gas_override else 1),

@@ -264,8 +264,8 @@ class CarController(CarControllerBase):
       can_sends.extend(hyundaicanfd.create_suppress_lfa(self.packer, self.CP, CC, CS, self.CAN))
 
     # LFA and HDA icons
-    if self.frame % 5 == 0 and (not lka_steering or lka_steering_long):
-      can_sends.append(hyundaicanfd.create_lfahda_cluster(self.packer, CC, self.CAN))
+    if self.frame % 5 == 0 and camera_scc:
+      can_sends.extend(hyundaicanfd.create_lfahda_cluster(self.packer, CC, CS, self.CAN))
 
     # blinkers
     if lka_steering and self.CP.flags & HyundaiFlags.ENABLE_BLINKERS:

@@ -66,7 +66,7 @@ class CarState(CarStateBase):
 
     self.lfa_info = {}
     self.lfa_alt_info = {}
-    self.lfahda_cluster_info = {}
+    self.lfahda_cluster_info = None
     self.mdps_info = {}
     self.hod_info = {}
 
@@ -114,13 +114,16 @@ class CarState(CarStateBase):
     fingerprints_str = Params().get("FingerPrints", encoding='utf-8')
     fingerprints = ast.literal_eval(fingerprints_str)
 
+    self.HDA_MSG_4A3 = True if 0x4a3 in fingerprints[pt_bus] else False
+
     self.CCNC_MSG_161 = True if 0x161 in fingerprints[cam_bus] else False
     self.CCNC_MSG_162 = True if 0x162 in fingerprints[cam_bus] else False
     self.CCNC_MSG_1B5 = True if 0x1b5 in fingerprints[cam_bus] else False
     self.ADRV_MSG_200 = True if 0x200 in fingerprints[cam_bus] else False
     self.ADRV_MSG_1EA = True if 0x1ea in fingerprints[cam_bus] else False
     self.ADRV_MSG_160 = True if 0x160 in fingerprints[cam_bus] else False
-    self.HDA_MSG_4A3 = True if 0x4a3 in fingerprints[pt_bus] else False
+    self.LFAHDA_CLUSTER = True if 480 in fingerprints[cam_bus] else False
+
     self.CAM_0x362 = True if 0x362 in fingerprints[alt_bus] else False
     self.CAM_0x2a4 = True if 0x2a4 in fingerprints[alt_bus] else False
 
@@ -426,11 +429,12 @@ class CarState(CarStateBase):
       self.lfa_info = copy.copy(cp_cam.vl["LFA"])
       if self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING.value:
         self.lfa_alt_info = copy.copy(cp_cam.vl["LFA_ALT"])
-      self.lfahda_cluster_info = copy.copy(cp_cam.vl["LFAHDA_CLUSTER"])
       self.mdps_info = copy.copy(cp.vl["MDPS"])
 
       if self.CP.exFlags & HyundaiExFlags.HOD:
-        self.hod_info = copy.copy(cp.vl["HANDS_ON_DETECTION"])
+        self.hod_info = cp.vl["HANDS_ON_DETECTION"]
+
+      self.lfahda_cluster_info = cp_cam.vl["LFAHDA_CLUSTER"] if self.LFAHDA_CLUSTER else None
 
       if self.CP.exFlags & HyundaiExFlags.CCNC.value:
         self.ccnc_msg_161 = cp_cam.vl["CCNC_0x161"] if self.CCNC_MSG_161 else None

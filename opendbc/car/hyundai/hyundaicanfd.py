@@ -403,42 +403,40 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       values["LANELINE_LEFT"] = get_lane_value(hud.leftLaneDepart, hud.leftLaneVisible, frame)
       values["LANELINE_RIGHT"] = get_lane_value(hud.rightLaneDepart, hud.rightLaneVisible, frame)
 
-      """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
         msg_1b5 = copy.copy(CS.ccnc_msg_1b5)
-        leftlaneraw, rightlaneraw = msg_1b5["LeftLnPosition"], msg_1b5["RightLnPosition"]
+        left_lane_raw, right_lane_raw = msg_1b5["LeftLnPosition"], msg_1b5["RightLnPosition"]
 
         scale_per_m = 15 / 1.7
-        leftlane = abs(int(round(15 + (leftlaneraw - 1.7) * scale_per_m)))
-        rightlane = abs(int(round(15 + (rightlaneraw - 1.7) * scale_per_m)))
+        left_lane = abs(int(round(15 + (left_lane_raw - 1.7) * scale_per_m)))
+        right_lane = abs(int(round(15 + (right_lane_raw - 1.7) * scale_per_m)))
 
         if msg_1b5["LeftLnQualStat"] not in (2, 3):
-          leftlane = 0
+          left_lane = 0
         if msg_1b5["RightLnQualStat"] not in (2, 3):
-          rightlane = 0
+          right_lane = 0
 
-        if leftlaneraw == -2.0248375:
-          leftlane = 30 - rightlane
-        if rightlaneraw == 2.0248375:
-          rightlane = 30 - leftlane
+        if left_lane_raw == -2.0248375:
+          left_lane = 30 - right_lane
+        if right_lane_raw == 2.0248375:
+          right_lane = 30 - left_lane
 
-        if leftlaneraw == rightlaneraw == 0:
-          leftlane = rightlane = 15
-        elif leftlaneraw == 0:
-          leftlane = 30 - rightlane
-        elif rightlaneraw == 0:
-          rightlane = 30 - leftlane
+        if left_lane_raw == right_lane_raw == 0:
+          left_lane = right_lane = 15
+        elif left_lane_raw == 0:
+          left_lane = 30 - right_lane
+        elif right_lane_raw == 0:
+          right_lane = 30 - left_lane
 
-        total = leftlane + rightlane
+        total = left_lane + right_lane
         if total == 0:
-          leftlane = rightlane = 15
+          left_lane = right_lane = 15
         else:
-          leftlane = round((leftlane / total) * 30)
-          rightlane = 30 - leftlane
+          left_lane = round((left_lane / total) * 30)
+          right_lane = 30 - left_lane
 
-        values["LANELINE_LEFT_POSITION"] = leftlane
-        values["LANELINE_RIGHT_POSITION"] = rightlane
-      """
+        values["LANELINE_LEFT_POSITION"] = left_lane
+        values["LANELINE_RIGHT_POSITION"] = right_lane
 
       ret.append(packer.make_can_msg("CCNC_0x161", CAN.ECAN, values))
 

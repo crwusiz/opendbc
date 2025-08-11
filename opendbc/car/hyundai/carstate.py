@@ -412,7 +412,7 @@ class CarState(CarStateBase):
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
         self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainStat"] == 1
         self.ACCMode = cp_cam.vl["SCC_CONTROL"]["OperationStat"]
-        self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["LFA_ICON"]
+        self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["HDA_LFA_SymSta"]
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
       ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["MainStat"] == 1

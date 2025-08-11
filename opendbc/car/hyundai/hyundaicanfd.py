@@ -218,8 +218,8 @@ def create_acc_cancel(packer, CP, CS, CAN):
 def create_lfahda_cluster(packer, CC, CS, CAN):
   if CS.lfahda_cluster_info is not None:
     values = {}
-    values["HDA_ICON"] = 1 if CC.longActive else 0
-    values["LFA_ICON"] = 2 if CC.latActive else 0
+    values["HDA_CntrlModSta"] = 2 if CC.longActive else 0
+    values["HDA_LFA_SymSta"] = 2 if CC.latActive else 0
   else:
     return []
   return [packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)]

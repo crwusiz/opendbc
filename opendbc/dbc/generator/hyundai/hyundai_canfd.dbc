@@ -464,16 +464,19 @@ BO_ 474 ADRV_0x1da: 32 ADRV
  SG_ SET_ME_41 : 47|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 480 LFAHDA_CLUSTER: 16 ADRV
- SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
- SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" XXX
- SG_ OptUsmState : 26|3@0+ (1,0) [0|7] "" XXX
- SG_ HDA_ICON : 30|2@1+ (1,0) [0|3] "" XXX
- SG_ LFA_State : 34|3@0+ (1,0) [0|7] "" XXX
- SG_ LFA_ICON : 47|2@1+ (1,0) [0|3] "" XXX
- SG_ LFA_WrnSnd : 49|2@1+ (1,0) [0|3] "" XXX
- SG_ HDA_InfoPopup : 51|3@1+ (1,0) [0|7] "" XXX
- SG_ LFA_Deactive : 54|2@1+ (1,0) [0|3] "" XXX
-
+ SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" CGW
+ SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" CGW
+ SG_ HDA_OptUsmSta : 24|3@1+ (1,0) [0|7] ""  CGW
+ SG_ LFA_OptUsmSta : 27|3@1+ (1,0) [0|7] ""  CGW
+ SG_ HDA_CntrlModSta : 30|2@1+ (1,0) [0|3] ""  CGW
+ SG_ HDA_InfoPUDis : 32|3@1+ (1,0) [0|7] ""  CGW
+ SG_ HDA_AutoSetSpdSta : 35|2@1+ (1,0) [0|3] ""  CGW
+ SG_ HDA_AutoSetSpdUpdtSta : 37|2@1+ (1,0) [0|3] ""  CGW
+ SG_ HDA_AutoSetSpdVal : 39|8@1+ (1,0) [0|255] "km/h"  CGW
+ SG_ HDA_LFA_SymSta : 47|2@1+ (1,0) [0|3] ""  CGW
+ SG_ HDA_LFA_WrnSnd : 49|2@1+ (1,0) [0|3] ""  Dummy
+ SG_ HDA_InfoPUDis1 : 51|3@1+ (1,0) [0|7] ""  CLU,CGW
+ SG_ HDA_TDMRMDclReq : 54|2@1+ (1,0) [0|3] ""  Dummy
 
 BO_ 485 BLINDSPOTS_FRONT_CORNER_1: 16 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX

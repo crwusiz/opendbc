@@ -72,7 +72,7 @@ class CarState(CarStateBase):
 
     self.ccnc_msg_161 = None
     self.ccnc_msg_162 = None
-    self.ccnc_msg_1b5 = None
+    #self.ccnc_msg_1b5 = None
     self.adrv_msg_200 = None
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None
@@ -449,7 +449,7 @@ class CarState(CarStateBase):
         self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
         self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
         self.hda_msg_4a3 = cp.vl["HDA_0x4a3"] if self.HDA_MSG_4A3 else None
-        self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1B5"] if self.CCNC_MSG_1B5 else None
+        #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
 
         if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
           lane_info = None

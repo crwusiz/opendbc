@@ -61,8 +61,8 @@ BO_ 203 LFA_ALT: 24 CGW_CCU
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" FCU_C,GW_RGW,MDPS,SFA
  SG_ ADAS_AngleActiveStat : 24|4@1+ (1,0) [0|0] "" GW_RGW,MDPS,SFA
  SG_ ADAS_AngleActiveStat_Lv2 : 28|4@1+ (1,0) [0|0] "" ESC,FCU_C,GW_RGW,MDPS,SFA,VPC_C
- SG_ ADAS_AngleReq : 32|14@1- (0.1,0) [0|511] "" XXX
- SG_ ADAS_AngleTorqueGain : 48|8@1+ (1,0) [0|255] "" XXX
+ SG_ ADAS_AngleReq : 32|14@1- (0.1,0) [0|511] "Deg" GW_RGW,MDPS,SFA
+ SG_ ADAS_AngleTorqueGain : 48|8@1+ (1,0) [0|255] "" GW_RGW,MDPS,SFA
  SG_ FCA_ESA_ActiveStat : 56|2@1+ (1,0) [0|0] "" GW_RGW,MDPS,SFA
  SG_ FCA_ESA_ToqueGain : 64|8@1+ (0.004,0) [0|0] "" GW_RGW,MDPS,SFA
 

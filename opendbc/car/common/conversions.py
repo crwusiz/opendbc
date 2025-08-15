@@ -1,5 +1,6 @@
 import numpy as np
 
+from openpilot.common.params import Params
 
 class Conversions:
   # Speed
@@ -18,3 +19,18 @@ class Conversions:
 
   # Mass
   LB_TO_KG = 0.453592
+
+
+class UnitConverter:
+  def __init__(self):
+    self.params = Params()
+    self.is_metric = self.params.get_bool('IsMetric')
+
+  def to_ms(self, speed: float) -> float:
+    return speed * Conversions.KPH_TO_MS if self.is_metric else speed * Conversions.MPH_TO_MS
+
+  def to_clu(self, speed: float) -> float:
+    return speed * Conversions.MS_TO_KPH if self.is_metric else speed * Conversions.MS_TO_MPH
+
+  def to_current_unit(self, speed_kph: float) -> float:
+    return speed_kph if self.is_metric else speed_kph * Conversions.KPH_TO_MPH

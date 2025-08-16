@@ -145,10 +145,9 @@ class CANParser:
 
       self._add_message(name_or_addr, freq)
 
-    self.can_valid: bool = False
-    self.bus_timeout: bool = False
     self.can_invalid_cnt: int = CAN_INVALID_CNT
     self.last_nonempty_nanos: int = 0
+    self._last_update_nanos: int = 0
 
   def _add_message(self, name_or_addr: str | int, freq: int = None) -> None:
     if isinstance(name_or_addr, numbers.Number):
@@ -184,9 +183,20 @@ class CANParser:
 
     self.message_states[msg.address] = state
 
-  def update_valid(self, nanos: int) -> None:
+  @property
+  def bus_timeout(self) -> bool:
+    ignore_alive = all(s.ignore_alive for s in self.message_states.values())
+    bus_timeout_threshold = 500 * 1_000_000
+    for st in self.message_states.values():
+      if st.timeout_threshold > 0:
+        bus_timeout_threshold = min(bus_timeout_threshold, st.timeout_threshold)
+    return ((self._last_update_nanos - self.last_nonempty_nanos) > bus_timeout_threshold) and not ignore_alive
+
+  @property
+  def can_valid(self) -> bool:
     valid = True
     counters_valid = True
+    bus_timeout = self.bus_timeout
 
     if not hasattr(self, 'start_time'):
       self.start_time = datetime.now()
@@ -194,7 +204,7 @@ class CANParser:
     for state in self.message_states.values():
       if state.counter_fail >= MAX_BAD_COUNTER:
         counters_valid = False
-      if not state.valid(nanos, self.bus_timeout):
+      if not state.valid(self._last_update_nanos, bus_timeout):
         valid = False
 
       now = datetime.now()
@@ -203,10 +213,10 @@ class CANParser:
       elapsed_seconds = (now - self.start_time).total_seconds()
 
       missing = len(state.timestamps) == 0
-      timed_out = (not missing and 0 < state.timeout_threshold < (nanos - state.timestamps[-1]))
+      timed_out = (not missing and 0 < state.timeout_threshold < (self._last_update_nanos - state.timestamps[-1]))
 
       if (state.timeout_threshold > 0 and (missing or timed_out) and
-        not self.bus_timeout and self.error_print_count < 100 and elapsed_seconds >= 5):
+        not bus_timeout and self.error_print_count < 100 and elapsed_seconds >= 5):
 
         status = "NOT SEEN" if missing else "TIMED OUT"
         log_file = "/data/can_missing.log" if missing else "/data/can_timeout.log"
@@ -222,8 +232,9 @@ class CANParser:
 
         self.error_print_count += 1
 
+    # TODO: probably only want to increment this once per update() call
     self.can_invalid_cnt = 0 if valid else min(self.can_invalid_cnt + 1, CAN_INVALID_CNT)
-    self.can_valid = self.can_invalid_cnt < CAN_INVALID_CNT and counters_valid
+    return self.can_invalid_cnt < CAN_INVALID_CNT and counters_valid
 
   def update(self, strings, sendcan: bool = False):
     if strings and not isinstance(strings[0], list | tuple):

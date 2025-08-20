@@ -86,7 +86,7 @@ BO_ 234 MDPS: 24 SFA
  SG_ ResetStat : 59|2@1+ (1,0) [0|0] "" Vector__XXX
  SG_ SteerMode : 61|3@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ OutTorque : 64|12@1+ (0.1,-204.8) [0|65535] "Nm" CGW_CCU,ESC,ICSC,RCU,RWA
- SG_ VSM_Stat : 76|2@1+ (1,0) [0|0] "" ESC,RCU,RWA
+ SG_ VSM_ActStat : 76|2@1+ (1,0) [0|0] "" ESC,RCU,RWA
  SG_ ReprogramStat : 78|2@1+ (1,0) [0|0] "" CGW_CCU
  SG_ SteerTorqueSensor : 80|13@1+ (1,-4095) [0|4095] "" CGW_CCU,ESC,ICSC,RCU,RWA,VPC_C
  SG_ PA_SteerAngle : 96|16@1- (0.1,0) [0|255] "deg" CGW_CCU,RWA
@@ -269,10 +269,10 @@ BO_ 353 CCNC_0x161: 32 CCNC
 BO_ 354 CCNC_0x162: 32 CCNC
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" XXX
- SG_ COUNTRY : 24|4@1+ (1,0) [0|7] "" XXX
+ SG_ COUNTRY : 24|4@1+ (1,0) [0|15] "" XXX
  SG_ SPEEDLIMIT_FLASH : 28|4@1+ (1,0) [0|15] "" XXX
  SG_ SPEEDLIMIT : 32|8@1+ (1,0) [0|255] "" XXX
- SG_ SIGNS : 40|8@1+ (1,0) [0|15] "" XXX
+ SG_ ROAD_SIGNS : 40|8@1+ (1,0) [0|255] "" XXX
  SG_ SPEEDLIMIT_WEATHER : 48|4@1+ (1,0) [0|15] "" XXX
  SG_ VIBRATE : 52|3@1+ (1,0) [0|7] "" XXX
  SG_ ZEROS_1 : 55|1@0+ (1,0) [0|1] "" XXX
@@ -519,12 +519,12 @@ BO_ 490 ADRV_0x1ea: 32 ADRV
 BO_ 506 CLUSTER_SPEED_LIMIT: 32 FR_CMR
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" CGW
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" CGW
- SG_ OptUsmSta : 24|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ ISLW_OptUsmSta : 24|2@1+ (1,0) [0|3] "" CLU,CGW
  SG_ SysSta : 26|2@1+ (1,0) [0|3] "" CLU,CGW
  SG_ NoPassingInfoDis : 28|3@1+ (1,0) [0|7] "" CLU,CGW
  SG_ OvrlpSignDis : 31|2@1+ (1,0) [0|3] "" CLU,CGW
- SG_ SpdCluMainDis : 33|8@1+ (1,0) [0|255] "" CLU,CGW
- SG_ SpdNaviMainDis : 41|8@1+ (1,0) [0|255] "" CGW
+ SG_ CluSpeedLimit : 33|8@1+ (1,0) [0|255] "" CLU,CGW
+ SG_ NavSpeedLimit : 41|8@1+ (1,0) [0|255] "" CGW
  SG_ SubCondinfoSta1 : 49|4@1+ (1,0) [0|15] "" CLU,CGW
  SG_ SubCondinfoSta2 : 53|4@1+ (1,0) [0|15] "" CLU,CGW
  SG_ SpdCluSubMainDis : 64|8@1+ (1,0) [0|255] "" CLU
@@ -540,12 +540,11 @@ BO_ 506 CLUSTER_SPEED_LIMIT: 32 FR_CMR
  SG_ IcyWrn : 126|2@1+ (1,0) [0|3] "" CLU,CGW
  SG_ SymFlashMod : 128|3@1+ (1,0) [0|7] "" CLU,CGW
  SG_ Popup : 131|3@1+ (1,0) [0|7] "" CLU
- SG_ OptUsmSta : 136|3@1+ (1,0) [0|7] "" CLU,CGW
+ SG_ ISLA_OptUsmSta : 136|3@1+ (1,0) [0|7] "" CLU,CGW
  SG_ OffstUsmSta : 139|3@1+ (1,0) [0|7] "" CLU,CGW
  SG_ AutoUsmSta : 142|2@1+ (1,0) [0|3] "" CLU,CGW
  SG_ Country : 144|4@1+ (1,0) [0|15] "" CLU,CGW
- SG_ RoadSign : 149|5@1+ (1,0) [0|31] "" CLU,CGW
- SG_ SchoolZone : 154|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ ROAD_SIGNS : 149|8@1+ (1,0) [0|255] "" CLU,CGW
 
 BO_ 507 CAM_0x1fb: 32 CAMERA
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -718,7 +717,7 @@ BO_ 1187 HDA_0x4a3: 8 XXX
  SG_ NEW_SIGNAL_1 : 4|4@1+ (1,0) [0|15] "" XXX
  SG_ SPEED_LIMIT : 15|8@0+ (1,0) [0|255] "" XXX
  SG_ NEW_SIGNAL_3 : 23|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_4 : 31|8@0+ (1,0) [0|255] "" XXX
+ SG_ LIMIT_ZONE : 31|8@0+ (1,0) [0|255] "" XXX
  SG_ NEW_SIGNAL_5 : 39|8@0+ (1,0) [0|255] "" XXX
  SG_ NEW_SIGNAL_6 : 47|24@0+ (1,0) [0|16777215] "" XXX
 
@@ -739,7 +738,6 @@ BO_ 1259 LOCAL_TIME2: 8 XXX
  SG_ HOURS : 15|5@0+ (1,0) [0|31] "" XXX
  SG_ MINUTES : 21|6@0+ (1,0) [0|63] "" XXX
  SG_ SECONDS : 24|6@1+ (1,0) [0|63] "" XXX
- SG_ NEW_SIGNAL_3 : 39|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 1264 LOCAL_TIME: 8 XXX
  SG_ HOURS : 12|5@0+ (1,0) [0|31] "" XXX
@@ -863,12 +861,12 @@ CM_ SG_ 437 ID_CIPV "Valid Object = 1 to 255 - ID detected by front camera can v
 CM_ SG_ 437 Relative_Velocity "+ : Preceding, - : Oncoming - Velocity detected by front camera can vary depending on vehicle environment. - Additional logic would be required to apply this signal for ISG. - Confirmaiton by Autonomous Driving Engineering Team is required to use ID_C";
 CM_ SG_ 480 NEW_SIGNAL_5 "todo: figure out why always set to 1";
 CM_ BO_ 506 "Sent by the camera containing speed limit information. ISLW stands for Intelligent Speed Limit Warning, and ISLA is Intelligent Speed Limit Assist. it also contains road sign information.";
-CM_ SG_ 506 OptUsmSta "ISLW option information";
+CM_ SG_ 506 ISLW_OptUsmSta "ISLW option information";
 CM_ SG_ 506 SysSta "Validity of ISLW information";
 CM_ SG_ 506 NoPassingInfoDis "This signal indicates additional information of ISLW. For example no passing.";
 CM_ SG_ 506 OvrlpSignDis "indicates presence of Overlap sign";
-CM_ SG_ 506 SpdCluMainDis "Main Speed Information for cluster display in main page(0x1~0xFCH: 1*(HEX VALUE) [KPH or MPH :Reference signal is  CF_Clu_SPEED_UNIT of CLU])";
-CM_ SG_ 506 SpdNaviMainDis "Main Speed information for navigation display in main page(0x1~0xFCH: 1*(HEX VALUE) [KPH or MPH :Reference signal is  Navi_SpdUnit of Navigation)";
+CM_ SG_ 506 CluSpeedLimit "Main Speed Information for cluster display in main page(0x1~0xFCH: 1*(HEX VALUE) [KPH or MPH :Reference signal is  CF_Clu_SPEED_UNIT of CLU])";
+CM_ SG_ 506 NavSpeedLimit "Main Speed information for navigation display in main page(0x1~0xFCH: 1*(HEX VALUE) [KPH or MPH :Reference signal is  Navi_SpdUnit of Navigation)";
 CM_ SG_ 506 SubCondinfoSta1 "Indicates 1st conditional traffic sign status";
 CM_ SG_ 506 SubCondinfoSta2 "Indicates 2nd conditional traffic sign status";
 CM_ SG_ 506 SpdCluSubMainDis "Main Speed Information for cluster display in ISLW detail page";
@@ -884,11 +882,11 @@ CM_ SG_ 506 SpdWrn "This is a warning signal when VANZ exceeds the speed limit."
 CM_ SG_ 506 IcyWrn "This is a warning signal when the snow or ice sign is recognized when it is less than 4 'C.";
 CM_ SG_ 506 SymFlashMod "This is a signal for the flashing mode of the symbol.";
 CM_ SG_ 506 Popup "This is a signal for ISLA pop-up.";
-CM_ SG_ 506 OptUsmSta "This is a ISLA option USM signal set by the driver.";
+CM_ SG_ 506 ISLA_OptUsmSta "This is a ISLA option USM signal set by the driver.";
 CM_ SG_ 506 OffstUsmSta "This is a signal for offset speed set by the driver. Unit (kph or mph) refers to cluster signal: CLU_SpdUnitTyp@CLU_01_20ms";
 CM_ SG_ 506 AutoUsmSta "This is a signal for ISLA AUTO USM set by the driver.";
 CM_ SG_ 506 Country "This is a signal for categorizing countries";
-CM_ SG_ 506 RoadSign "This is a signal for additional sign";
+CM_ SG_ 506 ROAD_SIGNS "This is a signal for additional sign";
 CM_ SG_ 506 SchoolZone "This is a signal for School Zone";
 CM_ SG_ 687 HOD_Dir_Status "This signal indicates the status of hands on/off";
 CM_ BO_ 698 "Sent by the camera containing information about vehicles in front of us. IFS stands for Intelligent Front-lighting System, and this signal provides the information necessary for it to operate.";
@@ -962,7 +960,7 @@ VAL_ 234 LKA_ToiFailStat 0 "Not in fail state" 1 "In fail state" 2 "RESERVED" 3 
 VAL_ 234 ResetStat 0 "Normal" 1 "Reset Complete" 2 "Reset Fail" 3 "RESERVED";
 VAL_ 234 SteerMode 0 "Comfort Mode" 1 "Sport Mode" 2 "Sport+ Mode" 3 "Chauffeur Mode" 4 "Mild Mode" 5 "Drift Mode" 6 "RESERVED" 7 "Error Indicator";
 VAL_ 234 OutTorque 0 "0x0x000~0xFFD:real values" 4093 "0x0x000~0xFFD:real values" 4094 "RESERVED" 4095 "Error Indicator";
-VAL_ 234 VSM_Stat 0 "VSM Control inactivated" 1 "VSM Control Activated" 2 "RESERVED" 3 "Invalid";
+VAL_ 234 VSM_ActStat 0 "VSM Control inactivated" 1 "VSM Control Activated" 2 "RESERVED" 3 "Invalid";
 VAL_ 234 ReprogramStat 0 "normal operation" 1 "reprogramming" 2 "RESERVED" 3 "Error Indicator";
 VAL_ 234 SteerTorqueSensor 0 "0x0x000~0x1FFD:real values" 8189 "0x0x000~0x1FFD:real values" 8190 "RESERVED" 8191 "Error Indicator";
 VAL_ 234 PA_SteerAngle 0 "0x0x000~0x7FFD:real values" 32765 "0x0x000~0x7FFD:real values" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "0x8000~0xFFFF:real values" 65535 "0x8000~0xFFFF:real values";
@@ -1057,9 +1055,9 @@ VAL_ 353 LCA_RIGHT_ICON 0 "HIDDEN" 1 "GRAY" 2 "GREEN" 4 "WHITE";
 VAL_ 353 BACKGROUND 0 "HIDDEN" 1 "BLUE" 3 "ORANGE" 4 "FLASHING ORANGE" 6 "FLASHING RED" 7 "GRAY";
 VAL_ 353 DAW_ICON 0 "HIDDEN" 1 "ORANGE";
 VAL_ 353 CAR_CIRCLE 0 "HIDDEN" 1 "GRAY" 2 "CYAN";
-VAL_ 354 COUNTRY 0 "HIDDEN" 1 "SOUTH_KOREA" 4 "INTL" 5 "JAPAN" 6 "CANADA" 7 "USA" 8 "CHINA" 9 "INTL";
+VAL_ 354 COUNTRY 0 "HIDDEN" 1 "KOREA" 4 "INTL" 5 "JAPAN" 6 "CANADA" 7 "USA" 8 "CHINA" 9 "INTL";
 VAL_ 354 SPEEDLIMIT_FLASH 0 "HIDDEN" 1 "ERROR" 2 "NORMAL" 4 "RED";
-VAL_ 354 SIGNS 0 "HIDDEN" 1 "PEDESTRIAN_CROSSING" 2 "SCHOOL_CROSSWALK" 8 "STOP" 9 "YIELD" 16 "DO_NOT_PASS" 19 "DO_NOT_ENTER" 24 "ROUNDABOUT" 26 "RIGHT_CURVE_AHEAD" 27 "LEFT_CURVE_AHEAD" 28 "SLIGHT_RIGHT_CURVE_AHEAD" 29 "SLIGHT_LEFT_CURVE_AHEAD";
+VAL_ 354 ROAD_SIGNS 0 "HIDDEN" 1 "SCHOOL_ZONE" 2 "PEDESTRIAN_CROSSING" 8 "STOP" 9 "YIELD" 16 "DO_NOT_PASS" 19 "DO_NOT_ENTER" 24 "ROUNDABOUT" 26 "RIGHT_CURVE_AHEAD" 27 "LEFT_CURVE_AHEAD" 28 "SLIGHT_RIGHT_CURVE_AHEAD" 29 "SLIGHT_LEFT_CURVE_AHEAD";
 VAL_ 354 SPEEDLIMIT_WEATHER 0 "HIDDEN" 1 "RAIN" 2 "SNOW" 3 "RAIN+SNOW" 4 "TRAILER";
 VAL_ 354 VIBRATE 0 "NONE" 1 "VIBRATE";
 VAL_ 354 FF_DETECT 0 "HIDDEN" 1 "GRAY BOX" 2 "WHITE BOX" 3 "GRAY CAR" 4 "WHITE CAR" 5 "GRAY TRUCK" 6 "WHITE TRUCK" 7 "GRAY PERSON" 8 "WHITE PERSON" 9 "GRAY BICYCLE" 10 "WHITE BICYCLE" 11 "GRAY MOTORCYCLE" 12 "WHITE MOTORCYCLE" 13 "DARK CONE" 14 "ORANGE CONE";
@@ -1121,35 +1119,34 @@ VAL_ 437 RightLnCurvature 65534 "Reserved" 65535 "Error indicator";
 VAL_ 463 CRUISE_BUTTONS 0 "none" 1 "res_accel" 2 "set_decel" 3 "gap_distance" 4 "pause_resume";
 VAL_ 463 RIGHT_PADDLE 0 "Not Pulled" 1 "Pulled";
 VAL_ 463 LEFT_PADDLE 0 "Not Pulled" 1 "Pulled";
-VAL_ 506 OptUsmSta 0 "None ISLW Option (Default)" 1 "System Disabled by USM" 2 "System Enable by USM" 3 "Invalid";
+VAL_ 506 ISLW_OptUsmSta 0 "None ISLW Option" 1 "System Disabled by USM" 2 "System Enable by USM" 3 "Invalid";
 VAL_ 506 SysSta 0 "Normal (Default)" 1 "System Fail" 2 "ISLW Temporary Unavailable" 3 "Reserved";
-VAL_ 506 NoPassingInfoDis 0 "None Display (Default)" 1 "LHD No Passing Zone Display" 2 "RHD No Passing Zone Display" 3 "Reserved" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Invalid";
-VAL_ 506 OvrlpSignDis 0 "None (Default)" 1 "Overlap Sign" 2 "Reserved" 3 "Error indicator";
-VAL_ 506 SpdCluMainDis 0 "No Recognition (Default)" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
-VAL_ 506 SpdNaviMainDis 0 "No Recognition (Default)" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
-VAL_ 506 SubCondinfoSta1 0 "None (Default)" 1 "Rain" 2 "Snow" 3 "Snow&Rain" 4 "Trailer" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Generic" 15 "Invalid";
-VAL_ 506 SubCondinfoSta2 0 "None (Default)" 1 "Rain" 2 "Snow" 3 "Snow&Rain" 4 "Trailer" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Generic" 15 "Invalid";
-VAL_ 506 SpdCluSubMainDis 0 "No Recognition (Default)" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
-VAL_ 506 SpdCluDisSubCond1 0 "No Recognition (Default)" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
-VAL_ 506 SpdCluDisSubCond2 0 "No Recognition (Default)" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
-VAL_ 506 SpdNaviSubMainDis 0 "No Recognition (Default)" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
-VAL_ 506 SpdNaviDisSubCond1 0 "No Recognition (Default)" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
-VAL_ 506 SpdNaviDisSubCond2 0 "No Recognition (Default)" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
+VAL_ 506 NoPassingInfoDis 0 "None Display" 1 "LHD No Passing Zone Display" 2 "RHD No Passing Zone Display" 3 "Reserved" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Invalid";
+VAL_ 506 OvrlpSignDis 0 "None" 1 "Overlap Sign" 2 "Reserved" 3 "Error indicator";
+VAL_ 506 CluSpeedLimit 0 "No Recognition" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
+VAL_ 506 NavSpeedLimit 0 "No Recognition" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
+VAL_ 506 SubCondinfoSta1 0 "None" 1 "Rain" 2 "Snow" 3 "Snow&Rain" 4 "Trailer" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Generic" 15 "Invalid";
+VAL_ 506 SubCondinfoSta2 0 "None" 1 "Rain" 2 "Snow" 3 "Snow&Rain" 4 "Trailer" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Generic" 15 "Invalid";
+VAL_ 506 SpdCluSubMainDis 0 "No Recognition" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
+VAL_ 506 SpdCluDisSubCond1 0 "No Recognition" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
+VAL_ 506 SpdCluDisSubCond2 0 "No Recognition" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
+VAL_ 506 SpdNaviSubMainDis 0 "No Recognition" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
+VAL_ 506 SpdNaviDisSubCond1 0 "No Recognition" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
+VAL_ 506 SpdNaviDisSubCond2 0 "No Recognition" 253 "LHD Conditional No Passing ZONE" 254 "RHD Conditional No Passing ZONE" 255 "Invalid";
 VAL_ 506 SpdwOffst 0 "No Recognition" 253 "Unlimited Speed" 254 "Reserved" 255 "Invalid";
-VAL_ 506 SwIgnoreReq 0 "Allow All Switch Inputs (default)" 1 "-(SET) Switch Input Ignore" 2 "+(SET) Switch Input Ignore" 3 "-(SET) & +(SET) Switch Inputs Ignore";
+VAL_ 506 SwIgnoreReq 0 "Allow All Switch Inputs" 1 "-(SET) Switch Input Ignore" 2 "+(SET) Switch Input Ignore" 3 "-(SET) & +(SET) Switch Inputs Ignore";
 VAL_ 506 SpdChgReq 0 "Default" 1 "Speed Change Request" 2 "Reserved" 3 "Reserved";
 VAL_ 506 SpdWrn 0 "No Warning" 1 "Warning" 2 "Reserved" 3 "Reserved";
 VAL_ 506 IcyWrn 0 "No Warning" 1 "Warning" 2 "Reserved" 3 "Reserved";
 VAL_ 506 SymFlashMod 0 "No Flasing" 1 "Flashing Sign" 2 "Flashing - Arrow Symbol" 3 "Flashing + Arrow Symbol" 4 "Flashing Auto Symbol" 5 "Reserved" 6 "Reserved" 7 "Reserved";
 VAL_ 506 Popup 0 "No Popup" 1 "MSLA Speed will Change" 2 "MSLA Speed has Changed" 3 "CC_SCC Speed will Change" 4 "CC_SCC Speed has Changed" 5 "Reserved" 6 "Reserved" 7 "Reserved";
-VAL_ 506 OptUsmSta 0 "None ISLA Option (속도 제한 메뉴 삭제)" 1 "Off" 2 "Warning" 3 "Assist" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Invalid (GRAY)";
+VAL_ 506 ISLA_OptUsmSta 0 "None ISLA Option" 1 "Off" 2 "Warning" 3 "Assist" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Invalid (GRAY)";
 VAL_ 506 OffstUsmSta 0 "None Offset Function" 1 "-10kph or -5mph" 2 "-5kph or -3mph" 3 "0kph or 0mph" 4 "+5kph or +3mph" 5 "+10kph or +5mph" 6 "Reserved" 7 "Invalid (GRAY)";
-VAL_ 506 AutoUsmSta 0 "None Auto Function (Delete Menu)" 1 "Auto Off" 2 "Auto On" 3 "Invalid (GRAY)";
-VAL_ 506 Country 0 "Europe/Russia/Australia" 1 "Domestic" 2 "China" 3 "USA" 4 "Canada" 5 "Australia" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Reserved" 15 "Initial Value (default)";
-VAL_ 506 RoadSign 0 "No Recognition (default)" 1 "School Crossing" 16 "Do Not Pass" 17 "Reserved" 18 "Reserved" 19 "Reserved" 20 "Reserved" 21 "Reserved" 22 "Reserved" 23 "Reserved" 24 "Exit" 25 "Roundabout" 26 "Right Curve" 27 "Left Curve" 28 "Winding Road" 29 "Reserved" 30 "Reserved" 31 "Reserved" 2 "Pedestrian Crossing" 3 "Bicycle Crossing" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Stop" 9 "Yield" 10 "Stop Ahead" 11 "Yield Ahead" 12 "Road Construction Ahead" 13 "Lane Reduction" 14 "Reserved" 15 "Reserved";
-VAL_ 506 SchoolZone 0 "No School Zone" 1 "School Zone" 2 "Reserved" 3 "Reserved";
+VAL_ 506 AutoUsmSta 0 "None Auto Function" 1 "Auto Off" 2 "Auto On" 3 "Invalid (GRAY)";
+VAL_ 506 Country 0 "Europe" 1 "Korea" 2 "China" 3 "USA" 4 "Canada" 5 "Australia" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Reserved" 15 "Initial Value";
+VAL_ 506 ROAD_SIGNS 0 "No Recognition" 1 "School Zone" 2 "Pedestrian Crossing" 3 "Bicycle Crossing" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Stop" 9 "Yield" 10 "Stop Ahead" 11 "Yield Ahead" 12 "Road Construction Ahead" 13 "Lane Reduction" 14 "Reserved" 15 "Reserved" 16 "Do Not Pass" 17 "Reserved" 18 "Reserved" 19 "Reserved" 20 "Reserved" 21 "Reserved" 22 "Reserved" 23 "Reserved" 24 "Exit" 25 "Roundabout" 26 "Right Curve" 27 "Left Curve" 28 "Winding Road" 29 "Reserved" 30 "Reserved" 31 "Reserved";
 VAL_ 687 HOD_Dir_Status 0 "HANDS OFF" 1 "HAND TOUCH (SOFT)" 2 "HAND TOUCH (STRONG)" 3 "HAND GRIP (SOFT)" 4 "HAND GRIP (STRONG)" 5 "RESERVED" 6 "RESERVED";
-VAL_ 698 Status 0 "None Option (Default)" 1 "Normal" 2 "Blockage Status" 3 "Error Indicator";
+VAL_ 698 Status 0 "None Option" 1 "Normal" 2 "Blockage Status" 3 "Error Indicator";
 VAL_ 698 VehNumVal 0 "No vehicle" 1 "Number of vehicles" 2 "Number of vehicles" 3 "Number of vehicles" 4 "Number of vehicles" 5 "Number of vehicles" 6 "Number of vehicles" 7 "Number of vehicles" 8 "Number of vehicles" 9 "Number of vehicles" 10 "Number of vehicles" 11 "Over than 10 vehicles" 12 "Reserved" 13 "Reserved" 14 "Default" 15 "Error indicator";
 VAL_ 698 ILLAmbtSta 0 "Bright" 1 "Dark" 2 "Not used" 3 "Error indicator";
 VAL_ 698 VehLeftAngl1Val 501 "Not used" 502 "Not used" 503 "Not used" 504 "Not used" 505 "Not used" 506 "Not used" 507 "Not used" 508 "Not used" 509 "Not used" 510 "Default" 511 "Error indicator";

@@ -453,13 +453,15 @@ class CarState(CarStateBase):
 
         if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
           lane_info = None
-          lane_info = cp_alt.vl["CAM_0x362"] if self.CAM_0x362 else None
-          lane_info = cp_alt.vl["CAM_0x2a4"] if self.CAM_0x2a4 else lane_info
+          if self.CAM_0x362:
+            lane_info = cp_alt.vl["CAM_0x362"]
+          if self.CAM_0x2a4:
+            lane_info = cp_alt.vl["CAM_0x2a4"]
 
         if self.HDA_MSG_4A3:
           speedLimit = self.hda_msg_4a3["SPEED_LIMIT"]
           ret.speedLimit = speedLimit if speedLimit < 255 else 0
-          if int(self.hda_msg_4a3["NEW_SIGNAL_4"]) == 17:
+          if int(self.hda_msg_4a3["LIMIT_ZONE"]) == 17:
             speed_limit_cam = True
           self.update_speed_limit(ret, speed_limit_cam)
 
@@ -520,11 +522,11 @@ class CarState(CarStateBase):
 
     if self.CP.exFlags & HyundaiExFlags.NAVI:
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC.value:
+        ret.exState.roadSigns = cp_cam.vl["CCNC_0x162"]["ROAD_SIGNS"]
         ret.exState.navLimitSpeed = cp_cam.vl["CCNC_0x162"]["SPEEDLIMIT"]
-      elif self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
-        ret.exState.navLimitSpeed = cp_cam.vl["CLUSTER_SPEED_LIMIT"]["SpdNaviMainDis"]
       else:
-        ret.exState.navLimitSpeed = cp.vl["CLUSTER_SPEED_LIMIT"]["SpdNaviMainDis"]
+        ret.exState.roadSigns = cp.vl["CLUSTER_SPEED_LIMIT"]["ROAD_SIGNS"]
+        ret.exState.navLimitSpeed = cp.vl["CLUSTER_SPEED_LIMIT"]["NavSpeedLimit"]
 
     self.canfd_buttons = cp.vl[self.cruise_btns_msg_canfd]
 

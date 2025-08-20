@@ -492,7 +492,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
         "NEW_SIGNAL_1": 4,
         "SPEED_LIMIT": 80,
         "NEW_SIGNAL_3": 154,
-        "NEW_SIGNAL_4": 9,
+        "LIMIT_ZONE": 9,
         "NEW_SIGNAL_5": 0,
         "NEW_SIGNAL_6": 256,
       }

@@ -240,9 +240,9 @@ struct CarState {
 
   struct ExState {
     vCluRatio @0 :Float32;
-    autoHold @1 : Int32;
+    autoHold @1 :Int32;
     tpms @2 :Tpms;
-    navLimitSpeed @3 :Int16;
+    navLimitSpeed @3 :Int32;
     vEgo @4 :Float32;
     vEgoCluster @5 :Float32;
     vCruiseKph @6 :Float32;
@@ -255,6 +255,7 @@ struct CarState {
     steerSpeed @13 :Float32;
     leadSpeed @14 :Float32;
     applyLimitSpeed @15 :Float32;
+    roadSigns @16 :Int32;
   }
 
   struct Tpms {
@@ -482,6 +483,7 @@ struct CarControl {
       ready @9;
       ding @10;
       dong @11;
+      beep @12;
     }
   }
 

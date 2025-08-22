@@ -667,8 +667,8 @@ BO_ 928 TPMS: 16 XXX
  SG_ UNIT : 68|2@0+ (1,0) [0|3] "" XXX
 
 BO_ 961 BLINKER_STALKS: 8 XXX
- SG_ CHECKSUM_MAYBE : 7|8@0+ (1,0) [0|255] "" XXX
- SG_ COUNTER_ALT : 15|4@0+ (1,0) [0|15] "" XXX
+ SG_ CHECKSUM_MAYBE : 0|8@1+ (1,0) [0|255] "" XXX
+ SG_ COUNTER_ALT : 12|4@1+ (1,0) [0|15] "" XXX
  SG_ HIGHBEAM_FORWARD : 18|1@0+ (1,0) [0|1] "" XXX
  SG_ LIGHT_KNOB_POSITION : 21|2@0+ (1,0) [0|3] "" XXX
  SG_ HIGHBEAM_BACKWARD : 26|1@0+ (1,0) [0|1] "" XXX
@@ -676,24 +676,24 @@ BO_ 961 BLINKER_STALKS: 8 XXX
  SG_ RIGHT_BLINKER : 32|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 1041 DOORS_SEATBELTS: 8 XXX
- SG_ CHECKSUM_MAYBE : 7|8@0+ (1,0) [0|65535] "" XXX
- SG_ COUNTER_ALT : 15|4@0+ (1,0) [0|15] "" XXX
- SG_ DRIVER_DOOR : 24|1@1+ (1,0) [0|1] "" XXX
- SG_ PASSENGER_DOOR : 34|1@0+ (1,0) [0|1] "" XXX
- SG_ PASSENGER_SEATBELT : 36|1@0+ (1,0) [0|1] "" XXX
- SG_ DRIVER_SEATBELT : 42|1@0+ (1,0) [0|1] "" XXX
- SG_ DRIVER_REAR_DOOR : 52|1@0+ (1,0) [0|1] "" XXX
- SG_ PASSENGER_REAR_DOOR : 56|1@0+ (1,0) [0|1] "" XXX
+ SG_ CHECKSUM_MAYBE : 0|8@1+ (1,0) [0|65535] "" XXX
+ SG_ COUNTER_ALT : 12|4@1+ (1,0) [0|15] "" XXX
+ SG_ FL_DOOR : 24|1@1+ (1,0) [0|1] "" XXX
+ SG_ FR_DOOR : 34|1@0+ (1,0) [0|1] "" XXX
+ SG_ FR_SEATBELT : 36|1@0+ (1,0) [0|1] "" XXX
+ SG_ FL_SEATBELT : 42|1@0+ (1,0) [0|1] "" XXX
+ SG_ RL_DOOR : 52|1@0+ (1,0) [0|1] "" XXX
+ SG_ RR_DOOR : 56|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 1043 BLINKERS: 8 XXX
- SG_ LEFT_STALK : 8|1@0+ (1,0) [0|1] "" XXX
- SG_ RIGHT_STALK : 10|1@0+ (1,0) [0|1] "" XXX
- SG_ COUNTER_ALT : 15|4@0+ (1,0) [0|15] "" XXX
- SG_ LEFT_LAMP : 20|1@0+ (1,0) [0|1] "" XXX
- SG_ RIGHT_LAMP : 22|1@0+ (1,0) [0|1] "" XXX
- SG_ LEFT_LAMP_ALT : 59|1@0+ (1,0) [0|1] "" XXX
- SG_ RIGHT_LAMP_ALT : 61|1@0+ (1,0) [0|1] "" XXX
- SG_ USE_ALT_LAMP : 62|1@0+ (1,0) [0|1] "" XXX
+ SG_ LEFT_STALK : 8|1@1+ (1,0) [0|1] "" XXX
+ SG_ RIGHT_STALK : 10|1@1+ (1,0) [0|1] "" XXX
+ SG_ COUNTER_ALT : 12|4@1+ (1,0) [0|15] "" XXX
+ SG_ LEFT_LAMP : 20|1@1+ (1,0) [0|1] "" XXX
+ SG_ RIGHT_LAMP : 22|1@1+ (1,0) [0|1] "" XXX
+ SG_ LEFT_LAMP_ALT : 59|1@1+ (1,0) [0|1] "" XXX
+ SG_ RIGHT_LAMP_ALT : 61|1@1+ (1,0) [0|1] "" XXX
+ SG_ USE_ALT_LAMP : 62|1@1+ (1,0) [0|1] "" XXX
 
 BO_ 1144 DRIVE_MODE: 8 XXX
  SG_ DRIVE_MODE : 0|16@1+ (1,-61611) [0|61611] "" XXX
@@ -730,6 +730,36 @@ BO_ 1204 HDA_0x4b4: 8 XXX
  SG_ NEW_SIGNAL_4 : 47|8@0+ (1,0) [0|255] "" XXX
  SG_ NEW_SIGNAL_5 : 55|8@0+ (1,0) [0|255] "" XXX
  SG_ NEW_SIGNAL_6 : 63|8@0+ (1,0) [0|255] "" XXX
+
+BO_ 1208 HU_NAVI_V2_META_E: 8 CGW
+ SG_ META_V2_CyclicCounter : 28|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ META_V2_Country_OptADAS : 40|2@1+ (1,0) [0|3] ""  FR_CMR
+
+BO_ 1209 HU_NAVI_V2_SEG_E: 8 CGW
+ SG_ SEG_V2_Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ SEG_V2_CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ SEG_V2_Retransmission : 21|1@1+ (1,0) [0|1] ""  FR_CMR
+ SG_ SEG_V2_CalculatedRoute : 22|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ SEG_V2_FuncRoadClass : 24|3@1+ (1,0) [0|7] ""  FR_CMR
+ SG_ SEG_V2_SpeedLimit : 27|5@1+ (1,0) [0|31] ""  FR_CMR
+ SG_ SEG_V2_FormOfWay : 32|4@1+ (1,0) [0|15] ""  FR_CMR
+ SG_ SEG_V2_DirectionLanes : 36|4@1+ (1,0) [0|15] ""  FR_CMR
+ SG_ SEG_V2_SpeedLimitUnder5 : 40|3@1+ (1,0) [0|7] ""  FR_CMR
+
+BO_ 1210 HU_NAVI_V2_PROSHORT_E_00: 8 CGW
+ SG_ PROSHORT_V2_Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ PROSHORT_V2_CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ PROSHORT_V2_Distance : 23|10@1+ (1,0) [0|1023] "m"  FR_CMR
+ SG_ PROSHORT_V2_Value0 : 33|10@1+ (1,0) [0|1023] ""  FR_CMR
+ SG_ PROSHORT_V2_Value1 : 43|10@1+ (1,0) [0|1023] ""  FR_CMR
+ SG_ PROSHORT_V2_ProfileType : 53|5@1+ (1,0) [0|31] ""  FR_CMR
+
+BO_ 1214 HU_NAVI_V2_PROLONG_E: 8 CGW
+ SG_ PROLONG_V2_Value : 0|32@1+ (1,0) [0|4294967295] ""  FR_CMR
+ SG_ PROLONG_V2_Offset : 32|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ PROLONG_V2_CyclicCounter : 45|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ PROLONG_V2_Update : 47|1@1+ (1,0) [0|1] ""  FR_CMR
+ SG_ PROLONG_V2_ProfileType : 54|5@1+ (1,0) [0|31] ""  FR_CMR
 
 BO_ 1240 CLUSTER_INFO: 8 XXX
  SG_ DISTANCE_UNIT : 0|1@1+ (1,0) [0|1] "" XXX
@@ -824,10 +854,10 @@ CM_ SG_ 416 SysFailStat "This signal is evaluated by the driver information devi
 CM_ SG_ 416 MainStat "This signal specifies the status of a Main switch of SCC system - Main swith 에 의한 SCC ON/OFF 상태 정보";
 CM_ SG_ 416 OperationStat "The signal ACCmode specifies the operational mode of SCC - ACC 작동 상태 정보(off&ready / active / override / shut off)";
 CM_ SG_ 416 TakeoverReq "The Take-over Request supports the driver to identify the limits of the SCC control. Reasons for such a request may be: - Deceleration capability insufficient for the current situation. Clutch actuation by the driver is necessary to avoid stopping of t";
-CM_ SG_ 416 InfoDisplay "This signal carries information that indicates below 4 signals. (1) SCC Mode display (2) CC Mode display (3) Object disapearing display (4) Go notifying display - SCC 제어 상세 상태를 보여주는 정보 신호 (SCC 모드 / CC 모드 / 전�";
+CM_ SG_ 416 InfoDisplay "This signal carries information that indicates below 4 signals. (1) SCC Mode display (2) CC Mode display (3) Object disapearing display (4) Go notifying display";
 CM_ SG_ 416 AlertDisplay "This signal carries the information which message shall be displayed to the driver  when the SCC must be disengaged by the system or cann’t be engaged. A signal value unequal 00H is repeated for 5 messages cycles in order to ensure it appears for at";
-CM_ SG_ 416 ObjectDistanceLevel "If a in-path object is recognized by SCC, the driver should be informed. - 자차선상의 전방 물체 인식 여부 정보";
-CM_ SG_ 416 DistanceGapSet "The desired time gap from which a following distance is extracted has to be presented to the driver at least if the value changes.  The representation of the information depends on the display concept. - 전방 차량과의 거리 setting 정보 ※ S";
+CM_ SG_ 416 ObjectDistanceLevel "If a in-path object is recognized by SCC, the driver should be informed.";
+CM_ SG_ 416 DistanceGapSet "The desired time gap from which a following distance is extracted has to be presented to the driver at least if the value changes.  The representation of the information depends on the display concept. - 전방 차량과의 거리 setting 정보";
 CM_ SG_ 416 NSCC_AutoSetStat "This is information if Auto Set Speed Control is enabled or not.";
 CM_ SG_ 416 SCC_TrgtSpdSetVal "The desired vehicle speed for free cruising has to be displayed all the time SCC is under active control. ※This signal can be sent in km/h or MPH according to the “SPEED_UNIT” signal (See CLU1 message). SPEED_UNIT = 0 : [km/h], SPEED_UNIT = 1 : [";
 CM_ SG_ 416 NSCC_OperationStat "This signal describes the operational status of NSCC-Z/C/R function.   NSCC-Z/C/R  작동 상태 정보(off/ready/active)";
@@ -1182,11 +1212,11 @@ VAL_ 698 VehDst10Val 0 "No Value" 1 "1~10m" 2 "11~20m" 3 "21~30m" 4 "31~40m" 5 "
 VAL_ 736 MSLA_STATUS 0 "disabled" 1 "active" 2 "paused";
 VAL_ 866 LEFT_LANE_LINE 0 "Not Detected" 1 "Low Confidence" 2 "Medium Confidence" 3 "High Confidence";
 VAL_ 866 RIGHT_LANE_LINE 0 "Not Detected" 1 "Low Confidence" 2 "Medium Confidence" 3 "High Confidence";
-VAL_ 1041 DRIVER_DOOR 0 "Closed" 1 "Opened";
-VAL_ 1041 PASSENGER_DOOR 0 "Closed" 1 "Opened";
-VAL_ 1041 PASSENGER_SEATBELT 0 "Unlatched" 1 "Latched";
-VAL_ 1041 DRIVER_SEATBELT 0 "Unlatched" 1 "Latched";
-VAL_ 1041 DRIVER_REAR_DOOR 0 "Closed" 1 "Opened";
-VAL_ 1041 PASSENGER_REAR_DOOR 0 "Closed" 1 "Opened";
+VAL_ 1041 FL_DOOR 0 "Closed" 1 "Opened";
+VAL_ 1041 FR_DOOR 0 "Closed" 1 "Opened";
+VAL_ 1041 FR_SEATBELT 0 "Unlatched" 1 "Latched";
+VAL_ 1041 FL_SEATBELT 0 "Unlatched" 1 "Latched";
+VAL_ 1041 RL_DOOR 0 "Closed" 1 "Opened";
+VAL_ 1041 RR_DOOR 0 "Closed" 1 "Opened";
 VAL_ 1144 DRIVE_MODE2 3 "Set Sport" 1 "Set Normal" 2 "Set Eco";
 VAL_ 1240 DISTANCE_UNIT 1 "Miles" 0 "Kilometers";

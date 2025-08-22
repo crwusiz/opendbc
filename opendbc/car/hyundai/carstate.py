@@ -127,6 +127,8 @@ class CarState(CarStateBase):
     self.CAM_0x362 = True if 0x362 in fingerprints[alt_bus] else False
     self.CAM_0x2a4 = True if 0x2a4 in fingerprints[alt_bus] else False
 
+    self.controls_ready_cnt = 0
+
   def recent_button_interaction(self) -> bool:
     # On some newer model years, the CANCEL button acts as a pause/resume button based on the PCM state
     # To avoid re-engaging when openpilot cancels, check user engagement intention via buttons
@@ -136,6 +138,15 @@ class CarState(CarStateBase):
   def update(self, can_parsers) -> structs.CarState:
     cp = can_parsers[Bus.pt]
     cp_cam = can_parsers[Bus.cam]
+    cp_alt = can_parsers[Bus.alt] if Bus.alt in can_parsers else None
+
+    if self.controls_ready_cnt <= 100:
+      self.controls_ready_cnt += 1
+    elif self.controls_ready_cnt == 100:
+      print("cp.seen_addresses =", cp.seen_addresses)
+      print("cp_cam.seen_addresses =", cp_cam.seen_addresses)
+      if cp_alt is not None:
+        print("cp_alt.seen_addresses =", cp_alt.seen_addresses)
 
     if self.CP.flags & HyundaiFlags.CANFD:
       return self.update_canfd(can_parsers)

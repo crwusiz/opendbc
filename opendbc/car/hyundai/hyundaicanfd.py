@@ -255,7 +255,6 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
       "DistanceGapSet": hud.leadDistanceBars,
       "InfoDisplay": 4 if stopping and CS.out.aEgo > -0.3 else 0,
 
-      "TargetDistance": CS.out.vEgo + 4.0,
       "AlertDisplay": 0,
       "TakeoverReq": 0,
       "AccelLimitBandUpper": 0,
@@ -488,15 +487,15 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     if frame % 20 == 0 and CS.hda_msg_4a3 is not None:
       values = copy.copy(CS.hda_msg_4a3)
       values |= {
-        "SIGNAL_0": 5,
-        "NEW_SIGNAL_1": 4,
-        "SPEED_LIMIT": 80,
-        "NEW_SIGNAL_3": 154,
-        "LIMIT_ZONE": 9,
-        "NEW_SIGNAL_5": 0,
-        "NEW_SIGNAL_6": 256,
+        "SpeedLimit": 80,
       }
-      ret.append(packer.make_can_msg("HDA_0x4a3", CAN.CAM, values))
+      ret.append(packer.make_can_msg("HU_Navi_ISLW_PE", CAN.CAM, values))
+    """"LinkClass": 5,
+    "FreewayInfo": 4,
+    "CountryCode": 154,
+    "MapSource": 9,
+    "TunnelExist": 0,
+    "TimeSpeed": 256,"""
 
     return ret
 

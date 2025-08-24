@@ -712,54 +712,51 @@ BO_ 1151 HVAC_TOUCH_BUTTONS: 8 XXX
  SG_ RECIRC_BUTTON : 48|1@0+ (1,0) [0|1] "" XXX
  SG_ HEAT_BUTTON : 52|1@0+ (1,0) [0|1] "" XXX
 
-BO_ 1187 HDA_0x4a3: 8 XXX
- SG_ SIGNAL_0 : 0|4@1+ (1,0) [0|15] "" XXX
- SG_ NEW_SIGNAL_1 : 4|4@1+ (1,0) [0|15] "" XXX
- SG_ SPEED_LIMIT : 15|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_3 : 23|8@0+ (1,0) [0|255] "" XXX
- SG_ LIMIT_ZONE : 31|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_5 : 39|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_6 : 47|24@0+ (1,0) [0|16777215] "" XXX
+BO_ 1187 HU_Navi_ISLW_PE: 8 CGW
+ SG_ LinkClass : 0|3@1+ (1,0) [0|7] ""  FR_CMR
+ SG_ FreewayInfo : 3|3@1+ (1,0) [0|7] ""  FR_CMR
+ SG_ SpeedUnit : 6|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ SpeedLimit : 8|8@1+ (1,0) [0|255] ""  FR_CMR
+ SG_ CountryCode : 16|10@1+ (1,0) [0|1023] ""  FR_CMR
+ SG_ MapSource : 27|3@1+ (1,0) [0|7] ""  FR_CMR
+ SG_ TollExist : 30|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ TunnelExist : 38|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ TimeSpeed : 40|8@1+ (1,0) [0|255] ""  FR_CMR
 
-BO_ 1204 HDA_0x4b4: 8 XXX
- SG_ NEW_SIGNAL_1 : 7|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_8 : 15|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_2 : 23|16@0+ (1,0) [0|65535] "" XXX
- SG_ NEW_SIGNAL_7 : 35|4@0+ (1,0) [0|15] "" XXX
- SG_ NEW_SIGNAL_3 : 39|4@0+ (1,0) [0|15] "" XXX
- SG_ NEW_SIGNAL_4 : 47|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_5 : 55|8@0+ (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_6 : 63|8@0+ (1,0) [0|255] "" XXX
+BO_ 1204 HU_NAVI_V2_POS_PE: 8 CGW
+ SG_ Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ RangeAvgSpeed : 21|9@1+ (1,0) [0|511] "km/h"  FR_CMR
 
 BO_ 1208 HU_NAVI_V2_META_E: 8 CGW
- SG_ META_V2_CyclicCounter : 28|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ META_V2_Country_OptADAS : 40|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ CyclicCounter : 28|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ Country_OptADAS : 40|2@1+ (1,0) [0|3] ""  FR_CMR
 
 BO_ 1209 HU_NAVI_V2_SEG_E: 8 CGW
- SG_ SEG_V2_Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
- SG_ SEG_V2_CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ SEG_V2_Retransmission : 21|1@1+ (1,0) [0|1] ""  FR_CMR
- SG_ SEG_V2_CalculatedRoute : 22|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ SEG_V2_FuncRoadClass : 24|3@1+ (1,0) [0|7] ""  FR_CMR
- SG_ SEG_V2_SpeedLimit : 27|5@1+ (1,0) [0|31] ""  FR_CMR
- SG_ SEG_V2_FormOfWay : 32|4@1+ (1,0) [0|15] ""  FR_CMR
- SG_ SEG_V2_DirectionLanes : 36|4@1+ (1,0) [0|15] ""  FR_CMR
- SG_ SEG_V2_SpeedLimitUnder5 : 40|3@1+ (1,0) [0|7] ""  FR_CMR
+ SG_ Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ Retransmission : 21|1@1+ (1,0) [0|1] ""  FR_CMR
+ SG_ CalculatedRoute : 22|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ FuncRoadClass : 24|3@1+ (1,0) [0|7] ""  FR_CMR
+ SG_ SpeedLimit : 27|5@1+ (1,0) [0|31] ""  FR_CMR
+ SG_ FormOfWay : 32|4@1+ (1,0) [0|15] ""  FR_CMR
+ SG_ DirectionLanes : 36|4@1+ (1,0) [0|15] ""  FR_CMR
+ SG_ SpeedLimitUnder5 : 40|3@1+ (1,0) [0|7] ""  FR_CMR
 
 BO_ 1210 HU_NAVI_V2_PROSHORT_E_00: 8 CGW
- SG_ PROSHORT_V2_Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
- SG_ PROSHORT_V2_CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ PROSHORT_V2_Distance : 23|10@1+ (1,0) [0|1023] "m"  FR_CMR
- SG_ PROSHORT_V2_Value0 : 33|10@1+ (1,0) [0|1023] ""  FR_CMR
- SG_ PROSHORT_V2_Value1 : 43|10@1+ (1,0) [0|1023] ""  FR_CMR
- SG_ PROSHORT_V2_ProfileType : 53|5@1+ (1,0) [0|31] ""  FR_CMR
+ SG_ Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ Distance : 23|10@1+ (1,0) [0|1023] "m"  FR_CMR
+ SG_ Value0 : 33|10@1+ (1,0) [0|1023] ""  FR_CMR
+ SG_ Value1 : 43|10@1+ (1,0) [0|1023] ""  FR_CMR
+ SG_ ProfileType : 53|5@1+ (1,0) [0|31] ""  FR_CMR
 
 BO_ 1214 HU_NAVI_V2_PROLONG_E: 8 CGW
- SG_ PROLONG_V2_Value : 0|32@1+ (1,0) [0|4294967295] ""  FR_CMR
- SG_ PROLONG_V2_Offset : 32|13@1+ (1,0) [0|8191] "m"  FR_CMR
- SG_ PROLONG_V2_CyclicCounter : 45|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ PROLONG_V2_Update : 47|1@1+ (1,0) [0|1] ""  FR_CMR
- SG_ PROLONG_V2_ProfileType : 54|5@1+ (1,0) [0|31] ""  FR_CMR
+ SG_ Value : 0|32@1+ (1,0) [0|4294967295] ""  FR_CMR
+ SG_ Offset : 32|13@1+ (1,0) [0|8191] "m"  FR_CMR
+ SG_ CyclicCounter : 45|2@1+ (1,0) [0|3] ""  FR_CMR
+ SG_ Update : 47|1@1+ (1,0) [0|1] ""  FR_CMR
+ SG_ ProfileType : 54|5@1+ (1,0) [0|31] ""  FR_CMR
 
 BO_ 1240 CLUSTER_INFO: 8 XXX
  SG_ DISTANCE_UNIT : 0|1@1+ (1,0) [0|1] "" XXX

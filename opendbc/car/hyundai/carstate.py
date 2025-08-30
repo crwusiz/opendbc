@@ -474,7 +474,7 @@ class CarState(CarStateBase):
         if self.HDA_MSG_4A3:
           speedLimit = self.hda_msg_4a3["SpeedLimit"]
           ret.speedLimit = speedLimit if speedLimit < 255 else 0
-          if int(self.hda_msg_4a3["MapSource"]) == 17:
+          if int(self.hda_msg_4a3["MapSource"]) == 2:
             speed_limit_cam = True
           self.update_speed_limit(ret, speed_limit_cam)
 

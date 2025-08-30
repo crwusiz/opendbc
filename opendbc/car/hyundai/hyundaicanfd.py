@@ -463,12 +463,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
       ret.append(packer.make_can_msg("CCNC_0x162", CAN.ECAN, values))
 
-    #if frame % 2 == 0 and CS.adrv_msg_160 is not None:
-    #  values = CS.adrv_msg_160
-    #  values |= {
-    #  }
-    #  ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
-
     if frame % 5 == 0 and CS.adrv_msg_200 is not None:
       values = copy.copy(CS.adrv_msg_200)
       values |= {
@@ -483,19 +477,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
         "HDA_MODE2": 0x1,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
-
-    if frame % 20 == 0 and CS.hda_msg_4a3 is not None:
-      values = copy.copy(CS.hda_msg_4a3)
-      values |= {
-        "SpeedLimit": 80,
-      }
-      ret.append(packer.make_can_msg("HU_Navi_ISLW_PE", CAN.CAM, values))
-    """"LinkClass": 5,
-    "FreewayInfo": 4,
-    "CountryCode": 154,
-    "MapSource": 9,
-    "TunnelExist": 0,
-    "TimeSpeed": 256,"""
 
     return ret
 

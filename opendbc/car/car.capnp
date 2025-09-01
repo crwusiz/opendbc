@@ -248,7 +248,7 @@ struct CarState {
     vCruiseKph @6 :Float32;
     cruiseMaxSpeed @7 :Float32;
     applyMaxSpeed @8 :Float32;
-    targetSpeed @9 :Float32;
+    overrideSpeed @9 :Float32;
     curveSpeed @10 :Float32;
     roadSpeed @11 :Float32;
     cameraSpeed @12 :Float32;

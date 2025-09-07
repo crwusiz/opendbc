@@ -107,6 +107,8 @@ class CarState(CarStateBase):
     self.totalDistance = 0.0
     self.speedLimitDistance = 0
 
+    self.DistanceGapSet = 0
+
     cam_bus = CanBus(CP).CAM
     pt_bus = CanBus(CP).ECAN
     alt_bus = CanBus(CP).ACAN
@@ -447,36 +449,37 @@ class CarState(CarStateBase):
       if self.CP.exFlags & HyundaiExFlags.HOD:
         self.hod_info = cp.vl["HANDS_ON_DETECTION"]
 
-      self.lfahda_cluster_info = cp_cam.vl["LFAHDA_CLUSTER"] if self.LFAHDA_CLUSTER else None
+    self.lfahda_cluster_info = cp_cam.vl["LFAHDA_CLUSTER"] if self.LFAHDA_CLUSTER else None
+    self.DistanceGapSet = cp_cam.vl["SCC_CONTROL"]["DistanceGapSet"]
 
-      if self.CP.exFlags & HyundaiExFlags.CCNC.value:
-        self.ccnc_msg_161 = cp_cam.vl["CCNC_0x161"] if self.CCNC_MSG_161 else None
-        self.ccnc_msg_162 = cp_cam.vl["CCNC_0x162"] if self.CCNC_MSG_162 else None
-        if self.CCNC_MSG_162 is not None:
-          self.ff_distance = cp_cam.vl["CCNC_0x162"]["FF_DISTANCE"]
-          self.lf_distance = cp_cam.vl["CCNC_0x162"]["LF_DISTANCE"]
-          self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DISTANCE"]
-          self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DISTANCE"]
-          self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DISTANCE"]
-        self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
-        self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
-        self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
-        self.hda_msg_4a3 = cp.vl["HU_Navi_ISLW_PE"] if self.HDA_MSG_4A3 else None
-        #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
+    if self.CP.exFlags & HyundaiExFlags.CCNC.value:
+      self.ccnc_msg_161 = cp_cam.vl["CCNC_0x161"] if self.CCNC_MSG_161 else None
+      self.ccnc_msg_162 = cp_cam.vl["CCNC_0x162"] if self.CCNC_MSG_162 else None
+      if self.CCNC_MSG_162 is not None:
+        self.ff_distance = cp_cam.vl["CCNC_0x162"]["FF_DISTANCE"]
+        self.lf_distance = cp_cam.vl["CCNC_0x162"]["LF_DISTANCE"]
+        self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DISTANCE"]
+        self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DISTANCE"]
+        self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DISTANCE"]
+      self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
+      self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
+      self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
+      self.hda_msg_4a3 = cp.vl["HU_Navi_ISLW_PE"] if self.HDA_MSG_4A3 else None
+      #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
 
-        if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
-          lane_info = None
-          if self.CAM_0x362:
-            lane_info = cp_alt.vl["CAM_0x362"]
-          if self.CAM_0x2a4:
-            lane_info = cp_alt.vl["CAM_0x2a4"]
+      if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
+        lane_info = None
+        if self.CAM_0x362:
+          lane_info = cp_alt.vl["CAM_0x362"]
+        if self.CAM_0x2a4:
+          lane_info = cp_alt.vl["CAM_0x2a4"]
 
-        if self.HDA_MSG_4A3:
-          speedLimit = self.hda_msg_4a3["SpeedLimit"]
-          ret.speedLimit = speedLimit if speedLimit < 255 else 0
-          if int(self.hda_msg_4a3["MapSource"]) == 2:
-            speed_limit_cam = True
-          self.update_speed_limit(ret, speed_limit_cam)
+      if self.HDA_MSG_4A3:
+        speedLimit = self.hda_msg_4a3["SpeedLimit"]
+        ret.speedLimit = speedLimit if speedLimit < 255 else 0
+        if int(self.hda_msg_4a3["MapSource"]) == 2:
+          speed_limit_cam = True
+        self.update_speed_limit(ret, speed_limit_cam)
 
     # Manual Speed Limit Assist is a feature that replaces non-adaptive cruise control on EV CAN FD platforms.
     # It limits the vehicle speed, overridable by pressing the accelerator past a certain point.

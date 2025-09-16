@@ -350,11 +350,11 @@ class CarState(CarStateBase):
     self.totalDistance += ret.vEgo * DT_CTRL
     if ret.speedLimit > 0 and not ret.gasPressed and speed_limit_cam:
       if self.speedLimitDistance <= self.totalDistance:
-        self.speedLimitDistance = self.totalDistance + ret.speedLimit * 6
+        self.speedLimitDistance = self.totalDistance + 500
       self.speedLimitDistance = max(self.totalDistance + 1, self.speedLimitDistance)
     else:
       self.speedLimitDistance = self.totalDistance
-    ret.speedLimitDistance = self.speedLimitDistance - self.totalDistance
+    ret.speedLimitDistance = round(self.speedLimitDistance - self.totalDistance, 2)
 
   def update_canfd(self, can_parsers) -> structs.CarState:
     cp = can_parsers[Bus.pt]

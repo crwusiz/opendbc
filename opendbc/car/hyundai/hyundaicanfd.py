@@ -322,8 +322,8 @@ def create_fca_warning_light(packer, CP, CAN, frame):
     values = {
       'AEB_SETTING': 0x1,  # show AEB disabled icon
       'SET_ME_2': 0x2,
-      'SET_ME_FF': 0xFF,
-      'SET_ME_FC': 0xFC,
+      'SET_ME_FF': 0xff,
+      'SET_ME_FC': 0xfc,
       'SET_ME_9': 0x9,
     }
     ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
@@ -463,13 +463,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
       ret.append(packer.make_can_msg("CCNC_0x162", CAN.ECAN, values))
 
-    if frame % 5 == 0 and CS.adrv_msg_200 is not None:
-      values = copy.copy(CS.adrv_msg_200)
-      values |= {
-        "TauGapSet": hud.leadDistanceBars,
-      }
-      ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))
-
     if frame % 5 == 0 and CS.adrv_msg_1ea is not None:
       values = copy.copy(CS.adrv_msg_1ea)
       values |= {
@@ -487,16 +480,15 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       values = {
         'HDA_MODE1': 0x8,
         'HDA_MODE2': 0x1,
-        'SET_ME_FF': 0xFF,
-        'SET_ME_TMP_F': 0xF,
+        'SET_ME_FF': 0xff,
+        'SET_ME_TMP_F': 0xf,
         'SET_ME_TMP_F_2': 0xf,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 
       values = {
-        'SET_ME_E1': 0xE1,
-        'TauGapSet': 0x1,
-        'NEW_SIGNAL_2': 0x3,
+        'SET_ME_E1': 0xe1,
+        'SET_ME_3A': 0x3a,
       }
       ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))
 

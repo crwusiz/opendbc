@@ -350,7 +350,7 @@ class CarState(CarStateBase):
     self.totalDistance += ret.vEgo * DT_CTRL
     if ret.speedLimit > 0 and not ret.gasPressed and speed_limit_cam:
       if self.speedLimitDistance <= self.totalDistance:
-        self.speedLimitDistance = self.totalDistance + 500
+        self.speedLimitDistance = self.totalDistance + ret.speedLimit * 6
       self.speedLimitDistance = max(self.totalDistance + 1, self.speedLimitDistance)
     else:
       self.speedLimitDistance = self.totalDistance

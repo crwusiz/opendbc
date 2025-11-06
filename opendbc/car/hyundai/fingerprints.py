@@ -1154,7 +1154,7 @@ FW_VERSIONS = {
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\x00SV11.011.031.012471000HKP_SV124_40712099211EV000',
       b'\xf1\x00SV11.011.041.012473000HKP_SV124_40801099211EV000',
-],
+    ],
   },
 
   # Genesis

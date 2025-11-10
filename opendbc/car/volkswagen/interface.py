@@ -44,6 +44,12 @@ class CarInterface(CarInterfaceBase):
       ret.enableBsm = 0x24C in fingerprint[0]  # MEB_Side_Assist_01
       ret.steerControlType = structs.CarParams.SteerControlType.angle
       ret.transmissionType = TransmissionType.automatic
+    elif ret.flags & VolkswagenFlags.MLB:
+      # Set global MLB parameters
+      safety_configs = [get_safety_config(structs.CarParams.SafetyModel.volkswagenMlb)]
+      ret.enableBsm = 0x30F in fingerprint[0]  # SWA_01
+      ret.networkLocation = NetworkLocation.gateway
+      ret.dashcamOnly = True  # Pending HCA timeout fix, safety validation, harness termination, install procedure
 
       if any(msg in fingerprint[1] for msg in (0x520, 0x86, 0xFD, 0x13D)):  # Airbag_02, LWI_01, ESP_21, QFK_01
         ret.networkLocation = NetworkLocation.gateway
@@ -76,7 +82,7 @@ class CarInterface(CarInterfaceBase):
     # Global lateral tuning defaults, can be overridden per-vehicle
 
     ret.steerLimitTimer = 0.4
-    if ret.flags & VolkswagenFlags.PQ:
+    if ret.flags & VolkswagenFlags.PQ or ret.flags & VolkswagenFlags.MLB:
       ret.steerActuatorDelay = 0.2
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
     elif ret.flags & VolkswagenFlags.MEB:
@@ -98,6 +104,11 @@ class CarInterface(CarInterfaceBase):
       safety_configs[0].safetyParam |= VolkswagenSafetyFlags.LONG_CONTROL.value
       if ret.transmissionType == TransmissionType.manual:
         ret.minEnableSpeed = 4.5
+
+    # Per-vehicle overrides
+
+    if candidate == CAR.PORSCHE_MACAN_MK1:
+      ret.steerActuatorDelay = 0.07
 
     ret.pcmCruise = not ret.openpilotLongitudinalControl
     ret.stopAccel = -0.55

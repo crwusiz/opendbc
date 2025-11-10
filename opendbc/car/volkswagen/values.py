@@ -123,6 +123,22 @@ class CarControllerParams:
         Button(structs.CarState.ButtonEvent.Type.gapAdjustCruise, "GRA_ACC_01", "GRA_Verstellung_Zeitluecke", [3]),
       ]
 
+    elif CP.flags & VolkswagenFlags.MLB:
+      self.STEER_DRIVER_ALLOWANCE = 60  # Driver intervention threshold 0.6 Nm
+      self.STEER_DELTA_UP = 9  # Max HCA reached in 0.66s (STEER_MAX / (50Hz * 0.66))
+      self.STEER_DELTA_DOWN = 10  # Min HCA reached in 0.60s (STEER_MAX / (50Hz * 0.60))
+
+      self.shifter_values = can_define.dv["Getriebe_03"]["GE_Waehlhebel"]
+
+      self.BUTTONS = [
+        Button(structs.CarState.ButtonEvent.Type.setCruise, "LS_01", "LS_Tip_Setzen", [1]),
+        Button(structs.CarState.ButtonEvent.Type.resumeCruise, "LS_01", "LS_Tip_Wiederaufnahme", [1]),
+        Button(structs.CarState.ButtonEvent.Type.accelCruise, "LS_01", "LS_Tip_Hoch", [1]),
+        Button(structs.CarState.ButtonEvent.Type.decelCruise, "LS_01", "LS_Tip_Runter", [1]),
+        Button(structs.CarState.ButtonEvent.Type.cancel, "LS_01", "LS_Abbrechen", [1]),
+        Button(structs.CarState.ButtonEvent.Type.gapAdjustCruise, "LS_01", "LS_Verstellung_Zeitluecke", [1]),
+      ]
+
       self.LDW_MESSAGES = {
         "none": 0,                        # Nothing to display
         "laneAssistTakeOverUrgent": 4,    # "Lane Assist: Please Take Over Steering" (red)
@@ -182,6 +198,7 @@ class WMI(StrEnum):
   AUDI_EUROPE_MPV = "WA1"
   AUDI_GERMANY_CAR = "WAU"
   MAN = "WMA"
+  PORSCHE_SUV = "WP1"
   AUDI_SPORT = "WUA"
   VOLKSWAGEN_COMMERCIAL = "WV1"
   VOLKSWAGEN_COMMERCIAL_BUS_VAN = "WV2"
@@ -202,7 +219,7 @@ class VolkswagenFlags(IntFlag):
   # Static flags
   PQ = 2
   MEB = 8
-
+  MLB = 16
 
 @dataclass
 class VolkswagenMQBPlatformConfig(PlatformConfig):
@@ -224,6 +241,14 @@ class VolkswagenMEBPlatformConfig(PlatformConfig):
   def init(self):
     self.flags |= VolkswagenFlags.MEB
 
+@dataclass
+class VolkswagenMLBPlatformConfig(PlatformConfig):
+  dbc_dict: DbcDict = field(default_factory=lambda: {Bus.pt: 'vw_mlb'})
+  chassis_codes: set[str] = field(default_factory=set)
+  wmis: set[WMI] = field(default_factory=set)
+
+  def init(self):
+    self.flags |= VolkswagenFlags.MLB
 
 @dataclass
 class VolkswagenPQPlatformConfig(VolkswagenMQBPlatformConfig):
@@ -469,6 +494,12 @@ class CAR(Platforms):
     VolkswagenCarSpecs(mass=1623, wheelbase=2.68),
     chassis_codes={"8U", "F3", "FS"},
     wmis={WMI.AUDI_EUROPE_MPV, WMI.AUDI_GERMANY_CAR},
+  )
+  PORSCHE_MACAN_MK1 = VolkswagenMLBPlatformConfig(
+    [VWCarDocs("Porsche Macan 2017-24")],
+    VolkswagenCarSpecs(mass=1895, wheelbase=2.81, steerRatio=16.2),
+    chassis_codes={"95", "A5"},
+    wmis={WMI.PORSCHE_SUV},
   )
   SEAT_ATECA_MK1 = VolkswagenMQBPlatformConfig(
     [

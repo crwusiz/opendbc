@@ -24,7 +24,7 @@ class Conversions:
 class UnitConverter:
   def __init__(self):
     self.params = Params()
-    self.is_metric = self.params.get_bool('IsMetric')
+    self.is_metric = self.params.get_bool("IsMetric")
 
   def to_ms(self, speed: float) -> float:
     return speed * Conversions.KPH_TO_MS if self.is_metric else speed * Conversions.MPH_TO_MS

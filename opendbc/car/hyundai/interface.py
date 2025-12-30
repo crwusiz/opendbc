@@ -101,6 +101,9 @@ class CarInterface(CarInterfaceBase):
       if 0xCB in fingerprint[CAN.CAM]: # LFA_ALT
         ret.flags |= HyundaiFlags.CANFD_ANGLE_STEERING.value
 
+      if 0x210 in fingerprint[CAN.ACAN]:
+        ret.extFlags |= HyundaiExFlags.RADAR_GROUP1.value
+
       if 0x105 in fingerprint[CAN.ECAN]:
         ret.flags |= HyundaiFlags.HYBRID.value
 

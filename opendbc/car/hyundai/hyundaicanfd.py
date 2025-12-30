@@ -184,7 +184,9 @@ def create_acc_cancel(packer, CP, CS, CAN):
   cruise_info_copy = CS.cruise_info
   camera_scc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
 
-  # TODO: why do we copy different values here?
+  # CAN FD camera-based SCC requires additional signals to be preserved
+  # verbatim from the previous SCC_CONTROL frame to avoid checksum or
+  # state validation faults. Classic CAN SCC only validates a subset.
   if camera_scc:
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",

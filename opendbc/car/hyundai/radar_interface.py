@@ -78,7 +78,7 @@ class RadarInterface(RadarInterfaceBase):
     self.dRel_last = 0
 
     # Initialize pts
-    total_tracks = self.radar_msg_count * ( 2 if self.radar_group1 else 1)
+    total_tracks = self.radar_msg_count * (2 if self.radar_group1 else 1)
     for track_id in range(total_tracks):
       t_id = track_id + 32
       self.pts[t_id] = structs.RadarData.RadarPoint()

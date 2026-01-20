@@ -244,9 +244,10 @@ class CarInterfaceBase(ABC):
     dbc_names = {bus: cp.dbc_name for bus, cp in self.can_parsers.items()}
     self.CC: CarControllerBase = self.CarController(dbc_names, CP)
 
-  def apply(self, c: structs.CarControl, now_nanos: int | None = None) -> tuple[structs.CarControl.Actuators, list[CanData]]:
+  def apply(self, c: structs.CarControl, now_nanos: int | None = None, MD = None) -> tuple[structs.CarControl.Actuators, list[CanData]]:
     if now_nanos is None:
       now_nanos = int(time.monotonic() * 1e9)
+    self.CS.MD = MD
     return self.CC.update(c, self.CS, now_nanos)
 
   @staticmethod
@@ -425,6 +426,8 @@ class CarStateBase(ABC):
     K = get_kalman_gain(DT_CTRL, np.array(A), np.array(C), np.array(Q), R)
     self.v_ego_kf = KF1D(x0=x0, A=A, C=C[0], K=K)
     self.v_ego_clu_kf = KF1D(x0=x0, A=A, C=C[0], K=K)
+
+    self.MD = None
 
   @abstractmethod
   def update(self, can_parsers) -> structs.CarState:

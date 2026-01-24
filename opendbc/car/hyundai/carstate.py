@@ -474,14 +474,14 @@ class CarState(CarStateBase):
       self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
       self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
       self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
-      if self.adrv_info_1ea is not None:
+      if self.adrv_msg_1ea is not None:
         if not corner:
-          ret.leftLongDist = self.adrv_info_1ea["LF_DETECT_DISTANCE"]
-          ret.rightLongDist = self.adrv_info_1ea["RF_DETECT_DISTANCE"]
-          self.lr_distance = self.adrv_info_1ea["LR_DETECT_DISTANCE"]
-          self.rr_distance = self.adrv_info_1ea["RR_DETECT_DISTANCE"]
-          ret.leftLatDist = self.adrv_info_1ea["LF_DETECT_LATERAL"]
-          ret.rightLatDist = self.adrv_info_1ea["RF_DETECT_LATERAL"]
+          ret.leftLongDist = self.adrv_msg_1ea["LF_DETECT_DISTANCE"]
+          ret.rightLongDist = self.adrv_msg_1ea["RF_DETECT_DISTANCE"]
+          self.lr_distance = self.adrv_msg_1ea["LR_DETECT_DISTANCE"]
+          self.rr_distance = self.adrv_msg_1ea["RR_DETECT_DISTANCE"]
+          ret.leftLatDist = self.adrv_msg_1ea["LF_DETECT_LATERAL"]
+          ret.rightLatDist = self.adrv_msg_1ea["RF_DETECT_LATERAL"]
           corner = True
       if corner:
         left_block = True if 0 < ret.leftLongDist < 9.0 or 0 < self.lr_distance < 20 else False

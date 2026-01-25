@@ -545,7 +545,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       """
 
       if hud.leadDistance > 0:
-        values["FF_DISTANCE"] = hud.leadDistance
+        values["FF_DETECT_DISTANCE"] = hud.leadDistance
         ff_type = 3 if hud.leadRadar == 1 else 13
         values["FF_DETECT"] = ff_type if hud.leadRelSpeed > -0.1 else ff_type + 1
 

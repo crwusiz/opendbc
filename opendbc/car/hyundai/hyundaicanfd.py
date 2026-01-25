@@ -531,11 +531,11 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
       """
       sensors = [
-        ('ff', 'FF_DETECT_DISTANCE'),
-        ('lf', 'LF_DETECT_DISTANCE'),
-        ('rf', 'RF_DETECT_DISTANCE'),
-        ('lr', 'LR_DETECT_DISTANCE'),
-        ('rr', 'RR_DETECT_DISTANCE')
+        ('ff', 'FF_DETECT'),
+        ('lf', 'LF_DETECT'),
+        ('rf', 'RF_DETECT'),
+        ('lr', 'LR_DETECT'),
+        ('rr', 'RR_DETECT')
       ]
 
       for sensor_key, detect_key in sensors:
@@ -591,28 +591,30 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       if HDA_CntrlModSta == 0:
         if frame % 500 in [10,20,30]:
           values = {
-            'BYTE_1': 0,
-            'BYTE_2': 0,
-            'BYTE_3': 0x80,
-            'BYTE_4': 0x8A,
-            'BYTE_5': 0x32,
-            'BYTE_6': 0x30,
-            'BYTE_7': 0x01,
-            'BYTE_8': 0x00,
+            "Offset": 0,
+            "CyclicCounter": 0,
+            "Retransmission": 0,
+            "CalculatedRoute": 0,
+            "FuncRoadClass": 2,
+            "SpeedLimit": 17,
+            "FormOfWay": 3,
+            "DirectionLanes": 3,
+            "SpeedLimitUnder5": 0,
           }
-          ret.append(packer.make_can_msg("NEW_MSG_4B9", CAN.CAM, values))
+          ret.append(packer.make_can_msg("HU_NAVI_V2_SEG_E", CAN.CAM, values))
         elif frame % 500 in [40,50,60]:
           values = {
-            'BYTE_1': 0xff,
-            'BYTE_2': 0xff,
-            'BYTE_3': 0xff,
-            'BYTE_4': 0xff,
-            'BYTE_5': 0xff,
-            'BYTE_6': 0xff,
-            'BYTE_7': 0xff,
-            'BYTE_8': 0xff,
+            "Offset": 8191,
+            "CyclicCounter": 3,
+            "Retransmission": 1,
+            "CalculatedRoute": 3,
+            "FuncRoadClass": 7,
+            "SpeedLimit": 31,
+            "FormOfWay": 15,
+            "DirectionLanes": 15,
+            "SpeedLimitUnder5": 7,
           }
-          ret.append(packer.make_can_msg("NEW_MSG_4B9", CAN.CAM, values))
+          ret.append(packer.make_can_msg("HU_NAVI_V2_SEG_E", CAN.CAM, values))
     """
 
     return ret

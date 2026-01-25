@@ -463,6 +463,7 @@ struct CarControl {
 
     leadDistance @11: Float32;
     leadRelSpeed @12: Float32;
+    leadRadar @13: Int16;
 
     enum VisualAlert {
       # these are the choices from the Honda

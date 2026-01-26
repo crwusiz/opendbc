@@ -223,9 +223,10 @@ def create_acc_cancel(packer, CP, CS, CAN):
 
 def create_lfahda_cluster(packer, CC, CS, CAN):
   if CS.lfahda_cluster_info is not None:
-    values = {}
-    values["HDA_CntrlModSta"] = 2 if CC.longActive else 0
-    values["HDA_LFA_SymSta"] = 2 if CC.latActive else 0
+    values = {
+      "HDA_CntrlModSta": 2 if CC.longActive else 0,
+      "HDA_LFA_SymSta": 2 if CC.latActive else 0,
+    }
   else:
     return []
   return [packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)]
@@ -349,19 +350,16 @@ def create_tcs_messages(packer, CAN, CS):
     ret.append(packer.make_can_msg("TCS", CAN.CAM, values))
   return ret
 
-def forward_button_message(packer, CAN, frame, CS, cruise_button, MainMode_ACC_trigger, LFA_trigger):
+def forward_button_message(packer, CAN, frame, CS, MainMode_ACC_trigger, LFA_trigger):
   ret = []
   if frame % 2 == 0:
     if CS.cruise_buttons_msg is not None:
       values = copy.copy(CS.cruise_buttons_msg)
-      cruise_button_driver = values["CRUISE_BUTTONS"]
-      if cruise_button_driver == 0:
-        values["CRUISE_BUTTONS"] = cruise_button
       if MainMode_ACC_trigger > 0:
         #values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
         pass
       elif LFA_trigger > 0:
-        values["LFA_BTN"] = 1
+        values["LDA_BTN"] = 1
 
       ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
   return ret

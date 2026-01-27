@@ -527,7 +527,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       for f in {"FAULT_FCA", "FAULT_LSS", "FAULT_DAS", "FAULT_LFA"}:
         values[f] = 0
 
-      """
       sensors = [
         ('ff', 'FF_DETECT'),
         ('lf', 'LF_DETECT'),
@@ -540,12 +539,12 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
         distance = getattr(CS, f"{sensor_key}_distance")
         if distance > 0:
           values[detect_key] = 3 if distance > 30 else 4
-      """
 
+      """
       if hud.leadDistance > 0:
         values["FF_DETECT_DISTANCE"] = hud.leadDistance
-        ff_type = 3 if hud.leadRadar == 1 else 13
-        values["FF_DETECT"] = ff_type if hud.leadRelSpeed > -0.1 else ff_type + 1
+        values["FF_DETECT"] = 3 if hud.leadRelSpeed > -0.1 else 4
+      """
 
       _make_ccnc_values(
         values, CS, lat_active, frame, hud,

@@ -356,8 +356,7 @@ def forward_button_message(packer, CAN, frame, CS, MainMode_ACC_trigger, LFA_tri
     if CS.cruise_buttons_msg is not None:
       values = copy.copy(CS.cruise_buttons_msg)
       if MainMode_ACC_trigger > 0:
-        #values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
-        pass
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
       elif LFA_trigger > 0:
         values["LDA_BTN"] = 1
 
@@ -379,41 +378,38 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   # the ADAS Driving ECU to do longitudinal control
 
   ret = []
-
-  if CP.flags & HyundaiFlags.CAMERA_SCC.value:
+  if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
     HDA_CntrlModSta = 0
     if CS.lfahda_cluster_info is not None:
       HDA_CntrlModSta = CS.lfahda_cluster_info["HDA_CntrlModSta"]
 
-    if frame % 2 == 0:
-      if CS.adrv_msg_160 is not None:
+    if frame % 2 == 0 and CS.adrv_msg_160 is not None:
         values = copy.copy(CS.adrv_msg_160)
         ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
 
-  if CS.cruise_buttons_msg is not None:
-    values = copy.copy(CS.cruise_buttons_msg)
+    if frame % 2 == 0 and CS.cruise_buttons_msg is not None:
+      values = copy.copy(CS.cruise_buttons_msg)
 
-    for key, val in values.items():
-      if isinstance(val, list):
-        if len(val) > 0:
-          values[key] = val[0]
-        else:
-          values[key] = 0
+      for key, val in values.items():
+        if isinstance(val, list):
+          if len(val) > 0:
+            values[key] = val[0]
+          else:
+            values[key] = 0
 
-    if CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
-      values["LDA_BTN"] = 1
+      if CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
+        values["LDA_BTN"] = 1
 
-    if CC.enabled and CS.MainMode_ACC:
-      if CS.ACCMode in [0, 4] and 10 < frame % 200 < 22:
-        values["CRUISE_BUTTONS"] = 2
-    elif CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:
-      values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
-    else:
-      values["ADAPTIVE_CRUISE_MAIN_BTN"] = 0
+      if CC.enabled and CS.MainMode_ACC:
+        if CS.ACCMode in [0, 4] and 10 < frame % 200 < 22:
+          values["CRUISE_BUTTONS"] = 2
+      elif CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
+      else:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 0
 
-    ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
+      ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
 
-  if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
     if frame % 5 == 0 and CS.ccnc_msg_161 is not None and ccnc:
       values = copy.copy(CS.ccnc_msg_161)
       values |= {

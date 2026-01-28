@@ -270,6 +270,13 @@ struct CarState {
   vEgoClu @64 :Float32;
   aEgoClu @65 :Float32;
 
+  leftLatDist @66 : Float32;  # distance to left lane line
+  rightLatDist @67 : Float32; # distance to right lane line
+  leftLongDist @68 : Float32; # distance to left lane line in the direction of travel
+  rightLongDist @69 : Float32; # distance to right lane line in the direction of travel
+  leftLaneLine @70 : Int16; # -1: no lane, 0: dashed, 1: solid, +10: white, +20: yellow, ex) 21: solid yellow
+  rightLaneLine @71 : Int16; # -1: no lane, 0: dashed, 1: solid, +10: white, +20: yellow, ex) 21: solid yellow
+
   struct WheelSpeeds {
     # optional wheel speeds
     fl @0 :Float32;
@@ -456,6 +463,7 @@ struct CarControl {
 
     leadDistance @11: Float32;
     leadRelSpeed @12: Float32;
+    leadRadar @13: Int16;
 
     enum VisualAlert {
       # these are the choices from the Honda

@@ -7,6 +7,11 @@ from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 from openpilot.common.params import Params
 from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
 
+from cereal import log
+
+LaneChangeState = log.LaneChangeState
+LaneChangeDirection = log.LaneChangeDirection
+TurnDirection = log.Desire
 
 class CanBus(CanBusBase):
   def __init__(self, CP, fingerprint=None, lka_steering=None) -> None:
@@ -218,9 +223,10 @@ def create_acc_cancel(packer, CP, CS, CAN):
 
 def create_lfahda_cluster(packer, CC, CS, CAN):
   if CS.lfahda_cluster_info is not None:
-    values = {}
-    values["HDA_CntrlModSta"] = 2 if CC.longActive else 0
-    values["HDA_LFA_SymSta"] = 2 if CC.latActive else 0
+    values = {
+      "HDA_CntrlModSta": 2 if CC.longActive else 0,
+      "HDA_LFA_SymSta": 2 if CC.latActive else 0,
+    }
   else:
     return []
   return [packer.make_can_msg("LFAHDA_CLUSTER", CAN.ECAN, values)]
@@ -332,6 +338,31 @@ def create_fca_warning_light(packer, CP, CAN, frame):
   return ret
 
 
+def create_tcs_messages(packer, CAN, CS):
+  ret = []
+  if CS.tcs_info_373 is not None:
+    values = copy.copy(CS.tcs_info_373)
+    values["DriverBraking"] = 0
+    values["DriverBrakingLowSens"] = 0
+    #values["NEW_SIGNAL_1"] = 0 # accel과 관련..  옆두부 꺼지는것과 관련? 확인필요
+    #values["ACC_REQ"] = 1 # 옆두부 꺼지는것과 관련? 확인필요.. 항상 켜지게함..
+    values["NEW_SIGNAL_1"] = 0 if values["ACC_REQ"] == 1 else 1 # 옆두부..
+    ret.append(packer.make_can_msg("TCS", CAN.CAM, values))
+  return ret
+
+def forward_button_message(packer, CAN, frame, CS, MainMode_ACC_trigger, LFA_trigger):
+  ret = []
+  if frame % 2 == 0:
+    if CS.cruise_buttons_msg is not None:
+      values = copy.copy(CS.cruise_buttons_msg)
+      if MainMode_ACC_trigger > 0:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
+      elif LFA_trigger > 0:
+        values["LDA_BTN"] = 1
+
+      ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
+  return ret
+
 def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   main_enabled = CS.out.cruiseState.available
   cruise_enabled = CC.enabled
@@ -339,12 +370,46 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   ccnc = CP.exFlags & HyundaiExFlags.CCNC
   nav_active = SpeedLimiter.instance().get_active()
   hdp_active = cruise_enabled and nav_active
+  md = CS.MD
+  enable_corner_radar = CP.flags & HyundaiFlags.CANFD_LKA_STEERING
+  desire, lane_changing = _get_desire_and_lane_changing(md)
 
   # messages needed to car happy after disabling
   # the ADAS Driving ECU to do longitudinal control
 
   ret = []
   if CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
+    HDA_CntrlModSta = 0
+    if CS.lfahda_cluster_info is not None:
+      HDA_CntrlModSta = CS.lfahda_cluster_info["HDA_CntrlModSta"]
+
+    if frame % 2 == 0 and CS.adrv_msg_160 is not None:
+        values = copy.copy(CS.adrv_msg_160)
+        ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
+
+    if frame % 2 == 0 and CS.cruise_buttons_msg is not None:
+      values = copy.copy(CS.cruise_buttons_msg)
+
+      for key, val in values.items():
+        if isinstance(val, list):
+          if len(val) > 0:
+            values[key] = val[0]
+          else:
+            values[key] = 0
+
+      if CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
+        values["LDA_BTN"] = 1
+
+      if CC.enabled and CS.MainMode_ACC:
+        if CS.ACCMode in [0, 4] and 10 < frame % 200 < 22:
+          values["CRUISE_BUTTONS"] = 2
+      elif CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
+      else:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 0
+
+      ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
+
     if frame % 5 == 0 and CS.ccnc_msg_161 is not None and ccnc:
       values = copy.copy(CS.ccnc_msg_161)
       values |= {
@@ -361,7 +426,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
         "TARGET_DISTANCE": int(hud.leadDistance),
 
         "BACKGROUND": 1 if cruise_enabled else 3 if main_enabled else 7,
-        "CENTERLINE": 1 if lat_active else 0,
+        "CENTERLINE": 1 if HDA_CntrlModSta > 0 else 0, #lat_active else 0,
         "CAR_CIRCLE": 2 if hdp_active else 1 if lat_active else 0,
 
         "NAV_ICON": 2 if nav_active else 1,
@@ -379,6 +444,17 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
         "SOUNDS_2": 0,
       }
+
+      if md is not None:
+        desire = md.meta.desire.raw
+        lane_left = desire in (1, 3)
+        lane_right = desire in (2, 4)
+        # lane_left = md.meta.desireStat[1] > 0.1 or md.meta.desireStat[3] > 0.1
+        # lane_right = md.meta.desireStat[2] > 0.1 or md.meta.desireStat[4] > 0.1
+        values["LANE_LEFT"] = 1 if lane_left else 0
+        values["LANE_RIGHT"] = 1 if lane_right else 0
+        # values["LANE_LEFT"] = 1 if hud.modelDesire in [1,3] else 0
+        # values["LANE_RIGHT"] = 1 if hud.modelDesire in [2,4] else 0
 
       alerts_disable_map = {
         "ALERTS_2": [1, 2, 5],
@@ -460,6 +536,24 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
         if distance > 0:
           values[detect_key] = 3 if distance > 30 else 4
 
+      """
+      if hud.leadDistance > 0:
+        values["FF_DETECT_DISTANCE"] = hud.leadDistance
+        values["FF_DETECT"] = 3 if hud.leadRelSpeed > -0.1 else 4
+      """
+
+      _make_ccnc_values(
+        values, CS, lat_active, frame, hud,
+        lane_line=False,
+        corner_radar=True,
+        desire=0,
+        # 필요하면 162도 깜빡임 적용(원래 코드처럼 LR/RR만)
+        blink_pairs=[('LR_DETECT', 'LR_DETECT_DISTANCE'),
+                     ('RR_DETECT', 'RR_DETECT_DISTANCE')],
+        blink_t=1.0
+      )
+
+      #if (left_lane_warning and not CS.out.leftBlinker) or (right_lane_warning and not CS.out.rightBlinker):
       if hud.leftLaneDepart or hud.rightLaneDepart:
         values["VIBRATE"] = 1
 
@@ -467,11 +561,54 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
     if frame % 5 == 0 and CS.adrv_msg_1ea is not None:
       values = copy.copy(CS.adrv_msg_1ea)
-      values |= {
-        "HDA_MODE1": 0x8,
-        "HDA_MODE2": 0x1,
-      }
+
+      # blinker hold
+      values['LEFT_BLINK_HOLD'] = 1 if lane_changing == 3 else 0
+      values['RIGHT_BLINK_HOLD'] = 1 if lane_changing == 4 else 0
+
+      _make_ccnc_values(
+        values, CS, lat_active, frame, hud,
+        lane_line=True,
+        corner_radar=True,
+        desire=desire,
+        # 기존대로 LR/RR만 깜빡임
+        blink_pairs=[('LR_DETECT', 'LR_DETECT_DISTANCE'),
+                     ('RR_DETECT', 'RR_DETECT_DISTANCE')],
+        blink_t=1.0
+      )
+
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
+
+    """
+    if enable_corner_radar > 0:
+      if HDA_CntrlModSta == 0:
+        if frame % 500 in [10,20,30]:
+          values = {
+            "Offset": 0,
+            "CyclicCounter": 0,
+            "Retransmission": 0,
+            "CalculatedRoute": 0,
+            "FuncRoadClass": 2,
+            "SpeedLimit": 17,
+            "FormOfWay": 3,
+            "DirectionLanes": 3,
+            "SpeedLimitUnder5": 0,
+          }
+          ret.append(packer.make_can_msg("HU_NAVI_V2_SEG_E", CAN.CAM, values))
+        elif frame % 500 in [40,50,60]:
+          values = {
+            "Offset": 8191,
+            "CyclicCounter": 3,
+            "Retransmission": 1,
+            "CalculatedRoute": 3,
+            "FuncRoadClass": 7,
+            "SpeedLimit": 31,
+            "FormOfWay": 15,
+            "DirectionLanes": 15,
+            "SpeedLimitUnder5": 7,
+          }
+          ret.append(packer.make_can_msg("HU_NAVI_V2_SEG_E", CAN.CAM, values))
+    """
 
     return ret
 
@@ -480,17 +617,15 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     ret.extend(create_fca_warning_light(packer, CP, CAN, frame))
     if frame % 5 == 0:
       values = {
-        'HDA_MODE1': 0x8,
+        #'HDA_MODE1': 0x8,
         'HDA_MODE2': 0x1,
-        'SET_ME_FF': 0xff,
-        'SET_ME_TMP_F': 0xf,
-        'SET_ME_TMP_F_2': 0xf,
+        #'SET_ME_FF': 0xff,
       }
       ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 
       values = {
         'SET_ME_E1': 0xe1,
-        'SET_ME_3A': 0x3a,
+        #'SET_ME_3A': 0x3a,
       }
       ret.append(packer.make_can_msg("ADRV_0x200", CAN.ECAN, values))
 
@@ -540,3 +675,88 @@ def hyundai_crc8(data: bytes) -> int:
         crc = (crc << 1) & 0xFF
 
   return crc ^ 0xFF
+
+
+def _clip_int(x, lo, hi):
+  return lo if x < lo else hi if x > hi else int(x)
+
+def _get_desire_and_lane_changing(md):
+  desire = 0
+  lane_changing = 0
+  if md is not None:
+    desire = md.meta.desire.raw
+    ds = md.meta.desireState
+    if len(ds) > 4:
+      if ds[1] > 0.3: lane_changing = 1
+      if ds[2] > 0.3: lane_changing = 2
+      if ds[3] > 0.3: lane_changing = 3
+      if ds[4] > 0.3: lane_changing = 4
+  return desire, lane_changing
+
+def _apply_lane_desire(values, desire):
+  #values['LANE_CHANGING'] = 0
+
+  if desire == 1:  # 좌회전
+    values['LANE_CHANGING'] = 1
+    values["LANELINE_CURVATURE"] = 15
+    values["LANELINE_CURVATURE_DIRECTION"] = 0
+
+  elif desire == 2:  # 우회전
+    values['LANE_CHANGING'] = 2
+    values["LANELINE_CURVATURE"] = 15
+    values["LANELINE_CURVATURE_DIRECTION"] = 1
+
+  elif desire == 3:  # 좌차선변경
+    values['LANE_CHANGING'] = 3
+
+  elif desire == 4:  # 우차선변경
+    values['LANE_CHANGING'] = 4
+
+def _apply_radar_blink(values, radar_pairs, frame, *,
+                      disp_dist=30.0, min_dist=14.0,
+                      max_interval=100, t=1.0):
+  """
+  거리 > min_dist 일 때만 깜빡임.
+  거리 멀수록 interval 커짐(느리게).
+  """
+  for det_key, dist_key in radar_pairs:
+    dist = values[dist_key]
+    if dist <= min_dist:
+      continue
+
+    d = min(dist, disp_dist)
+    interval = int((1 + (max_interval - 1) * (d / disp_dist)) * t)
+    interval = _clip_int(interval, 1, max_interval)
+
+    blink = (frame // interval) & 1
+    values[det_key] = 2 - blink
+    values[dist_key] = min_dist
+
+def _make_ccnc_values(values, CS, lat_active, frame, hud,
+                     lane_line=True, corner_radar=True,
+                     desire=0,
+                     blink_pairs=None,
+                     blink_t=1.0):
+  if lane_line:
+    curvature = round(CS.out.steeringAngleDeg / 3)
+    mag = min(abs(curvature), 15)
+    curv = mag + (-1 if curvature < 0 else 0)
+    direction = 1 if curvature < 0 else 0
+    values["LANELINE_CURVATURE"] = curv if lat_active else 0
+    values["LANELINE_CURVATURE_DIRECTION"] = direction if lat_active else 0
+    if desire:
+      _apply_lane_desire(values, desire)
+
+  if corner_radar:
+    radar_all = [
+      ('LF_DETECT', 'LF_DETECT_DISTANCE'),
+      ('RF_DETECT', 'RF_DETECT_DISTANCE'),
+      ('LR_DETECT', 'LR_DETECT_DISTANCE'),
+      ('RR_DETECT', 'RR_DETECT_DISTANCE'),
+    ]
+    for det_key, dist_key in radar_all:
+      if values[det_key] >= 4 and values[dist_key] != 0:
+        values[det_key] = 1
+
+    if blink_pairs:
+      _apply_radar_blink(values, blink_pairs, frame, t=blink_t)

@@ -79,6 +79,7 @@ class CarState(CarStateBase):
     self.hda_msg_4a3 = None
     self.msg_0x362 = None
     self.msg_0x2a4 = None
+    self.tcs_info_373 = None
 
     self.cruise_buttons_msg = None
 
@@ -108,6 +109,11 @@ class CarState(CarStateBase):
     self.speedLimitDistance = 0
 
     self.DistanceGapSet = 0
+
+    self.regen_level = 0
+    self.regen_level_auto = False
+    self.i_pedal_max = False
+    self.i_pedel_stop = False
 
     cam_bus = CanBus(CP).CAM
     pt_bus = CanBus(CP).ECAN
@@ -453,26 +459,59 @@ class CarState(CarStateBase):
     self.DistanceGapSet = cp_cam.vl["SCC_CONTROL"]["DistanceGapSet"]
 
     if self.CP.exFlags & HyundaiExFlags.CCNC.value:
+      corner = False
       self.ccnc_msg_161 = cp_cam.vl["CCNC_0x161"] if self.CCNC_MSG_161 else None
       self.ccnc_msg_162 = cp_cam.vl["CCNC_0x162"] if self.CCNC_MSG_162 else None
       if self.CCNC_MSG_162 is not None:
-        self.ff_distance = cp_cam.vl["CCNC_0x162"]["FF_DISTANCE"]
-        self.lf_distance = cp_cam.vl["CCNC_0x162"]["LF_DISTANCE"]
-        self.rf_distance = cp_cam.vl["CCNC_0x162"]["RF_DISTANCE"]
-        self.lr_distance = cp_cam.vl["CCNC_0x162"]["LR_DISTANCE"]
-        self.rr_distance = cp_cam.vl["CCNC_0x162"]["RR_DISTANCE"]
+        self.ff_distance = self.ccnc_msg_162["FF_DETECT_DISTANCE"]
+        ret.leftLongDist = self.lf_distance = self.ccnc_msg_162["LF_DETECT_DISTANCE"]
+        ret.rightLongDist = self.rf_distance = self.ccnc_msg_162["RF_DETECT_DISTANCE"]
+        self.lr_distance = self.ccnc_msg_162["LR_DETECT_DISTANCE"]
+        self.rr_distance =self.ccnc_msg_162["RR_DETECT_DISTANCE"]
+        ret.leftLatDist = self.ccnc_msg_162["LF_DETECT_LATERAL"]
+        ret.rightLatDist = self.ccnc_msg_162["RF_DETECT_LATERAL"]
+        corner = True
       self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
       self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
       self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
+      if self.adrv_msg_1ea is not None:
+        if not corner:
+          ret.leftLongDist = self.adrv_msg_1ea["LF_DETECT_DISTANCE"]
+          ret.rightLongDist = self.adrv_msg_1ea["RF_DETECT_DISTANCE"]
+          self.lr_distance = self.adrv_msg_1ea["LR_DETECT_DISTANCE"]
+          self.rr_distance = self.adrv_msg_1ea["RR_DETECT_DISTANCE"]
+          ret.leftLatDist = self.adrv_msg_1ea["LF_DETECT_LATERAL"]
+          ret.rightLatDist = self.adrv_msg_1ea["RF_DETECT_LATERAL"]
+          corner = True
+      if corner:
+        left_block = True if 0 < ret.leftLongDist < 7.0 or 0 < self.lr_distance < 7.0 else False
+        right_block = True if 0 < ret.rightLongDist < 7.0 or 0 < self.rr_distance < 7.0 else False
+        if left_block:
+          ret.leftBlindspot = True
+        if right_block:
+          ret.rightBlindspot = True
       self.hda_msg_4a3 = cp.vl["HU_Navi_ISLW_PE"] if self.HDA_MSG_4A3 else None
       #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
 
+      self.tcs_info_373 = cp.vl["TCS"]
+
       if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
         lane_info = None
-        if self.CAM_0x362:
-          lane_info = cp_alt.vl["CAM_0x362"]
-        if self.CAM_0x2a4:
-          lane_info = cp_alt.vl["CAM_0x2a4"]
+        lane_info = cp_alt.vl["CAM_0x362"] if self.CAM_0x362 else None
+        lane_info = cp_alt.vl["CAM_0x2a4"] if self.CAM_0x2a4 else lane_info
+
+        if lane_info is not None:
+          left_lane_prob = lane_info["LEFT_LANE_PROB"]
+          right_lane_prob = lane_info["RIGHT_LANE_PROB"]
+          left_lane_type = lane_info["LEFT_LANE_TYPE"]
+          # 0: dashed, 1: solid, 2: undecided, 3: road edge, 4: DLM Inner Solid, 5: DLM InnerDashed, 6:DLM Inner Undecided, 7: Botts Dots, 8: Barrier
+          right_lane_type = lane_info["RIGHT_LANE_TYPE"]
+          left_lane_color = lane_info["LEFT_LANE_COLOR"]
+          right_lane_color = lane_info["RIGHT_LANE_COLOR"]
+          left_lane_info = left_lane_color * 10 + left_lane_type
+          right_lane_info = right_lane_color * 10 + right_lane_type
+          ret.leftLaneLine = left_lane_info
+          ret.rightLaneLine = right_lane_info
 
       if self.HDA_MSG_4A3:
         speedLimit = self.hda_msg_4a3["SpeedLimit"]
@@ -487,6 +526,10 @@ class CarState(CarStateBase):
     # TODO: find this message on ICE & HYBRID cars + cruise control signals (if exists)
     if self.CP.flags & HyundaiFlags.EV:
       ret.cruiseState.nonAdaptive = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["MSLA_ENABLED"] == 1
+      self.regen_level = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["REGEN_LEVEL"]
+      self.regen_level_auto = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["REGEN_LEVEL_AUTO"] == 1
+      self.i_pedal_max = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["I_PEDAL_MAX"] == 1
+      self.i_pedel_stop = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["I_PEDAL_STOP"] == 1
 
     prev_cruise_buttons = self.cruise_buttons[-1]
     #self.cruise_buttons.extend(cp.vl_all[self.cruise_btns_msg_canfd]["CRUISE_BUTTONS"])

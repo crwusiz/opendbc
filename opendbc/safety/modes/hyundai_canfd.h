@@ -103,10 +103,11 @@ CanFdTxEntry tx_bus_2[CANFD_TX_ENTRIES_SIZE] = {
 };
 
 CanFdTxEntry tx_bus_0[CANFD_TX_ENTRIES_SIZE] = {
-  [0] = { .addr = 0x4A3,  .timestamp = 0 },  // HDA_INFO_0x4A3
+  [0] = { .addr = 0x4A3,  .timestamp = 0 },  // NAVI_MSG_0x4A3
   [1] = { .addr = 0x2AF,  .timestamp = 0 },  // HANDS_ON_DETECTION
   [2] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
   [3] = { .addr = 0x7C4,  .timestamp = 0 },  // VEHICLE DIAGNOSTICS
+  [4] = { .addr = 0x4B9,  .timestamp = 0 },  // NAVI_MSG_0x4B9
 };
 
 static void update_canfd_entry(CanFdTxEntry *entries, int size, int addr, bool tx) {
@@ -379,7 +380,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x160, 1, 16, .check_relay = false},  // ADRV_0x160
     {0x161, 0, 32, .check_relay = false},  // CCNC_0x161
     {0x162, 0, 32, .check_relay = false},  // CCNC_0x162
-    {0x4A3, 2,  8, .check_relay = false},  // HDA_INFO_0x4a3
+    {0x4A3, 2,  8, .check_relay = false},  // NAVI_MSG_0x4a3
+    {0x4B9, 2,  8, .check_relay = false},  // NAVI_MSG_0x4b9
     {0xEA,  2, 24, .check_relay = false},  // MDPS
     {0x2AF, 2,  8, .check_relay = false},  // HANDS_ON_DETECTION
   };

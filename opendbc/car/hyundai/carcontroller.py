@@ -275,6 +275,7 @@ class CarController(CarControllerBase):
     if self.CP.openpilotLongitudinalControl:
       if camera_scc:
         self.canfd_toggle_adas(CC, CS)
+        can_sends.extend(hyundaicanfd.forward_button_message(self.packer, self.CAN, self.frame, CS, self.MainMode_ACC_trigger, self.LFA_trigger))
       if lka_steering:
         can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, set_speed_in_units, hud_control))
       else:

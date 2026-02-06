@@ -562,8 +562,8 @@ class CarState(CarStateBase):
       cruise_button = cp.vl_all[self.cruise_btns_msg_canfd]["CRUISE_BUTTONS"]
     self.cruise_buttons.extend(cruise_button)
 
-    if self.cruise_btns_msg_canfd in cp.vl_all:
-      self.cruise_buttons_msg = copy.copy(cp.vl_all[self.cruise_btns_msg_canfd])
+    if self.cruise_btns_msg_canfd in cp.vl:
+      self.cruise_buttons_msg = copy.copy(cp.vl[self.cruise_btns_msg_canfd])
 
     prev_main_buttons = self.main_buttons[-1]
     self.main_buttons.extend(cp.vl_all[self.cruise_btns_msg_canfd]["ADAPTIVE_CRUISE_MAIN_BTN"])

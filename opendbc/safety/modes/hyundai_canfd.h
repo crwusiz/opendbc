@@ -408,8 +408,9 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x160, 1, 16, .check_relay = false},  // ADRV_0x160
     {0x161, 0, 32, .check_relay = false},  // CCNC_0x161
     {0x162, 0, 32, .check_relay = false},  // CCNC_0x162
-    {0x4A3, 2,  8, .check_relay = false},  // NAVI_MSG_0x4a3
-    {0x4B9, 2,  8, .check_relay = false},  // NAVI_MSG_0x4b9
+    {0x4A3, 2,  8, .check_relay = false},  // Hud_Navi_ISLW_PE
+    {0x4B4, 2,  8, .check_relay = false},  // Hud_Navi_V2_POS_PE
+    {0x4B9, 2,  8, .check_relay = false},  // Hud_Navi_V2_SEG_E
     {0xEA,  2, 24, .check_relay = false},  // MDPS
     {0x2AF, 2,  8, .check_relay = false},  // HANDS_ON_DETECTION
   };

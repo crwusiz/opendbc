@@ -521,14 +521,14 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     if enable_corner_radar > 0 and HDA_CntrlModSta == 0:
       if frame % 500 in [10, 20, 30]:
         values = {
-          "Offset": CS.Offset_4b9,
-          "CyclicCounter": frame % 4,
+          "Offset": 0,
+          "CyclicCounter": 3,
           "Retransmission": 1,
           "CalculatedRoute": 0,
           "FuncRoadClass": 1,
-          "SpeedLimit": CS.SpeedLimit_4b9,
-          "FormOfWay": CS.FormOfWay_4b9,
-          "DirectionLanes": CS.DirectionLanes_4b9,
+          "SpeedLimit": 17,
+          "FormOfWay": 2,
+          "DirectionLanes": 2,
           "SpeedLimitUnder5": 0,
         }
         ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))

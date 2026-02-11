@@ -90,7 +90,6 @@ class CarState(CarStateBase):
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None
     self.navi_msg_4a3 = None
-    self.navi_msg_4b9 = None
     self.msg_0x362 = None
     self.msg_0x2a4 = None
     self.tcs_info_373 = None
@@ -119,11 +118,6 @@ class CarState(CarStateBase):
     self.lr_distance = 0
     self.rr_distance = 0
 
-    self.Offset_4b9 = 0
-    self.SpeedLimit_4b9 = 0
-    self.DirectionLanes_4b9 = 0
-    self.FormOfWay_4b9 = 0
-
     self.totalDistance = 0.0
     self.speedLimitDistance = 0
 
@@ -142,7 +136,6 @@ class CarState(CarStateBase):
     fingerprints = ast.literal_eval(fingerprints_str)
 
     self.NAVI_MSG_4A3 = 0x4a3 in fingerprints[pt_bus]
-    self.NAVI_MSG_4B9 = 0x4b9 in fingerprints[pt_bus]
 
     # Refactored: Removed ternary operators
     self.CCNC_MSG_161 = 0x161 in fingerprints[cam_bus]
@@ -503,7 +496,6 @@ class CarState(CarStateBase):
         if right_block:
           ret.rightBlindspot = True
       self.navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"] if self.NAVI_MSG_4A3 else None
-      self.navi_msg_4b9 = cp.vl["Hud_Navi_V2_SEG_E"] if self.NAVI_MSG_4B9 else None
       #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
 
       self.tcs_info_373 = cp.vl["TCS"]
@@ -534,12 +526,6 @@ class CarState(CarStateBase):
         if int(self.navi_msg_4a3["MapSource"]) == 2:
           speed_limit_cam = True
         self.update_speed_limit(ret, speed_limit_cam)
-
-      if self.NAVI_MSG_4B9:
-        self.Offset_4b9 = self.navi_msg_4b9["Offset"]
-        self.SpeedLimit_4b9 = self.navi_msg_4b9["SpeedLimit"]
-        self.FormOfWay_4b9 = self.navi_msg_4b9["FormOfWay"]
-        self.DirectionLanes_4b9 = self.navi_msg_4b9["DirectionLanes"]
 
     # Manual Speed Limit Assist is a feature that replaces non-adaptive cruise control on EV CAN FD platforms.
     # It limits the vehicle speed, overridable by pressing the accelerator past a certain point.

@@ -338,16 +338,6 @@ def create_tcs_messages(packer, CAN, CS):
     ret.append(packer.make_can_msg("TCS", CAN.CAM, values))
   return ret
 
-def forward_button_message(packer, CAN, frame, CS, MainMode_ACC_trigger, LFA_trigger):
-  ret = []
-  if frame % 2 == 0 and CS.cruise_buttons_msg is not None:
-    values = copy.copy(CS.cruise_buttons_msg)
-    if MainMode_ACC_trigger > 0:
-      values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
-    elif LFA_trigger > 0:
-      values["LDA_BTN"] = 1
-    ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
-  return ret
 
 def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   main_enabled = CS.out.cruiseState.available

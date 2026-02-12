@@ -62,7 +62,7 @@ class CarController(CarControllerBase):
     self.angle_limit_counter = 0
     self.turningSignalTimer = 0
 
-    self.MainMode_ACC_trigger = 0
+    self.ACC_trigger = 0
     self.LFA_trigger = 0
 
   def update(self, CC, CS, now_nanos):
@@ -312,10 +312,10 @@ class CarController(CarControllerBase):
   def canfd_toggle_adas(self, CC, CS):
     trigger_min = -200
     trigger_start = 6
-    self.MainMode_ACC_trigger = max(trigger_min, self.MainMode_ACC_trigger - 1)
+    self.ACC_trigger = max(trigger_min, self.ACC_trigger - 1)
     self.LFA_trigger = max(trigger_min, self.LFA_trigger - 1)
-    if self.MainMode_ACC_trigger == trigger_min and self.LFA_trigger == trigger_min:
+    if self.ACC_trigger == trigger_min and self.LFA_trigger == trigger_min:
       if CC.enabled and not CS.MainMode_ACC and CS.out.vEgo > 3.:
-        self.MainMode_ACC_trigger = trigger_start
+        self.ACC_trigger = trigger_start
       elif CC.latActive and CS.LFA_ICON == 0:
         self.LFA_trigger = trigger_start

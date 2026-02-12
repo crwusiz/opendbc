@@ -124,7 +124,6 @@ CanFdBlockEntry op_on_bus2_block_list[] = {
   {0xEA, 100, 0, 0},   // MDPS
   {0x2AF, 10, 0, 0},   // HANDS_ON_DETECTION
   {0x4B9, 5, 0, 0},    // Hud_Navi_V2_SEG_E
-  {0x4BE, 5, 0, 0},    // Hud_Navi_V2_PROLONG_E
   {0x7C4, 5, 0, 0},    // VEHICLE DIAGNOSTICS
   {0, 0, 0, 0}
 };

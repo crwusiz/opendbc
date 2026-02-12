@@ -3,6 +3,7 @@
 #include "opendbc/safety/declarations.h"
 #include "opendbc/safety/modes/hyundai_common.h"
 
+// *** 1. TX Message Definitions (Openpilot -> CAN) ***
 #define HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(bus)                \
   {0x1CF, bus, 8, .check_relay = false},  /* CRUISE_BUTTON */   \
 
@@ -45,7 +46,7 @@
   HYUNDAI_CANFD_ADRV_TX_MSGS(e1)                \
   HYUNDAI_CANFD_ADRV_TX_MSGS(e2)                \
 
-// *** Addresses checked in rx hook ***
+// *** 2. RX Checks (Safety) ***
 // EV, ICE, HYBRID: ACCELERATOR (0x35), ACCELERATOR_BRAKE_ALT (0x100), ACCELERATOR_ALT (0x105)
 #define HYUNDAI_CANFD_COMMON_RX_CHECKS(pt_bus)                                                                                       \
   {.msg = {{0x35, (pt_bus), 32, 100U, .max_counter = 0xffU, .ignore_quality_flag = true},                                            \
@@ -76,49 +77,58 @@ static unsigned int hyundai_canfd_get_lka_addr(void) {
   return hyundai_canfd_lka_steering_alt ? 0x110U : 0x50U;
 }
 
-#define CANFD_TX_ENTRIES_SIZE 20
+// *** 3. Blocking Logic (Fwd Hook & Tx Hook) ***
 
 typedef struct {
   int addr;
+  int hz;
+  uint32_t timeout;
   uint32_t timestamp;
-} CanFdTxEntry;
+} CanFdBlockEntry;
 
-CanFdTxEntry tx_bus_2[CANFD_TX_ENTRIES_SIZE] = {
-  [0]  = { .addr = 0x160,  .timestamp = 0 },  // ADRV_0x160
-  [1]  = { .addr = 0x161,  .timestamp = 0 },  // CCNC_0x161
-  [2]  = { .addr = 0x162,  .timestamp = 0 },  // CCNC_0x162
-  [3]  = { .addr = 0x1A0,  .timestamp = 0 },  // SCC_CONTROL
-  [4]  = { .addr = 0x1DA,  .timestamp = 0 },  // ADRV_0x1DA
-  [5]  = { .addr = 0x1EA,  .timestamp = 0 },  // ADRV_0x1EA
-  [6]  = { .addr = 0x200,  .timestamp = 0 },  // ADRV_0x200
-  [7]  = { .addr = 0x345,  .timestamp = 0 },  // ADRV_0x345
-  [8]  = { .addr = 0x12A,  .timestamp = 0 },  // LFA
-  [9]  = { .addr = 0xCB,   .timestamp = 0 },  // LFA_ALT
-  [10] = { .addr = 0x1E0,  .timestamp = 0 },  // LFAHDA_CLUSTER
-  [11] = { .addr = 0x110,  .timestamp = 0 },  // LKAS_ALT
-  [12] = { .addr = 0x50,   .timestamp = 0 },  // LKAS
-  [13] = { .addr = 0x362,  .timestamp = 0 },  // CAM_0x362
-  [14] = { .addr = 0x2A4,  .timestamp = 0 },  // CAM_0x2A4
-  [15] = { .addr = 0x51,   .timestamp = 0 },  // ADRV_0x51
+CanFdBlockEntry op_on_bus0_block_list[] = {
+  {0x50, 100, 0, 0},   // LKAS
+  {0x51, 100, 0, 0},   // ADRV_0x51
+  {0x110, 100, 0, 0},  // LKAS_ALT
+  {0x11A, 100, 0, 0},  // ADAS_CAM
+  {0x12A, 100, 0, 0},  // LFA
+  {0x160, 50, 0, 0},   // ADRV_0x160
+  {0x161, 20, 0, 0},   // CCNC_0x161
+  {0x162, 20, 0, 0},   // CCNC_0x162
+  {0x1BA, 20, 0, 0},   // BLINDSPOTS_REAR_CORNERS
+  {0x1E5, 20, 0, 0},   // BLINDSPOTS_FRONT_CORNER_1
+  {0x1A0, 50, 0, 0},   // SCC_CONTROL
+  {0x1B5, 20, 0, 0},   // CCNC_0x1b5
+  {0x1FA, 10, 0, 0},   // CLUSTER_SPEED_LIMIT
+  {0x1DA, 1, 0, 0},    // ADRV_0x1da
+  {0x1E0, 20, 0, 0},   // LFAHDA_CLUSTER
+  {0x1EA, 20, 0, 0},   // ADRV_0x1ea
+  {0x200, 20, 0, 0},   // ADRV_0x200
+  {0x2A4, 20, 0, 0},   // CAM_0x2A4
+  {0x362, 10, 0, 0},   // CAM_0x362
+  {0x345, 5, 0, 0},    // ADRV_0x345
+  {0x4A3, 5, 0, 0},    // Hud_Navi_ISLW_PE
+  {0x4B4, 10, 0, 0},   // Hud_Navi_V2_POS_PE
+  {0xCB, 100, 0, 0},   // LFA_ALT
+  {0x1CF, 50, 0, 0},   // CRUISE_BUTTON
+  {0x1AA, 50, 0, 0},   // CRUISE_BUTTON_ALT
+  {0, 0, 0, 0}
 };
 
-CanFdTxEntry tx_bus_0[CANFD_TX_ENTRIES_SIZE] = {
-  [0] = { .addr = 0x4A3,  .timestamp = 0 },  // HDA_INFO_0x4A3
-  [1] = { .addr = 0x2AF,  .timestamp = 0 },  // HANDS_ON_DETECTION
-  [2] = { .addr = 0xEA,   .timestamp = 0 },  // MDPS
-  [3] = { .addr = 0x7C4,  .timestamp = 0 },  // VEHICLE DIAGNOSTICS
+CanFdBlockEntry op_on_bus2_block_list[] = {
+  {0x4A3, 5, 0, 0},    // Hud_Navi_ISLW_PE
+  {0x175, 50, 0, 0},   // TCS
+  {0x1FA, 10, 0, 0},   // CLUSTER_SPEED_LIMIT
+  {0x1CF, 50, 0, 0},   // CRUISE_BUTTON
+  {0x1AA, 50, 0, 0},   // CRUISE_BUTTON_ALT
+  {0xEA, 100, 0, 0},   // MDPS
+  {0x2AF, 10, 0, 0},   // HANDS_ON_DETECTION
+  {0x4B9, 5, 0, 0},    // Hud_Navi_V2_SEG_E
+  {0x4BE, 5, 0, 0},    // Hud_Navi_V2_PROLONG_E
+  {0x7C4, 5, 0, 0},    // VEHICLE DIAGNOSTICS
+  {0, 0, 0, 0}
 };
 
-static void update_canfd_entry(CanFdTxEntry *entries, int size, int addr, bool tx) {
-  for (int i = 0; i < size; i++) {
-    if (entries[i].addr == 0) break;
-
-    if (entries[i].addr == addr) {
-      entries[i].timestamp = tx ? microsecond_timer_get() : 0;
-      break;
-    }
-  }
-}
 
 static uint8_t hyundai_canfd_get_counter(const CANPacket_t *msg) {
   uint8_t ret = 0;
@@ -180,7 +190,6 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *msg) {
       gas_pressed = GET_BIT(msg, 103U) || (msg->data[13] != 0U) || GET_BIT(msg, 112U);
     } else if ((msg->addr == 0x100U) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
       gas_pressed = GET_BIT(msg, 176U);
-    } else {
     }
 
     // brake press
@@ -197,7 +206,7 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *msg) {
       vehicle_moving = (fl > HYUNDAI_STANDSTILL_THRSLD) || (fr > HYUNDAI_STANDSTILL_THRSLD) ||
                        (rl > HYUNDAI_STANDSTILL_THRSLD) || (rr > HYUNDAI_STANDSTILL_THRSLD);
 
-      // average of all 4 wheel speeds. Conversion: raw * 0.03125 / 3.6 = m/s
+      // average of all 4 wheel speeds. Conversion: raw * 0.03125 * KPH_TO_MS
       UPDATE_VEHICLE_SPEED((fr + rr + rl + fl) / 4.0 * 0.03125 * KPH_TO_MS);
     }
   }
@@ -236,19 +245,10 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
   const AngleSteeringLimits HYUNDAI_CANFD_ANGLE_STEERING_LIMITS = {
     .max_angle = 1800,
     .angle_deg_to_can = 10,
-    .angle_rate_up_lookup = {
-      //{5., 25., 25.},
-      //{0.3, 0.15, 0.15}
-      {0, 5., 25.},
-      {1.0, 0.6, 0.2}
-    },
-    .angle_rate_down_lookup = {
-      //{5., 25., 25.},
-      //{0.36, 0.26, 0.26}
-      {0, 5., 25.},
-      {1.5, 0.9, 0.3}
-    },
+    .angle_rate_up_lookup = {{0, 5., 25.}, {1.0, 0.6, 0.2}},
+    .angle_rate_down_lookup = {{0, 5., 25.}, {1.5, 0.9, 0.3}},
   };
+
   bool tx = true;
 
   // steering
@@ -305,48 +305,63 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
       violation |= longitudinal_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS);
       violation |= longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS);
     } else {
-      // only used to cancel on here
       const int acc_mode = (msg->data[8] >> 4) & 0x7U;
-      if (acc_mode != 4) {
-        violation = true;
-      }
-
-      if ((desired_accel_raw != 0) || (desired_accel_val != 0)) {
-        violation = true;
-      }
+      if (acc_mode != 4) { violation = true; }
+      if ((desired_accel_raw != 0) || (desired_accel_val != 0)) { violation = true; }
     }
 
-    if (violation) {
-      tx = false;
-    }
+    if (violation) { tx = false; }
   }
 
-  update_canfd_entry(tx_bus_2, CANFD_TX_ENTRIES_SIZE, msg->addr, tx);
-  update_canfd_entry(tx_bus_0, CANFD_TX_ENTRIES_SIZE, msg->addr, tx);
+  // *** Update Timestamps for Block Logic ***
+  if (tx) {
+    uint32_t now = microsecond_timer_get();
+
+    // Check List 1 (OP sending to Bus 0)
+    for (int i = 0; op_on_bus0_block_list[i].addr != 0; i++) {
+      if (op_on_bus0_block_list[i].addr == msg->addr) {
+        op_on_bus0_block_list[i].timestamp = now;
+      }
+    }
+
+    // Check List 2 (OP sending to Bus 2)
+    for (int i = 0; op_on_bus2_block_list[i].addr != 0; i++) {
+      if (op_on_bus2_block_list[i].addr == msg->addr) {
+        op_on_bus2_block_list[i].timestamp = now;
+      }
+    }
+  }
 
   return tx;
 }
 
-static bool should_block_msg(CanFdTxEntry *entries, int size, int addr, uint32_t now, uint32_t timeout) {
-  for (int i = 0; i < size; i++) {
-    if (entries[i].addr == 0) break;
-
-    if (entries[i].addr == addr && (now - entries[i].timestamp) < timeout) {
-      return true;
-    }
-  }
-  return false;
-}
-
 static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   bool block_msg = false;
-  uint32_t OP_CAN_SEND_TIMEOUT = 100000; // 1sec
   uint32_t now = microsecond_timer_get();
 
-  if (bus_num == 0) {
-    block_msg = should_block_msg(tx_bus_0, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
-  } else if (bus_num == 2) {
-    block_msg = should_block_msg(tx_bus_2, CANFD_TX_ENTRIES_SIZE, addr, now, OP_CAN_SEND_TIMEOUT);
+  // Bus 2 -> Bus 0 block_msg
+  if (bus_num == 2) {
+    for (int i = 0; op_on_bus0_block_list[i].addr != 0; i++) {
+      if ((op_on_bus0_block_list[i].addr == addr) &&
+          ((now - op_on_bus0_block_list[i].timestamp) < op_on_bus0_block_list[i].timeout)) {
+        block_msg = true;
+        break;
+      }
+    }
+  }
+  // Bus 0 -> Bus 2 block_msg
+  else if (bus_num == 0) {
+    for (int i = 0; op_on_bus2_block_list[i].addr != 0; i++) {
+      if ((op_on_bus2_block_list[i].addr == addr) &&
+          ((now - op_on_bus2_block_list[i].timestamp) < op_on_bus2_block_list[i].timeout)) {
+        block_msg = true;
+        break;
+      }
+    }
+
+    if (addr == 0x4B9) {
+      block_msg = true;
+    }
   }
 
   return block_msg;
@@ -356,6 +371,20 @@ static safety_config hyundai_canfd_init(uint16_t param) {
   const uint16_t HYUNDAI_PARAM_CANFD_LKA_STEERING_ALT = 128;
   const uint16_t HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
   const uint16_t HYUNDAI_PARAM_CANFD_ANGLE_STEERING = 1024;
+
+  // Initialize Timeouts based on Hz (1,000,000 us / Hz) + Margin
+  for (int i = 0; op_on_bus0_block_list[i].addr != 0; i++) {
+    if (op_on_bus0_block_list[i].hz > 0) {
+      op_on_bus0_block_list[i].timeout = (1000000U / op_on_bus0_block_list[i].hz) + 20000U; // +20ms Margin
+    }
+  }
+
+  for (int i = 0; op_on_bus2_block_list[i].addr != 0; i++) {
+    if (op_on_bus2_block_list[i].hz > 0) {
+      op_on_bus2_block_list[i].timeout = (1000000U / op_on_bus2_block_list[i].hz) + 20000U; // +20ms Margin
+    }
+  }
+
 
   static const CanMsg HYUNDAI_CANFD_LKA_STEERING_TX_MSGS[] = {
     HYUNDAI_CANFD_LKA_STEERING_COMMON_TX_MSGS(0, 1)
@@ -379,7 +408,9 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x160, 1, 16, .check_relay = false},  // ADRV_0x160
     {0x161, 0, 32, .check_relay = false},  // CCNC_0x161
     {0x162, 0, 32, .check_relay = false},  // CCNC_0x162
-    {0x4A3, 2,  8, .check_relay = false},  // HDA_INFO_0x4a3
+    {0x4A3, 2,  8, .check_relay = false},  // Hud_Navi_ISLW_PE
+    {0x4B4, 2,  8, .check_relay = false},  // Hud_Navi_V2_POS_PE
+    {0x4B9, 2,  8, .check_relay = false},  // Hud_Navi_V2_SEG_E
     {0xEA,  2, 24, .check_relay = false},  // MDPS
     {0x2AF, 2,  8, .check_relay = false},  // HANDS_ON_DETECTION
   };

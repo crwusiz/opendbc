@@ -35,6 +35,7 @@ class CarState(CarStateBase):
     self.main_buttons: deque = deque([Buttons.NONE] * PREV_BUTTON_SAMPLES, maxlen=PREV_BUTTON_SAMPLES)
     self.lda_button = 0
 
+    # CANFD Gear Message
     self.gear_msg_canfd = "ACCELERATOR" if CP.flags & HyundaiFlags.EV else \
                           "GEAR_ALT" if CP.flags & HyundaiFlags.CANFD_ALT_GEARS else \
                           "GEAR_ALT_2" if CP.flags & HyundaiFlags.CANFD_ALT_GEARS_2 else \
@@ -51,6 +52,18 @@ class CarState(CarStateBase):
       self.shifter_values = can_define.dv["EMS20"]["HYDROGEN_GEAR_SHIFTER"]
     else:
       self.shifter_values = can_define.dv["LVR12"]["CF_Lvr_Gear"]
+
+    # Non-CANFD Gear Message Setup (Pre-calculation)
+    if self.CP.flags & (HyundaiFlags.HYBRID | HyundaiFlags.EV):
+      self.gear_msg_pt, self.gear_sig_pt = "ELECT_GEAR", "Elect_Gear_Shifter"
+    elif self.CP.flags & HyundaiFlags.FCEV:
+      self.gear_msg_pt, self.gear_sig_pt = "EMS20", "HYDROGEN_GEAR_SHIFTER"
+    elif self.CP.flags & HyundaiFlags.CLUSTER_GEARS:
+      self.gear_msg_pt, self.gear_sig_pt = "CLU15", "CF_Clu_Gear"
+    elif self.CP.flags & HyundaiFlags.TCU_GEARS:
+      self.gear_msg_pt, self.gear_sig_pt = "TCU12", "CUR_GR"
+    else:
+      self.gear_msg_pt, self.gear_sig_pt = "LVR12", "CF_Lvr_Gear"
 
     self.accelerator_msg_canfd = "ACCELERATOR" if CP.flags & HyundaiFlags.EV else \
                                  "ACCELERATOR_ALT" if CP.flags & HyundaiFlags.HYBRID else \
@@ -76,7 +89,7 @@ class CarState(CarStateBase):
     self.adrv_msg_200 = None
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None
-    self.hda_msg_4a3 = None
+    self.navi_msg_4a3 = None
     self.msg_0x362 = None
     self.msg_0x2a4 = None
     self.tcs_info_373 = None
@@ -122,18 +135,19 @@ class CarState(CarStateBase):
     fingerprints_str = Params().get("FingerPrints")
     fingerprints = ast.literal_eval(fingerprints_str)
 
-    self.HDA_MSG_4A3 = True if 0x4a3 in fingerprints[pt_bus] else False
+    self.NAVI_MSG_4A3 = 0x4a3 in fingerprints[pt_bus]
 
-    self.CCNC_MSG_161 = True if 0x161 in fingerprints[cam_bus] else False
-    self.CCNC_MSG_162 = True if 0x162 in fingerprints[cam_bus] else False
-    self.CCNC_MSG_1B5 = True if 0x1b5 in fingerprints[cam_bus] else False
-    self.ADRV_MSG_200 = True if 0x200 in fingerprints[cam_bus] else False
-    self.ADRV_MSG_1EA = True if 0x1ea in fingerprints[cam_bus] else False
-    self.ADRV_MSG_160 = True if 0x160 in fingerprints[cam_bus] else False
-    self.LFAHDA_CLUSTER = True if 480 in fingerprints[cam_bus] else False
+    # Refactored: Removed ternary operators
+    self.CCNC_MSG_161 = 0x161 in fingerprints[cam_bus]
+    self.CCNC_MSG_162 = 0x162 in fingerprints[cam_bus]
+    self.CCNC_MSG_1B5 = 0x1b5 in fingerprints[cam_bus]
+    self.ADRV_MSG_200 = 0x200 in fingerprints[cam_bus]
+    self.ADRV_MSG_1EA = 0x1ea in fingerprints[cam_bus]
+    self.ADRV_MSG_160 = 0x160 in fingerprints[cam_bus]
+    self.LFAHDA_CLUSTER = 0x1e0 in fingerprints[cam_bus]
 
-    self.CAM_0x362 = True if 0x362 in fingerprints[alt_bus] else False
-    self.CAM_0x2a4 = True if 0x2a4 in fingerprints[alt_bus] else False
+    self.CAM_0x362 = 0x362 in fingerprints[alt_bus]
+    self.CAM_0x2a4 = 0x2a4 in fingerprints[alt_bus]
 
     self.controls_ready_cnt = 0
 
@@ -240,19 +254,8 @@ class CarState(CarStateBase):
     else:
       ret.gasPressed = bool(cp.vl["EMS16"]["CF_Ems_AclAct"])
 
-    # Gear Selection via Cluster - For those Kia/Hyundai which are not fully discovered, we can use the Cluster Indicator for Gear Selection,
-    # as this seems to be standard over all cars, but is not the preferred method.
-    if self.CP.flags & (HyundaiFlags.HYBRID | HyundaiFlags.EV):
-      gear = cp.vl["ELECT_GEAR"]["Elect_Gear_Shifter"]
-    elif self.CP.flags & HyundaiFlags.FCEV:
-      gear = cp.vl["EMS20"]["HYDROGEN_GEAR_SHIFTER"]
-    elif self.CP.flags & HyundaiFlags.CLUSTER_GEARS:
-      gear = cp.vl["CLU15"]["CF_Clu_Gear"]
-    elif self.CP.flags & HyundaiFlags.TCU_GEARS:
-      gear = cp.vl["TCU12"]["CUR_GR"]
-    else:
-      gear = cp.vl["LVR12"]["CF_Lvr_Gear"]
-
+    # Gear Selection via Cluster
+    gear = cp.vl[self.gear_msg_pt][self.gear_sig_pt]
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(gear))
 
     if not self.CP.openpilotLongitudinalControl or self.CP.flags & HyundaiFlags.CAMERA_SCC:
@@ -391,15 +394,10 @@ class CarState(CarStateBase):
     cluSpeed = cp.vl["CRUISE_BUTTONS_ALT"]["CLUSTER_SPEED_KPH"]
     ret.vEgoCluster = cluSpeed * speed_factor
 
-    # TODO: figure out positions
-    self.parse_wheel_speeds(ret,
-      cp.vl["WHEEL_SPEEDS"]["WHL_SpdFLVal"],
-      cp.vl["WHEEL_SPEEDS"]["WHL_SpdFRVal"],
-      cp.vl["WHEEL_SPEEDS"]["WHL_SpdRLVal"],
-      cp.vl["WHEEL_SPEEDS"]["WHL_SpdRRVal"],
-    )
-    ret.standstill = cp.vl["WHEEL_SPEEDS"]["WHL_SpdFLVal"] <= STANDSTILL_THRESHOLD and cp.vl["WHEEL_SPEEDS"]["WHL_SpdFRVal"] <= STANDSTILL_THRESHOLD and \
-                     cp.vl["WHEEL_SPEEDS"]["WHL_SpdRLVal"] <= STANDSTILL_THRESHOLD and cp.vl["WHEEL_SPEEDS"]["WHL_SpdRRVal"] <= STANDSTILL_THRESHOLD
+    # Refactored: Simplified Standstill logic using all()
+    wheel_speeds = [cp.vl["WHEEL_SPEEDS"][key] for key in ["WHL_SpdFLVal", "WHL_SpdFRVal", "WHL_SpdRLVal", "WHL_SpdRRVal"]]
+    self.parse_wheel_speeds(ret, *wheel_speeds)
+    ret.standstill = all(speed <= STANDSTILL_THRESHOLD for speed in wheel_speeds)
 
     ret.exState.vCluRatio = (ret.vEgo / ret.vEgoClu) if (ret.vEgoClu > 3. and ret.vEgo > 3.) else 1.0
 
@@ -416,12 +414,17 @@ class CarState(CarStateBase):
 
     if self.CP.enableBsm:
       cp_bsm_info = cp_cam if (self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value) else cp
+
+      bsm_msg = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]
       if self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
-        ret.leftBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FL_INDICATOR_ALT"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_LEFT_THREE"] != 0
-        ret.rightBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FR_INDICATOR_ALT"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_RIGHT_THREE"] != 0
+          left_sigs = ["FL_INDICATOR_ALT", "INDICATOR_LEFT_THREE"]
+          right_sigs = ["FR_INDICATOR_ALT", "INDICATOR_RIGHT_THREE"]
       else:
-        ret.leftBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FL_INDICATOR"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_LEFT_TWO"] != 0
-        ret.rightBlindspot = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["FR_INDICATOR"] != 0 or cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]["INDICATOR_RIGHT_TWO"] != 0
+          left_sigs = ["FL_INDICATOR", "INDICATOR_LEFT_TWO"]
+          right_sigs = ["FR_INDICATOR", "INDICATOR_RIGHT_TWO"]
+
+      ret.leftBlindspot = any(bsm_msg[sig] != 0 for sig in left_sigs)
+      ret.rightBlindspot = any(bsm_msg[sig] != 0 for sig in right_sigs)
 
     # cruise state
     # CAN FD cars enable on main button press, set available if no TCS faults preventing engagement
@@ -459,46 +462,50 @@ class CarState(CarStateBase):
     self.DistanceGapSet = cp_cam.vl["SCC_CONTROL"]["DistanceGapSet"]
 
     if self.CP.exFlags & HyundaiExFlags.CCNC.value:
-      corner = False
+      corner_detected = False
       self.ccnc_msg_161 = cp_cam.vl["CCNC_0x161"] if self.CCNC_MSG_161 else None
       self.ccnc_msg_162 = cp_cam.vl["CCNC_0x162"] if self.CCNC_MSG_162 else None
-      if self.CCNC_MSG_162 is not None:
+      self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
+      self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
+      self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
+
+      if self.ccnc_msg_162 is not None:
         self.ff_distance = self.ccnc_msg_162["FF_DETECT_DISTANCE"]
         ret.leftLongDist = self.lf_distance = self.ccnc_msg_162["LF_DETECT_DISTANCE"]
         ret.rightLongDist = self.rf_distance = self.ccnc_msg_162["RF_DETECT_DISTANCE"]
         self.lr_distance = self.ccnc_msg_162["LR_DETECT_DISTANCE"]
-        self.rr_distance =self.ccnc_msg_162["RR_DETECT_DISTANCE"]
+        self.rr_distance = self.ccnc_msg_162["RR_DETECT_DISTANCE"]
         ret.leftLatDist = self.ccnc_msg_162["LF_DETECT_LATERAL"]
         ret.rightLatDist = self.ccnc_msg_162["RF_DETECT_LATERAL"]
-        corner = True
-      self.adrv_msg_160 = cp_cam.vl["ADRV_0x160"] if self.ADRV_MSG_160 else None
-      self.adrv_msg_200 = cp_cam.vl["ADRV_0x200"] if self.ADRV_MSG_200 else None
-      self.adrv_msg_1ea = cp_cam.vl["ADRV_0x1ea"] if self.ADRV_MSG_1EA else None
+        corner_detected = True
+
       if self.adrv_msg_1ea is not None:
-        if not corner:
+        if not corner_detected:
           ret.leftLongDist = self.adrv_msg_1ea["LF_DETECT_DISTANCE"]
           ret.rightLongDist = self.adrv_msg_1ea["RF_DETECT_DISTANCE"]
           self.lr_distance = self.adrv_msg_1ea["LR_DETECT_DISTANCE"]
           self.rr_distance = self.adrv_msg_1ea["RR_DETECT_DISTANCE"]
           ret.leftLatDist = self.adrv_msg_1ea["LF_DETECT_LATERAL"]
           ret.rightLatDist = self.adrv_msg_1ea["RF_DETECT_LATERAL"]
-          corner = True
-      if corner:
+          corner_detected = True
+      if corner_detected:
         left_block = True if 0 < ret.leftLongDist < 7.0 or 0 < self.lr_distance < 7.0 else False
         right_block = True if 0 < ret.rightLongDist < 7.0 or 0 < self.rr_distance < 7.0 else False
         if left_block:
           ret.leftBlindspot = True
         if right_block:
           ret.rightBlindspot = True
-      self.hda_msg_4a3 = cp.vl["HU_Navi_ISLW_PE"] if self.HDA_MSG_4A3 else None
+      self.navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"] if self.NAVI_MSG_4A3 else None
       #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
 
       self.tcs_info_373 = cp.vl["TCS"]
 
       if cp_alt and self.CP.flags & HyundaiFlags.CAMERA_SCC:
         lane_info = None
-        lane_info = cp_alt.vl["CAM_0x362"] if self.CAM_0x362 else None
-        lane_info = cp_alt.vl["CAM_0x2a4"] if self.CAM_0x2a4 else lane_info
+        if self.CAM_0x362:
+          lane_info = cp_alt.vl["CAM_0x362"]
+        elif self.CAM_0x2a4:
+          lane_info = cp_alt.vl["CAM_0x2a4"]
 
         if lane_info is not None:
           left_lane_prob = lane_info["LEFT_LANE_PROB"]
@@ -513,10 +520,10 @@ class CarState(CarStateBase):
           ret.leftLaneLine = left_lane_info
           ret.rightLaneLine = right_lane_info
 
-      if self.HDA_MSG_4A3:
-        speedLimit = self.hda_msg_4a3["SpeedLimit"]
+      if self.NAVI_MSG_4A3:
+        speedLimit = self.navi_msg_4a3["SpeedLimit"]
         ret.speedLimit = speedLimit if speedLimit < 255 else 0
-        if int(self.hda_msg_4a3["MapSource"]) == 2:
+        if int(self.navi_msg_4a3["MapSource"]) == 2:
           speed_limit_cam = True
         self.update_speed_limit(ret, speed_limit_cam)
 
@@ -541,12 +548,8 @@ class CarState(CarStateBase):
       cruise_button = cp.vl_all[self.cruise_btns_msg_canfd]["CRUISE_BUTTONS"]
     self.cruise_buttons.extend(cruise_button)
 
-    if self.cruise_btns_msg_canfd in cp.vl_all: #carrot
-      if not cp.vl_all[self.cruise_btns_msg_canfd]["CRUISE_BUTTONS"]:
-        pass
-        #print("empty cruise btns...")
-      else:
-        self.cruise_buttons_msg = copy.copy(cp.vl_all[self.cruise_btns_msg_canfd])
+    if self.cruise_btns_msg_canfd in cp.vl:
+      self.cruise_buttons_msg = copy.copy(cp.vl[self.cruise_btns_msg_canfd])
 
     prev_main_buttons = self.main_buttons[-1]
     self.main_buttons.extend(cp.vl_all[self.cruise_btns_msg_canfd]["ADAPTIVE_CRUISE_MAIN_BTN"])

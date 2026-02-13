@@ -511,30 +511,28 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     if enable_corner_radar > 0 and HDA_CntrlModSta == 0:
       if frame % 500 in [10, 20, 30]:
         values = {
-          "Offset": 0,
-          "CyclicCounter": frame % 4,
-          "Retransmission": 1,
-          "CalculatedRoute": 0,
-          "FuncRoadClass": 2,
-          "SpeedLimit": 0,
-          "FormOfWay": 1,
-          "DirectionLanes": 1,
-          "SpeedLimitUnder5": 0,
+          'BYTE_1': 0,
+          'BYTE_2': 0,
+          'BYTE_3': 0x80,
+          'BYTE_4': 0x8A,
+          'BYTE_5': 0x32,
+          'BYTE_6': 0x30,
+          'BYTE_7': 0x01,
+          'BYTE_8': 0x00,
         }
-        ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))
+        ret.append(packer.make_can_msg("NEW_MSG_4B9", CAN.CAM, values))
       elif frame % 500 in [40, 50, 60]:
         values = {
-          "Offset": 8191,
-          "CyclicCounter": 3,
-          "Retransmission": 1,
-          "CalculatedRoute": 3,
-          "FuncRoadClass": 7, # 도로정보 1:고속도로, 2:도시고속화도로, 5:일반도로
-          "SpeedLimit": 31, # 속도정보
-          "FormOfWay": 15,
-          "DirectionLanes": 15,
-          "SpeedLimitUnder5": 7,
+          'BYTE_1': 0xff,
+          'BYTE_2': 0xff,
+          'BYTE_3': 0xff,
+          'BYTE_4': 0xff,
+          'BYTE_5': 0xff,
+          'BYTE_6': 0xff,
+          'BYTE_7': 0xff,
+          'BYTE_8': 0xff,
         }
-        ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))
+        ret.append(packer.make_can_msg("NEW_MSG_4B9", CAN.CAM, values))
 
     return ret
 

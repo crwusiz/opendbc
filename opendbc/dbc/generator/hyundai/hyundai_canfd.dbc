@@ -742,7 +742,17 @@ BO_ 1208 Hud_Navi_V2_META_E: 8 CGW
  SG_ CyclicCounter : 28|2@1+ (1,0) [0|3] ""  FR_CMR
  SG_ Country_OptADAS : 40|2@1+ (1,0) [0|3] ""  FR_CMR
 
-BO_ 1209 Hud_Navi_V2_SEG_E: 8 CGW
+BO_ 1209 NEW_MSG_4B9: 8 XXX
+ SG_ BYTE_1 : 7|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_2 : 15|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_3 : 23|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_4 : 31|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_5 : 39|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_6 : 47|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_7 : 55|8@0+ (1,0) [0|255] "" XXX
+ SG_ BYTE_8 : 63|8@0+ (1,0) [0|255] "" XXX
+
+BO_ 12090 Hud_Navi_V2_SEG_E: 8 CGW
  SG_ Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
  SG_ CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
  SG_ Retransmission : 21|1@1+ (1,0) [0|1] ""  FR_CMR

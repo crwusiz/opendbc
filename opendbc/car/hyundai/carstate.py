@@ -95,6 +95,7 @@ class CarState(CarStateBase):
     self.tcs_info_373 = None
 
     self.cruise_buttons_msg = None
+    self.low_speed_alert = None
 
     # On some cars, CLU15->CF_Clu_VehicleSpeed can oscillate faster than the dash updates. Sample at 5 Hz
     self.cluster_speed = 0
@@ -108,8 +109,6 @@ class CarState(CarStateBase):
 
     self.canfd_buttons = None
 
-    self.MainMode_ACC = False
-    self.ACCMode = 0
     self.LFA_ICON = 0
 
     self.ff_distance = 0
@@ -434,8 +433,6 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = cp.vl["TCS"]["ACC_REQ"] == 1
       ret.cruiseState.standstill = False
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
-        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainStat"] == 1
-        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["OperationStat"]
         self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["HDA_LFA_SymSta"]
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp

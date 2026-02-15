@@ -82,10 +82,10 @@ class CarState(CarStateBase):
     self.lfahda_cluster_info = None
     self.mdps_info = {}
     self.hod_info = {}
+    self.ccnc_msg_1b5 = {}
 
     self.ccnc_msg_161 = None
     self.ccnc_msg_162 = None
-    #self.ccnc_msg_1b5 = None
     self.adrv_msg_200 = None
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None
@@ -116,6 +116,11 @@ class CarState(CarStateBase):
     self.rf_distance = 0
     self.lr_distance = 0
     self.rr_distance = 0
+
+    self.leftLnPosition = 0.0
+    self.leftLnQualStat = 0
+    self.rightLnPosition = 0.0
+    self.rightLnQualStat = 0
 
     self.totalDistance = 0.0
     self.speedLimitDistance = 0
@@ -493,7 +498,12 @@ class CarState(CarStateBase):
         if right_block:
           ret.rightBlindspot = True
       self.navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"] if self.NAVI_MSG_4A3 else None
-      #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
+      if self.CCNC_MSG_1B5:
+        self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"]
+        self.leftLnPosition = self.ccnc_msg_1b5["LeftLnPosition"]
+        self.leftLnQualStat = self.ccnc_msg_1b5["LeftLnQualStat"]
+        self.rightLnPosition = self.ccnc_msg_1b5["RightLnPosition"]
+        self.rightLnQualStat = self.ccnc_msg_1b5["RightLnQualStat"]
 
       self.tcs_info_373 = cp.vl["TCS"]
 

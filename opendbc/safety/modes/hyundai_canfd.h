@@ -98,7 +98,6 @@ CanFdBlockEntry op_on_bus0_block_list[] = {
   {0x1BA, 20, 0, 0},   // BLINDSPOTS_REAR_CORNERS
   {0x1E5, 20, 0, 0},   // BLINDSPOTS_FRONT_CORNER_1
   {0x1A0, 50, 0, 0},   // SCC_CONTROL
-  {0x1B5, 20, 0, 0},   // CCNC_0x1b5
   {0x1FA, 10, 0, 0},   // CLUSTER_SPEED_LIMIT
   {0x1DA, 1, 0, 0},    // ADRV_0x1da
   {0x1E0, 20, 0, 0},   // LFAHDA_CLUSTER

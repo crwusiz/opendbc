@@ -311,7 +311,13 @@ class CarController(CarControllerBase):
   def canfd_toggle_adas(self, CC, CS):
     trigger_min = -200
     trigger_start = 6
+
     self.LFA_trigger = max(trigger_min, self.LFA_trigger - 1)
+
     if self.LFA_trigger == trigger_min:
-      if CC.enabled and CC.latActive and CS.LFA_ICON == 0:
+      is_cruise_main_on = CS.out.cruiseState.available or CS.out.cruiseState.enabled
+      is_op_active = CC.latActive or CC.longActive
+      is_lfa_off = CS.LFA_ICON == 0
+
+      if is_cruise_main_on and is_op_active and is_lfa_off:
         self.LFA_trigger = trigger_start

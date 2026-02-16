@@ -82,7 +82,7 @@ class CarState(CarStateBase):
     self.lfahda_cluster_info = None
     self.mdps_info = {}
     self.hod_info = {}
-    #self.ccnc_msg_1b5 = {}
+    self.ccnc_msg_1b5 = {}
 
     self.ccnc_msg_161 = None
     self.ccnc_msg_162 = None
@@ -144,7 +144,7 @@ class CarState(CarStateBase):
     # Refactored: Removed ternary operators
     self.CCNC_MSG_161 = 0x161 in fingerprints[cam_bus]
     self.CCNC_MSG_162 = 0x162 in fingerprints[cam_bus]
-    #self.CCNC_MSG_1B5 = 0x1b5 in fingerprints[cam_bus]
+    self.CCNC_MSG_1B5 = 0x1b5 in fingerprints[pt_bus]
     self.ADRV_MSG_200 = 0x200 in fingerprints[cam_bus]
     self.ADRV_MSG_1EA = 0x1ea in fingerprints[cam_bus]
     self.ADRV_MSG_160 = 0x160 in fingerprints[cam_bus]
@@ -498,12 +498,12 @@ class CarState(CarStateBase):
         if right_block:
           ret.rightBlindspot = True
       self.navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"] if self.NAVI_MSG_4A3 else None
-      #if self.CCNC_MSG_1B5:
-      #  self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"]
-      #  self.leftLnPosition = self.ccnc_msg_1b5["LeftLnPosition"]
-      #  self.leftLnQualStat = self.ccnc_msg_1b5["LeftLnQualStat"]
-      #  self.rightLnPosition = self.ccnc_msg_1b5["RightLnPosition"]
-      #  self.rightLnQualStat = self.ccnc_msg_1b5["RightLnQualStat"]
+      if self.CCNC_MSG_1B5:
+        self.ccnc_msg_1b5 = cp.vl["CCNC_0x1b5"]
+        self.leftLnPosition = self.ccnc_msg_1b5["LeftLnPosition"]
+        self.leftLnQualStat = self.ccnc_msg_1b5["LeftLnQualStat"]
+        self.rightLnPosition = self.ccnc_msg_1b5["RightLnPosition"]
+        self.rightLnQualStat = self.ccnc_msg_1b5["RightLnQualStat"]
 
       self.tcs_info_373 = cp.vl["TCS"]
 

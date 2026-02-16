@@ -427,6 +427,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       values["LANELINE_LEFT"] = _get_lane_value(CS.out.leftLaneLine, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible, frame)
       values["LANELINE_RIGHT"] = _get_lane_value(CS.out.rightLaneLine, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible, frame)
 
+      """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
         left_lane_raw, right_lane_raw = CS.leftLnPosition, CS.rightLnPosition
 
@@ -460,6 +461,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
         values["LANELINE_LEFT_POSITION"] = left_lane
         values["LANELINE_RIGHT_POSITION"] = right_lane
+      """
 
       ret.append(packer.make_can_msg("CCNC_0x161", CAN.ECAN, values))
 

@@ -30,13 +30,6 @@ class CarInterface(CarInterfaceBase):
   DRIVABLE_GEARS = (structs.CarState.GearShifter.sport, structs.CarState.GearShifter.manumatic)
 
   @staticmethod
-  def get_pid_accel_limits(CP, current_speed, cruise_speed):
-    v_current_kph = current_speed * CV.MS_TO_KPH
-    gas_max_bp = [0., 10., 30., 60., 90., 120.]
-    gas_max_v = [ACCEL_MAX, 1.8, 1.3, 0.9, 0.6, 0.4]
-    return ACCEL_MIN, np.interp(v_current_kph, gas_max_bp, gas_max_v)
-
-  @staticmethod
   def _get_params(ret: structs.CarParams, candidate, fingerprint, car_fw, alpha_long, is_release, docs) -> structs.CarParams:
     ret.brand = "hyundai"
 

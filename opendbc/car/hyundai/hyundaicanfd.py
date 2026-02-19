@@ -196,8 +196,8 @@ def create_acc_cancel(packer, CP, CS, CAN):
       "COUNTER",
       "CHECKSUM",
       "SysFailStat",
-      "MainStat",
-      "OperationStat",
+      "MainMode_ACC",
+      "ACCMode",
       "TakeoverReq",
       "InfoDisplay",
       "AlertDisplay",
@@ -208,12 +208,12 @@ def create_acc_cancel(packer, CP, CS, CAN):
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "OperationStat",
+      "ACCMode",
       "VSetDis",
       "InfoDisplay",
     ]}
   values.update({
-    "OperationStat": 4,
+    "ACCMode": 4,
     "AccelRequestRaw": 0.0,
     "AccelRequest": 0.0,
   })
@@ -247,8 +247,8 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
   if camera_scc:
     values = copy.copy(CS.cruise_info)
     values |= {
-      "OperationStat": 0 if not enabled else (2 if gas_override else 1),
-      "MainStat": 1,
+      "ACCMode": 0 if not enabled else (2 if gas_override else 1),
+      "MainMode_ACC": 1,
       "StopReq": 1 if stopping else 0,
       "AccelRequest": a_val,
       "AccelRequestRaw": a_raw,
@@ -276,8 +276,8 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
 
   else:
     values = {
-      "OperationStat": 0 if not enabled else (2 if gas_override else 1),
-      "MainStat": 1,
+      "ACCMode": 0 if not enabled else (2 if gas_override else 1),
+      "MainMode_ACC": 1,
       "StopReq": 1 if stopping else 0,
       "AccelRequest": a_val,
       "AccelRequestRaw": a_raw,
@@ -358,6 +358,18 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     HDA_CntrlModSta = 0
     if CS.lfahda_cluster_info is not None:
       HDA_CntrlModSta = CS.lfahda_cluster_info["HDA_CntrlModSta"]
+
+    if frame % 2 == 0 and CS.cruise_buttons_msg is not None:
+      values = copy.copy(CS.cruise_buttons_msg)
+      if CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
+        values["LDA_BTN"] = 1
+
+      if CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
+      else:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 0
+
+      ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
 
     if frame % 2 == 0 and CS.adrv_msg_160 is not None:
         values = copy.copy(CS.adrv_msg_160)

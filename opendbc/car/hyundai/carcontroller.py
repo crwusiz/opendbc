@@ -62,8 +62,6 @@ class CarController(CarControllerBase):
     self.angle_limit_counter = 0
     self.turningSignalTimer = 0
 
-    self.LFA_trigger = 0
-
   def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     hud_control = CC.hudControl
@@ -272,8 +270,6 @@ class CarController(CarControllerBase):
       can_sends.extend(hyundaicanfd.create_spas_messages(self.packer, CC, self.CAN))
 
     if self.CP.openpilotLongitudinalControl:
-      if camera_scc:
-        self.canfd_toggle_adas(CC, CS)
       if lka_steering:
         can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, set_speed_in_units, hud_control))
       else:
@@ -307,17 +303,3 @@ class CarController(CarControllerBase):
             self.last_button_frame = self.frame
 
     return can_sends
-
-  def canfd_toggle_adas(self, CC, CS):
-    trigger_min = -200
-    trigger_start = 6
-
-    self.LFA_trigger = max(trigger_min, self.LFA_trigger - 1)
-
-    if self.LFA_trigger == trigger_min:
-      is_cruise_main_on = CS.out.cruiseState.available or CS.out.cruiseState.enabled
-      is_op_active = CC.latActive or CC.longActive
-      is_lfa_off = CS.LFA_ICON == 0
-
-      if is_cruise_main_on and is_op_active and is_lfa_off:
-        self.LFA_trigger = trigger_start

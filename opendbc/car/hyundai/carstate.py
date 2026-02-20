@@ -82,10 +82,10 @@ class CarState(CarStateBase):
     self.lfahda_cluster_info = None
     self.mdps_info = {}
     self.hod_info = {}
+    self.ccnc_msg_1b5 = {}
 
     self.ccnc_msg_161 = None
     self.ccnc_msg_162 = None
-    #self.ccnc_msg_1b5 = None
     self.adrv_msg_200 = None
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None
@@ -95,6 +95,7 @@ class CarState(CarStateBase):
     self.tcs_info_373 = None
 
     self.cruise_buttons_msg = None
+    self.low_speed_alert = None
 
     # On some cars, CLU15->CF_Clu_VehicleSpeed can oscillate faster than the dash updates. Sample at 5 Hz
     self.cluster_speed = 0
@@ -102,14 +103,12 @@ class CarState(CarStateBase):
 
     self.params = CarControllerParams(CP)
 
-    self.lfa_btn = 0
     self.lfa_enabled = False
     self.main_enabled = False
 
     self.canfd_buttons = None
 
     self.MainMode_ACC = False
-    self.ACCMode = 0
     self.LFA_ICON = 0
 
     self.ff_distance = 0
@@ -117,6 +116,11 @@ class CarState(CarStateBase):
     self.rf_distance = 0
     self.lr_distance = 0
     self.rr_distance = 0
+
+    self.leftLnPosition = 0.0
+    self.leftLnQualStat = 0
+    self.rightLnPosition = 0.0
+    self.rightLnQualStat = 0
 
     self.totalDistance = 0.0
     self.speedLimitDistance = 0
@@ -140,7 +144,7 @@ class CarState(CarStateBase):
     # Refactored: Removed ternary operators
     self.CCNC_MSG_161 = 0x161 in fingerprints[cam_bus]
     self.CCNC_MSG_162 = 0x162 in fingerprints[cam_bus]
-    self.CCNC_MSG_1B5 = 0x1b5 in fingerprints[cam_bus]
+    self.CCNC_MSG_1B5 = 0x1b5 in fingerprints[pt_bus]
     self.ADRV_MSG_200 = 0x200 in fingerprints[cam_bus]
     self.ADRV_MSG_1EA = 0x1ea in fingerprints[cam_bus]
     self.ADRV_MSG_160 = 0x160 in fingerprints[cam_bus]
@@ -339,19 +343,20 @@ class CarState(CarStateBase):
 
     self.update_speed_limit(ret, speed_limit_cam)
 
-    if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON and not self.CP.openpilotLongitudinalControl:
-      prev_lfa_btn = self.lfa_btn
-      self.lfa_btn = cp.vl["BCM_PO_11"]["LDA_BTN"]
-      if prev_lfa_btn != 1 and self.lfa_btn == 1:
-        self.lfa_enabled = not self.lfa_enabled
-      ret.cruiseState.available = self.lfa_enabled
-
-    if prev_main_buttons == 0 and self.main_buttons[-1] != 0:
-      self.main_enabled = not self.main_enabled
-      ret.cruiseState.available = self.main_enabled
-
     if self.CP.openpilotLongitudinalControl and CruiseStateManager.instance().cruise_state_control:
+      if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON:
+        if prev_lda_button != 1 and self.lda_button == 1:
+          CruiseStateManager.instance().available = not CruiseStateManager.instance().available
       CruiseStateManager.instance().update(ret, self.main_buttons)
+    else:
+      if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON:
+        if prev_lda_button != 1 and self.lda_button == 1:
+          self.lfa_enabled = not self.lfa_enabled
+        ret.cruiseState.available = self.lfa_enabled
+
+      if prev_main_buttons == 0 and self.main_buttons[-1] != 0:
+        self.main_enabled = not self.main_enabled
+        ret.cruiseState.available = self.main_enabled
 
     return ret
 
@@ -434,18 +439,17 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = cp.vl["TCS"]["ACC_REQ"] == 1
       ret.cruiseState.standstill = False
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
-        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainStat"] == 1
-        self.ACCMode = cp_cam.vl["SCC_CONTROL"]["OperationStat"]
+        self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
         self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["HDA_LFA_SymSta"]
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
-      ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["MainStat"] == 1
-      ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["OperationStat"] in (1, 2)
+      ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
+      ret.cruiseState.enabled = cp_cruise_info.vl["SCC_CONTROL"]["ACCMode"] in (1, 2)
       ret.cruiseState.standstill = cp_cruise_info.vl["SCC_CONTROL"]["InfoDisplay"] >= 4
       ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["VSetDis"] * speed_factor
 
       self.cruise_info = copy.copy(cp_cruise_info.vl["SCC_CONTROL"])
-      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["OperationStat"] not in (1, 2)
+      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["ACCMode"] not in (1, 2)
 
     speed_limit_cam = False
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
@@ -496,7 +500,12 @@ class CarState(CarStateBase):
         if right_block:
           ret.rightBlindspot = True
       self.navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"] if self.NAVI_MSG_4A3 else None
-      #self.ccnc_msg_1b5 = cp_cam.vl["CCNC_0x1b5"] if self.CCNC_MSG_1B5 else None
+      if self.CCNC_MSG_1B5:
+        self.ccnc_msg_1b5 = cp.vl["CCNC_0x1b5"]
+        self.leftLnPosition = self.ccnc_msg_1b5["LeftLnPosition"]
+        self.leftLnQualStat = self.ccnc_msg_1b5["LeftLnQualStat"]
+        self.rightLnPosition = self.ccnc_msg_1b5["RightLnPosition"]
+        self.rightLnQualStat = self.ccnc_msg_1b5["RightLnQualStat"]
 
       self.tcs_info_373 = cp.vl["TCS"]
 
@@ -592,19 +601,20 @@ class CarState(CarStateBase):
 
     self.canfd_buttons = cp.vl[self.cruise_btns_msg_canfd]
 
-    if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON and not self.CP.openpilotLongitudinalControl:
-      prev_lfa_btn = self.lfa_btn
-      self.lfa_btn = cp.vl[self.cruise_btns_msg_canfd]["LDA_BTN"]
-      if prev_lfa_btn != 1 and self.lfa_btn == 1:
-        self.lfa_enabled = not self.lfa_enabled
-      ret.cruiseState.available = self.lfa_enabled
-
-    if self.main_buttons[-1] != prev_main_buttons and not self.main_buttons[-1]:
-      self.main_enabled = not self.main_enabled
-      ret.cruiseState.available = self.main_enabled
-
     if self.CP.openpilotLongitudinalControl and CruiseStateManager.instance().cruise_state_control:
+      if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON:
+        if prev_lda_button != 1 and self.lda_button == 1:
+          CruiseStateManager.instance().available = not CruiseStateManager.instance().available
       CruiseStateManager.instance().update(ret, self.main_buttons)
+    else:
+      if self.CP.flags & HyundaiFlags.HAS_LDA_BUTTON:
+        if prev_lda_button != 1 and self.lda_button == 1:
+          self.lfa_enabled = not self.lfa_enabled
+        ret.cruiseState.available = self.lfa_enabled
+
+      if self.main_buttons[-1] != prev_main_buttons and not self.main_buttons[-1]:
+        self.main_enabled = not self.main_enabled
+        ret.cruiseState.available = self.main_enabled
 
     return ret
 

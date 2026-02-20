@@ -196,8 +196,8 @@ def create_acc_cancel(packer, CP, CS, CAN):
       "COUNTER",
       "CHECKSUM",
       "SysFailStat",
-      "MainStat",
-      "OperationStat",
+      "MainMode_ACC",
+      "ACCMode",
       "TakeoverReq",
       "InfoDisplay",
       "AlertDisplay",
@@ -208,12 +208,12 @@ def create_acc_cancel(packer, CP, CS, CAN):
     values = {s: cruise_info_copy[s] for s in [
       "COUNTER",
       "CHECKSUM",
-      "OperationStat",
+      "ACCMode",
       "VSetDis",
       "InfoDisplay",
     ]}
   values.update({
-    "OperationStat": 4,
+    "ACCMode": 4,
     "AccelRequestRaw": 0.0,
     "AccelRequest": 0.0,
   })
@@ -247,8 +247,8 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
   if camera_scc:
     values = copy.copy(CS.cruise_info)
     values |= {
-      "OperationStat": 0 if not enabled else (2 if gas_override else 1),
-      "MainStat": 1,
+      "ACCMode": 0 if not enabled else (2 if gas_override else 1),
+      "MainMode_ACC": 1,
       "StopReq": 1 if stopping else 0,
       "AccelRequest": a_val,
       "AccelRequestRaw": a_raw,
@@ -276,8 +276,8 @@ def create_acc_control(packer, CP, CC, CS, CAN, accel_last, accel, stopping, set
 
   else:
     values = {
-      "OperationStat": 0 if not enabled else (2 if gas_override else 1),
-      "MainStat": 1,
+      "ACCMode": 0 if not enabled else (2 if gas_override else 1),
+      "MainMode_ACC": 1,
       "StopReq": 1 if stopping else 0,
       "AccelRequest": a_val,
       "AccelRequestRaw": a_raw,
@@ -359,6 +359,18 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
     if CS.lfahda_cluster_info is not None:
       HDA_CntrlModSta = CS.lfahda_cluster_info["HDA_CntrlModSta"]
 
+    if frame % 2 == 0 and CS.cruise_buttons_msg is not None:
+      values = copy.copy(CS.cruise_buttons_msg)
+      if CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
+        values["LDA_BTN"] = 1
+
+      if CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
+      else:
+        values["ADAPTIVE_CRUISE_MAIN_BTN"] = 0
+
+      ret.append(packer.make_can_msg(CS.cruise_btns_msg_canfd, CAN.CAM, values))
+
     if frame % 2 == 0 and CS.adrv_msg_160 is not None:
         values = copy.copy(CS.adrv_msg_160)
         ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
@@ -424,26 +436,19 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
       values["LANELINE_CURVATURE"] = (min(abs(curvature), 15) + (-1 if curvature < 0 else 0)) if lat_active else 0
       values["LANELINE_CURVATURE_DIRECTION"] = 1 if curvature < 0 and lat_active else 0
 
-      def get_lane_value(depart, visible, frame):
-        if depart:
-          return 4 if (frame // 50) % 2 == 0 else 1
-        return 2 if visible else 0
+      values["LANELINE_LEFT"] = _get_lane_value(CS.out.leftLaneLine, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible, frame)
+      values["LANELINE_RIGHT"] = _get_lane_value(CS.out.rightLaneLine, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible, frame)
 
-      values["LANELINE_LEFT"] = get_lane_value(hud.leftLaneDepart, hud.leftLaneVisible, frame)
-      values["LANELINE_RIGHT"] = get_lane_value(hud.rightLaneDepart, hud.rightLaneVisible, frame)
-
-      """
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
-        msg_1b5 = copy.copy(CS.ccnc_msg_1b5)
-        left_lane_raw, right_lane_raw = msg_1b5["LeftLnPosition"], msg_1b5["RightLnPosition"]
+        left_lane_raw, right_lane_raw = CS.leftLnPosition, CS.rightLnPosition
 
         scale_per_m = 15 / 1.7
         left_lane = abs(int(round(15 + (left_lane_raw - 1.7) * scale_per_m)))
         right_lane = abs(int(round(15 + (right_lane_raw - 1.7) * scale_per_m)))
 
-        if msg_1b5["LeftLnQualStat"] not in (2, 3):
+        if CS.leftLnQualStat not in (2, 3):
           left_lane = 0
-        if msg_1b5["RightLnQualStat"] not in (2, 3):
+        if CS.rightLnQualStat not in (2, 3):
           right_lane = 0
 
         if left_lane_raw == -2.0248375:
@@ -467,7 +472,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
         values["LANELINE_LEFT_POSITION"] = left_lane
         values["LANELINE_RIGHT_POSITION"] = right_lane
-        """
 
       ret.append(packer.make_can_msg("CCNC_0x161", CAN.ECAN, values))
 
@@ -664,3 +668,12 @@ def _make_ccnc_values(values, CS, lat_active, frame, hud, lane_line=True, corner
     # 3. 깜빡임 효과 적용
     if blink_pairs:
       _apply_radar_blink(values, blink_pairs, frame, t=blink_t)
+
+def _get_lane_value(prob, blindspot, depart, visible, frame):
+  if depart:
+    return 4 if (frame // 50) % 2 == 0 else 1
+
+  if not visible:
+    return 0
+
+  return 4 if (prob >= 20 or blindspot) else 2

@@ -98,7 +98,6 @@ CanFdBlockEntry op_on_bus0_block_list[] = {
   {0x1BA, 20, 0, 0},   // BLINDSPOTS_REAR_CORNERS
   {0x1E5, 20, 0, 0},   // BLINDSPOTS_FRONT_CORNER_1
   {0x1A0, 50, 0, 0},   // SCC_CONTROL
-  {0x1B5, 20, 0, 0},   // CCNC_0x1b5
   {0x1FA, 10, 0, 0},   // CLUSTER_SPEED_LIMIT
   {0x1DA, 1, 0, 0},    // ADRV_0x1da
   {0x1E0, 20, 0, 0},   // LFAHDA_CLUSTER
@@ -124,7 +123,6 @@ CanFdBlockEntry op_on_bus2_block_list[] = {
   {0xEA, 100, 0, 0},   // MDPS
   {0x2AF, 10, 0, 0},   // HANDS_ON_DETECTION
   {0x4B9, 5, 0, 0},    // Hud_Navi_V2_SEG_E
-  {0x4BE, 5, 0, 0},    // Hud_Navi_V2_PROLONG_E
   {0x7C4, 5, 0, 0},    // VEHICLE DIAGNOSTICS
   {0, 0, 0, 0}
 };

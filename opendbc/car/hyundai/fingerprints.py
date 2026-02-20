@@ -864,12 +864,14 @@ FW_VERSIONS = {
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\000YG MFC  1.00 1.01 95740F6100 170717',
       b'\xf1\000YG MFC  1.00 1.03 95740F6200 190605',
+      b'\xf1\x00YG  MFC  AT KOR LHD 1.00 1.01 95740-F6100 161129',
     ],
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00YG__ SCC F_CUP   1.01 1.01 96400F6000     \xf1\xa01.01',
       b'\xf1\x00YG__ SCC F_CUP   1.00 1.04 96400F6400     \xf1\xa01.04',
       b'\xf1\x00YG__ SCC F_CUP   1.01 1.02 96400F6000     \xf1\xa01.02',
       b'\xf1\x00YG__ SCC F_CUP   1.00 1.01 99110F6000     \xf1\xa01.01',
+      b'\xf1\x00YG__ SCC FNCUP      1.01 1.01 96400-F6000         ',
     ],
     (Ecu.abs, 0x7d1, None): [
       b'\xf1\x8758920-F6230\xf1\000NC MGH \t 101\031\t\005 58920F6230\xf1\xa01.01',

@@ -141,7 +141,6 @@ class CarState(CarStateBase):
 
     self.NAVI_MSG_4A3 = 0x4a3 in fingerprints[pt_bus]
 
-    # Refactored: Removed ternary operators
     self.CCNC_MSG_161 = 0x161 in fingerprints[cam_bus]
     self.CCNC_MSG_162 = 0x162 in fingerprints[cam_bus]
     self.CCNC_MSG_1B5 = 0x1b5 in fingerprints[pt_bus]
@@ -156,9 +155,6 @@ class CarState(CarStateBase):
     self.controls_ready_cnt = 0
 
   def recent_button_interaction(self) -> bool:
-    # On some newer model years, the CANCEL button acts as a pause/resume button based on the PCM state
-    # To avoid re-engaging when openpilot cancels, check user engagement intention via buttons
-    # Main button also can trigger an engagement on these cars
     return any(btn in ENABLE_BUTTONS for btn in self.cruise_buttons) or any(self.main_buttons)
 
   def update(self, can_parsers) -> structs.CarState:
@@ -209,7 +205,6 @@ class CarState(CarStateBase):
       self.cluster_speed = cp.vl["CLU15"]["CF_Clu_VehicleSpeed"]
       self.cluster_speed_counter = 0
 
-      # Mimic how dash converts to imperial.
       if not self.is_metric:
         self.cluster_speed = math.floor(self.cluster_speed * CV.KPH_TO_MPH + CV.KPH_TO_MPH)
 
@@ -238,7 +233,6 @@ class CarState(CarStateBase):
       ret.cruiseState.nonAdaptive = cp_cruise.vl["SCC11"]["SCCInfoDisplay"] == 2.  # Shows 'Cruise Control' on dash
       ret.cruiseState.speed = cp_cruise.vl["SCC11"]["VSetDis"] * speed_factor
 
-    # TODO: Find brake pressure
     ret.brake = 0
     ret.brakePressed = cp.vl["TCS13"]["DriverOverride"] == 2  # 2 includes regen braking by user on HEV/EV
     ret.brakeHoldActive = cp.vl["TCS15"]["AVH_LAMP"] == 2  # 0 OFF, 1 ERROR, 2 ACTIVE, 3 READY
@@ -399,7 +393,6 @@ class CarState(CarStateBase):
     cluSpeed = cp.vl["CRUISE_BUTTONS_ALT"]["CLUSTER_SPEED_KPH"]
     ret.vEgoCluster = cluSpeed * speed_factor
 
-    # Refactored: Simplified Standstill logic using all()
     wheel_speeds = [cp.vl["WHEEL_SPEEDS"][key] for key in ["WHL_SpdFLVal", "WHL_SpdFRVal", "WHL_SpdRLVal", "WHL_SpdRRVal"]]
     self.parse_wheel_speeds(ret, *wheel_speeds)
     ret.standstill = all(speed <= STANDSTILL_THRESHOLD for speed in wheel_speeds)
@@ -440,7 +433,7 @@ class CarState(CarStateBase):
       ret.cruiseState.standstill = False
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
         self.MainMode_ACC = cp_cam.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
-        self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["HDA_LFA_SymSta"]
+        self.LFA_ICON = cp_cam.vl["LFAHDA_CLUSTER"]["HDA_LFA_SymSta"] if self.LFAHDA_CLUSTER else 0
     else:
       cp_cruise_info = cp_cam if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC else cp
       ret.cruiseState.available = cp_cruise_info.vl["SCC_CONTROL"]["MainMode_ACC"] == 1
@@ -536,10 +529,6 @@ class CarState(CarStateBase):
           speed_limit_cam = True
         self.update_speed_limit(ret, speed_limit_cam)
 
-    # Manual Speed Limit Assist is a feature that replaces non-adaptive cruise control on EV CAN FD platforms.
-    # It limits the vehicle speed, overridable by pressing the accelerator past a certain point.
-    # The car will brake, but does not respect positive acceleration commands in this mode
-    # TODO: find this message on ICE & HYBRID cars + cruise control signals (if exists)
     if self.CP.flags & HyundaiFlags.EV:
       ret.cruiseState.nonAdaptive = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["MSLA_ENABLED"] == 1
       self.regen_level = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["REGEN_LEVEL"]

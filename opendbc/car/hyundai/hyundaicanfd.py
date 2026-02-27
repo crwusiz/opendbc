@@ -361,7 +361,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
     if frame % 2 == 0 and CS.cruise_buttons_msg is not None:
       values = copy.copy(CS.cruise_buttons_msg)
-      if CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
+      if CS.lfahda_cluster_info is not None and CS.lfahda_cluster_info["HDA_LFA_SymSta"] == 0 and 0 < frame % 200 < 12:
         values["LDA_BTN"] = 1
 
       if CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:

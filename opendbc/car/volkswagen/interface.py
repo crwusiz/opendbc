@@ -31,33 +31,14 @@ class CarInterface(CarInterfaceBase):
       else:
         ret.networkLocation = NetworkLocation.fwdCamera
 
-      # The PQ port is in dashcam-only mode due to a fixed six-minute maximum timer on HCA steering. An unsupported
-      # EPS flash update to work around this timer, and enable steering down to zero, is available from:
-      #   https://github.com/pd0wm/pq-flasher
-      # It is documented in a four-part blog series:
-      #   https://blog.willemmelching.nl/carhacking/2022/01/02/vw-part1/
-      # Panda ALLOW_DEBUG firmware required.
-      ret.dashcamOnly = True
+      ret.dashcamOnly = is_release  # Release support needs HCA timeout fix, safety validation
 
-    elif ret.flags & VolkswagenFlags.MEB:
-      # Set global MEB parameters
-      ret.dashcamOnly = True  # In development, safety code not yet available
-      safety_configs = [get_safety_config(structs.CarParams.SafetyModel.noOutput)]
-      ret.enableBsm = 0x24C in fingerprint[0]  # MEB_Side_Assist_01
-      ret.steerControlType = structs.CarParams.SteerControlType.angle
-      ret.transmissionType = TransmissionType.automatic
     elif ret.flags & VolkswagenFlags.MLB:
       # Set global MLB parameters
       safety_configs = [get_safety_config(structs.CarParams.SafetyModel.volkswagenMlb)]
       ret.enableBsm = 0x30F in fingerprint[0]  # SWA_01
       ret.networkLocation = NetworkLocation.gateway
-      ret.dashcamOnly = True  # Pending HCA timeout fix, safety validation, harness termination, install procedure
-
-      if any(msg in fingerprint[1] for msg in (0x520, 0x86, 0xFD, 0x13D)):  # Airbag_02, LWI_01, ESP_21, QFK_01
-        ret.networkLocation = NetworkLocation.gateway
-      else:
-        ret.networkLocation = NetworkLocation.fwdCamera
-
+      ret.dashcamOnly = is_release  # Release support needs HCA timeout fix, safety validation, revised J533 harness
 
     else:
       # Set global MQB parameters
@@ -87,8 +68,6 @@ class CarInterface(CarInterfaceBase):
     if ret.flags & VolkswagenFlags.PQ or ret.flags & VolkswagenFlags.MLB:
       ret.steerActuatorDelay = 0.2
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
-    elif ret.flags & VolkswagenFlags.MEB:
-      ret.steerActuatorDelay = 0.2
     else:
       ret.steerActuatorDelay = 0.1
       ret.lateralTuning.pid.kpBP = [0.]

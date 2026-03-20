@@ -70,17 +70,18 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   # telling the ADAS ECU to forward our steering and disable stock LFA lane centering.
   ret = []
 
-  values = copy.copy(CS.mdps_info)
-  if angle_control:
-    if CS.lfa_alt_info is not None:
-      values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
-  else:
-    if CS.lfa_info is not None:
-      values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
+  if CS.mdps is not None:
+    values = copy.copy(CS.mdps_info)
+    if angle_control:
+      if CS.lfa_alt_info is not None:
+        values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
+    else:
+      if CS.lfa_info is not None:
+        values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
 
-  if frame % 1000 < 40:
-    values["OutTorque"] += 220
-  ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
+    if frame % 1000 < 40:
+      values["OutTorque"] += 220
+    ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if frame % 10 == 0:
     if CP.exFlags & HyundaiExFlags.HOD:
@@ -366,6 +367,9 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
 
       if CC.enabled and not CS.MainMode_ACC and 10 < frame % 200 <= 16 and CS.out.vEgo > 3.:
         values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
+      elif CS.adrv_msg_1ea is not None and CS.adrv_msg_1ea["HDA_MODE2"] == 0:  # if corner radar is disabled, send main btn
+        if 10 < frame % 1000 <= 16 and CS.out.vEgo > 3:
+          values["ADAPTIVE_CRUISE_MAIN_BTN"] = 1
       else:
         values["ADAPTIVE_CRUISE_MAIN_BTN"] = 0
 

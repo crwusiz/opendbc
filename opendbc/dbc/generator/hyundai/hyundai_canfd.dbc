@@ -1107,7 +1107,7 @@ VAL_ 234 ADAS_AciFault_Lv2 0 "No Fault" 1 "MDPS Fault" 2 "Fault Except MDPS" 3 "
 VAL_ 234 TPA_Stat 0 "The TPA function of MDPS is not plugged in (unplugged)" 1 "The TPA function of MDPS is plugged in" 2 "RESERVED" 3 "Error Indicator";
 VAL_ 234 TPA_CanFailStat 0 "No Failure" 1 "Failure about Tpa can message" 2 "RESERVED" 3 "Error Indicator";
 VAL_ 234 TPA_ModeStat 0 "RESERVED" 1 "Steering still in initialization phase" 2 "Steering ready, waits for TPA command" 3 "Steering set in standby by TPA" 4 "Steering requested to go to first activation step activation step" 5 "Steering requested to go to final activation step" 6 "Steering went to error internally" 7 "Steering aborted the automatic function" 14 "RESERVED" 15 "Error Indicator";
-VAL_ 234 TPA_SteerAngle0 "0 (0x000~0x7FFD valid range)" 32765 "32765 (0x000~0x7FFD valid range)" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "32768 (0x8000~0xFFFF valid range)" 65535 "65535 (0x8000~0xFFFF valid range)";
+VAL_ 234 TPA_SteerAngle 0 "0 (0x000~0x7FFD valid range)" 32765 "32765 (0x000~0x7FFD valid range)" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "32768 (0x8000~0xFFFF valid range)" 65535 "65535 (0x8000~0xFFFF valid range)";
 VAL_ 234 LKA_FAULT 0 "ok" 1 "lka fault";
 VAL_ 272 LKA_OptUsmSta 0 "None LKA/LDW Option (Default)" 1 "LDW" 2 "LKA" 3 "Reserved" 4 "LDW Only (None LKA)" 5 "LDW only OFF (None LKA)" 6 "LDW/LKA OFF" 7 "Invalid";
 VAL_ 272 LKA_RcgSta 0 "Not Recognized" 1 "Left Lane Recognition" 2 "Right Lane Recognition" 3 "Full Lane Recognition" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved";

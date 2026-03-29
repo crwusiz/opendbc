@@ -415,11 +415,11 @@ class CarState(CarStateBase):
 
       bsm_msg = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]
       if self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
-          left_sigs = ["FL_INDICATOR_ALT", "INDICATOR_LEFT_THREE"]
-          right_sigs = ["FR_INDICATOR_ALT", "INDICATOR_RIGHT_THREE"]
+          left_sigs = ["FL_INDICATOR_ALT", "OSMrrLamp_LeftIndSta"]
+          right_sigs = ["FR_INDICATOR_ALT", "OSMrrLamp_RightIndSta"]
       else:
-          left_sigs = ["FL_INDICATOR", "INDICATOR_LEFT_TWO"]
-          right_sigs = ["FR_INDICATOR", "INDICATOR_RIGHT_TWO"]
+          left_sigs = ["FL_INDICATOR", "BCW_LeftIndSta"]
+          right_sigs = ["FR_INDICATOR", "BCW_RightIndSta"]
 
       ret.leftBlindspot = any(bsm_msg[sig] != 0 for sig in left_sigs)
       ret.rightBlindspot = any(bsm_msg[sig] != 0 for sig in right_sigs)

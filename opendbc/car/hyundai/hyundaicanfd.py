@@ -50,16 +50,14 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   camera_scc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
 
   common_values = {
-    "LKA_MODE": 2,
+    "LKA_OptUsmSta": 2,
     "LKA_ICON": 2 if enabled else 1,
-    "TORQUE_REQUEST": apply_torque,
-    "LKA_ASSIST": 0,
-    "STEER_REQ": 1 if lat_active else 0,
-    "STEER_MODE": 0,
-    "HAS_LANE_SAFETY": 0,  # hide LKAS settings
-    "NEW_SIGNAL_2": 0,
-    "DAMP_FACTOR": 100,  # can potentially tuned for better perf [3, 200]
-    "LKA_AVAILABLE": 0,
+    "StrTqReqVal": apply_torque,
+    "LKA_SysWrn": 0,
+    "ActToiSta": 1 if lat_active else 0,
+    "LKA_UsmMod": 0,  # hide LKAS settings
+    "LKA_RcgSta": 0,
+    "Damping_Gain": 100,  # can potentially tuned for better perf [3, 200]
   }
 
   lfa_values = copy.copy(common_values)
@@ -76,7 +74,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
       values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
   else:
     if CS.lfa_info is not None:
-      values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
+      values["LKA_RcgSta"] = 1 if CS.lfa_info["ActToiSta"] == 1 else 0
 
   if frame % 1000 < 40:
     values["OutTorque"] += 220
@@ -98,11 +96,11 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   if angle_control:
     if camera_scc:
       lfa_values |= {
-        "LKA_MODE": 0,  # TODO: not used by the stock system
-        "TORQUE_REQUEST": 0,  # we don't use torque
-        "STEER_REQ": 0,  # we don't use torque
+        "LKA_OptUsmSta": 0,  # TODO: not used by the stock system
+        "StrTqReqVal": 0,  # we don't use torque
+        "ActToiSta": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
-        "LKA_AVAILABLE": 3 if lat_active else 0,
+        "LKA_RcgSta": 3 if lat_active else 0,
         #"ADAS_AngleReq": 0,
         #"ADAS_AngleActiveStat_Lv2": 0,
         #"ADAS_AngleTorqueGain": 0,
@@ -117,11 +115,11 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
 
     else:
       lkas_values |= {
-        "LKA_MODE": 0,  # TODO: not used by the stock system
-        "TORQUE_REQUEST": 0,  # we don't use torque
-        "STEER_REQ": 0,  # we don't use torque
+        "LKA_OptUsmSta": 0,  # TODO: not used by the stock system
+        "StrTqReqVal": 0,  # we don't use torque
+        "ActToiSta": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
-        "LKA_AVAILABLE": 3 if lat_active else 0,
+        "LKA_RcgSta": 3 if lat_active else 0,
         "ADAS_AngleReq": apply_angle,
         "ADAS_AngleActiveStat_Lv2": 2 if lat_active else 1,
         "ADAS_AngleTorqueGain": angle_max_torque if lat_active else 0,

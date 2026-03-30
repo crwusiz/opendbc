@@ -1182,6 +1182,14 @@ FW_VERSIONS = {
       b'\xf1\x00SV11.011.041.012473000HKP_SV124_40801099211EV000',
     ],
   },
+  CAR.KIA_EV4: { # (CT1)
+    (Ecu.fwdRadar, 0x7d0, None): [
+      b'\xf1\x00CT1__               1.00 1.01 99110EZ000          ',
+    ],
+    (Ecu.fwdCamera, 0x7c4, None): [
+      b'\xf1\x00CT11.011.031.012551000HKP_CT125_50430099211EZ000',
+    ],
+  },
 
   # Genesis
   CAR.GENESIS: {  # (DH)

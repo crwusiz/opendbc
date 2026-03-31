@@ -536,7 +536,7 @@ FW_VERSIONS = {
       b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.02 99211-G8100 191029',
     ],
   },
-  CAR.HYUNDAI_GRANDEUR_FL: {  # (IG)
+  CAR.HYUNDAI_GRANDEUR_PE: {  # (IG)
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00IG__ SCC F-CUP   1.00 1.00 99110-G8100         ',
     ],
@@ -547,7 +547,7 @@ FW_VERSIONS = {
       b'\xf1\x00IG  MFC  AT MES LHD 1.00 1.04 99211-G8100 200511',
     ],
   },
-  CAR.HYUNDAI_GRANDEUR_FL_HEV: {  # (IG)
+  CAR.HYUNDAI_GRANDEUR_PE_HEV: {  # (IG)
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00IGhe SCC FHCUP      1.00 1.00 99110-M9100         ',
       b'\xf1\x00IGhe SCC FHCUP      1.00 1.01 99110-M9000         ',

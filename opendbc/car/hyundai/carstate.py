@@ -448,7 +448,7 @@ class CarState(CarStateBase):
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
       self.cruise_info = copy.copy(cp_cam.vl["SCC_CONTROL"])
       self.lfa_info = copy.copy(cp_cam.vl["LFA"])
-      if self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING.value:
+      if self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEER_MSG.value:
         self.lfa_alt_info = copy.copy(cp_cam.vl["LFA_ALT"])
       self.mdps_info = copy.copy(cp.vl["MDPS"])
 
@@ -556,7 +556,7 @@ class CarState(CarStateBase):
     self.buttons_counter = cp.vl[self.cruise_btns_msg_canfd]["COUNTER"]
     ret.accFaulted = cp.vl["TCS"]["ACCEnable"] != 0  # 0 ACC CONTROL ENABLED, 1-3 ACC CONTROL DISABLED
 
-    if self.CP.flags & HyundaiFlags.CANFD_LKA_STEERING and not self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
+    if self.CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG and not self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC:
       if self.msg_0x362 is not None or 0x362 in cp_cam.seen_addresses:
         self.msg_0x362 = cp_cam.vl["CAM_0x362"]
       elif self.msg_0x2a4 is not None or 0x2a4 in cp_cam.seen_addresses:

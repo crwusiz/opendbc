@@ -74,7 +74,7 @@ class CarController(CarControllerBase):
                                                                        MAX_FAULT_ANGLE_CONSECUTIVE_FRAMES)
 
     # steering torque
-    if not self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING:
+    if not self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEER_MSG:
       new_torque = int(round(actuators.torque * self.params.STEER_MAX))
       apply_torque = apply_driver_steer_torque_limits(new_torque, self.apply_torque_last, CS.out.steeringTorque, self.params)
 

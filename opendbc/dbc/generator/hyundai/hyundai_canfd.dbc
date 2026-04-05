@@ -24,6 +24,25 @@ BO_ 69 GEAR: 24 XXX
  SG_ GEAR_STEP : 146|5@1+ (1,0) [0|31] "" XXX
  SG_ GEAR_STEP1 : 154|5@1+ (1,0) [0|31] "" XXX
 
+BO_ 74 IMU_01_10ms: 32 CGW_CCU
+ SG_ IMU_Crc1Val : 0|16@1+ (1,0) [0|0] ""  ECS,ESC,FCU_C,GW_RGW,ICSC,MDPS,RCU,RWS,SFA,VPC_C
+ SG_ IMU_AlvCnt1Val : 16|8@1+ (1,0) [0|0] ""  ECS,ESC,FCU_C,GW_RGW,ICSC,MDPS,RCU,RWS,SFA,VPC_C
+ SG_ IMU_YawSigSta : 24|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ IMU_LatAccelSigSta : 28|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ IMU_LongAccelSigSta : 32|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ IMU_VerAccelSigSta : 36|4@1+ (1,0) [0|15] "" XXX
+ SG_ IMU_McuVoltSta : 40|4@1+ (1,0) [0|15] "" XXX
+ SG_ IMU_AcuRstSta : 44|4@1+ (1,0) [0|15] "" XXX
+ SG_ IMU_SnsrTyp : 48|8@1+ (1,0) [0|255] "" XXX
+ SG_ IMU_RollSigSta : 56|8@1+ (1,0) [0|255] "" XXX
+ SG_ IMU_YawRtVal : 64|16@1+ (0.005,-163.84) [-163.84|163.835] "Deg/s"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ IMU_LatAccelVal : 80|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ IMU_LongAccelVal : 96|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ IMU_SnsrTempVal : 112|16@1+ (1,0) [0|65535] "" XXX
+ SG_ IMU_SeralNumVal : 128|64@1+ (1,0) [0|1.84467440737096e+19] "" XXX
+ SG_ IMU_RollRtVal : 192|16@1+ (0.005,-163.84) [0|0] "º/s" XXX
+ SG_ IMU_VerAccelVal : 208|8@1+ (1,0) [0|255] "" XXX
+
 BO_ 96 ESP_STATUS: 32 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" XXX
@@ -66,6 +85,14 @@ BO_ 203 LFA_ALT: 24 CGW_CCU
  SG_ FCA_ESA_ActiveStat : 56|2@1+ (1,0) [0|0] "" GW_RGW,MDPS,SFA
  SG_ FCA_ESA_ToqueGain : 64|8@1+ (0.004,0) [0|0] "" GW_RGW,MDPS,SFA
 
+BO_ 229 ESC_02_10ms: 32 CGW
+ SG_ ESC_YawSigSta : 24|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ ESC_LatAccelSigSta : 28|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ ESC_LongAccelSigSta : 32|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ ESC_YawRtVal : 64|16@1+ (0.005,-163.84) [-163.84|163.835] "Deg/s"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ ESC_LatAccelVal : 80|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ ESC_LongAccelVal : 96|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+
 BO_ 234 MDPS: 24 SFA
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" CGW_CCU,ESC,ICSC,RCU,RWA,RWS,VPC_C
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" CGW_CCU,ESC,ICSC,RCU,RWA,RWS,VPC_C
@@ -89,13 +116,13 @@ BO_ 234 MDPS: 24 SFA
  SG_ VSM_ActStat : 76|2@1+ (1,0) [0|0] "" ESC,RCU,RWA
  SG_ ReprogramStat : 78|2@1+ (1,0) [0|0] "" CGW_CCU
  SG_ SteerTorqueSensor : 80|13@1+ (1,-4095) [0|4095] "" CGW_CCU,ESC,ICSC,RCU,RWA,VPC_C
- SG_ PA_SteerAngle : 96|16@1- (0.1,0) [0|255] "deg" CGW_CCU,RWA
+ SG_ PA_SteerAngle : 96|16@1- (0.1,0) [0|255] "Deg" CGW_CCU,RWA
  SG_ LoamStat : 112|2@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ HDPSwVer : 114|5@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ ADAS_ActiveStat : 120|4@1+ (1,0) [0|0] "" CGW_CCU,ESC,RWA,RWS
  SG_ ADAS_AciPlugStat : 124|2@1+ (1,0) [0|0] "" RWA
  SG_ ADAS_AciFault : 126|2@1+ (1,0) [0|0] "" CGW_CCU,ESC,RWA
- SG_ EstSteerAngle : 128|16@1- (0.1,0) [0|65535] "deg" CGW_CCU,RWA,RWS
+ SG_ EstSteerAngle : 128|16@1- (0.1,0) [0|65535] "Deg" CGW_CCU,RWA,RWS
  SG_ ADAS_ActiveStat_Lv2 : 144|4@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ ADAS_AciFault_Lv2 : 148|3@1+ (1,0) [0|0] "" CGW_CCU,RWA
  SG_ TPA_Stat : 152|2@1+ (1,0) [0|0] "" RWA,VPC_C
@@ -117,22 +144,24 @@ BO_ 261 ACCELERATOR_ALT: 32 XXX
 BO_ 272 LKAS_ALT: 32 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" XXX
- SG_ LKA_MODE : 24|3@1+ (1,0) [0|7] "" XXX
- SG_ LKA_AVAILABLE : 27|2@1+ (1,0) [0|3] "" XXX
- SG_ LKA_WARNING : 32|1@1+ (1,0) [0|1] "" XXX
- SG_ LKA_ICON : 38|2@1+ (1,0) [0|3] "" XXX
- SG_ FCA_SYSWARN : 40|1@0+ (1,0) [0|1] "" XXX
- SG_ TORQUE_REQUEST : 41|11@1+ (1,-1024) [0|4095] "" XXX
- SG_ STEER_REQ : 52|1@1+ (1,0) [0|1] "" XXX
+ SG_ LKA_OptUsmSta : 24|3@1+ (1,0) [0|7] "" ADAS_DRV
+ SG_ LKA_RcgSta : 27|3@1+ (1,0) [0|7] "" ADAS_DRV
+ SG_ LKA_LHLnWrnSta : 30|2@1+ (1,0) [0|3] "" ADAS_DRV
+ SG_ LKA_RHLnWrnSta : 32|2@1+ (1,0) [0|3] "" ADAS_DRV
+ SG_ LKA_HndsoffSnd : 34|2@1+ (1,0) [0|3] "" ADAS_DRV
+ SG_ LKA_StrSnd : 36|2@1+ (1,0) [0|3] "" ADAS_DRV
+ SG_ LKA_ICON : 38|3@1+ (1,0) [0|7] "" ADAS_DRV
+ SG_ StrTqReqVal : 41|11@1+ (1,-1024) [0|4095] "" XXX
+ SG_ ActToiSta : 52|2@1+ (1,0) [0|3] "" ADAS_DRV
+ SG_ ToiFltSta : 54|2@1+ (1,0) [0|3] "" ADAS_DRV
  SG_ LFA_BUTTON : 56|1@1+ (1,0) [0|1] "" XXX
- SG_ LKA_ASSIST : 62|1@1+ (1,0) [0|1] "" XXX
- SG_ STEER_MODE : 65|3@1+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_2 : 70|2@0+ (1,0) [0|3] "" XXX
+ SG_ LKA_SysWrn : 60|4@1+ (1,0) [0|15] "" ADAS_DRV
+ SG_ Damping_Gain : 64|8@1+ (1,0) [0|255] "" CGW
  SG_ ADAS_AngleActiveStat_Lv2 : 77|2@0+ (1,0) [0|3] "" XXX
- SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
+ SG_ LKA_UsmMod : 80|2@1+ (1,0) [0|3] "" ADAS_DRV
  SG_ ADAS_AngleReq : 82|14@1- (0.1,0) [0|511] "deg" GW_RGW,MDPS,SFA
  SG_ ADAS_AngleTorqueGain : 96|8@1+ (1,0) [0|255] "" GW_RGW,MDPS,SFA
- SG_ DAMP_FACTOR : 104|8@1+ (1,0) [0|255] "" XXX
+ SG_ FCA_ESA_CtrlSta : 107|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 282 ADAS_CAM: 16 CAMERA
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" Dummy,IBU_HS,vBDM
@@ -168,22 +197,29 @@ BO_ 293 STEERING_SENSORS: 16 XXX
 BO_ 298 LFA: 16 ADRV
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" CLU,CGW
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" CLU,CGW
- SG_ LKA_MODE : 24|3@1+ (1,0) [0|7] "" XXX
- SG_ LKA_AVAILABLE : 27|2@1+ (1,0) [0|3] "" XXX
- SG_ LKA_WARNING : 32|1@1+ (1,0) [0|1] "" XXX
- SG_ LKA_ICON : 38|2@1+ (1,0) [0|3] "" XXX
- SG_ FCA_SYSWARN : 40|1@0+ (1,0) [0|1] "" XXX
- SG_ TORQUE_REQUEST : 41|11@1+ (1,-1024) [0|4095] "" XXX
- SG_ STEER_REQ : 52|1@1+ (1,0) [0|1] "" XXX
- SG_ LFA_BUTTON : 56|1@1+ (1,0) [0|1] "" XXX
- SG_ LKA_ASSIST : 62|1@1+ (1,0) [0|1] "" XXX
- SG_ STEER_MODE : 65|3@1+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_2 : 70|2@0+ (1,0) [0|3] "" XXX
- SG_ ADAS_AngleActiveStat_Lv2 : 77|2@0+ (1,0) [0|3] "" XXX
- SG_ HAS_LANE_SAFETY : 80|1@0+ (1,0) [0|1] "" XXX
- SG_ ADAS_AngleReq : 82|14@1- (0.1,0) [0|511] "deg" XXX
- SG_ ADAS_AngleTorqueGain : 96|8@1+ (1,0) [0|255] "" XXX
- SG_ DAMP_FACTOR : 104|8@1+ (1,0) [0|255] "" XXX
+ SG_ LKA_OptUsmSta : 24|3@1+ (1,0) [0|7] "" CLU,CGW
+ SG_ LKA_RcgSta : 27|3@1+ (1,0) [0|7] "" CLU,CGW
+ SG_ LKA_LHLnWrnSta : 30|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ LKA_RHLnWrnSta : 32|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ LKA_HndsoffSnd : 34|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ LKA_StrSnd : 36|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ LKA_ICON : 38|3@1+ (1,0) [0|7] "" CLU,RR_C_RDR,CGW
+ SG_ StrTqReqVal : 41|11@1+ (1,-1024) [0|4095] "" XXX
+ SG_ ActToiSta : 52|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ ToiFltSta : 54|2@1+ (1,0) [0|3] "" CGW
+ SG_ LFA_BUTTON : 56|1@0+ (1,0) [0|255] "" XXX
+ SG_ BCA_Rear_WrnSta : 57|3@1+ (1,0) [0|255] "" ADRV
+ SG_ LKA_SysWrn : 60|4@1+ (1,0) [0|15] "" CLU,CGW
+ SG_ FCA_LO_WrnSta : 64|1@1+ (1,0) [0|1] "" ADRV
+ SG_ FCA_LS_WrnSta : 68|1@1+ (1,0) [0|1] "" ADRV
+ SG_ LKA_OnOffEquip2Sta : 72|2@1+ (1,0) [0|255] "" ADRV
+ SG_ LKA_UsmMod : 80|2@1+ (1,0) [0|3] "" CLU,CGW
+ SG_ Info_PedtrnDst : 84|3@0+ (1,0) [0|7] "" ADAS_DRV
+ SG_ ELK_SysFlrSta : 85|5@1+ (1,0) [0|31] "" ADRV
+ SG_ ELK_SymbDisp : 90|3@1+ (1,0) [0|7] "" ADRV
+ SG_ FCA_ESA_WrnSta : 93|1@1+ (1,0) [0|7] "" ADRV
+ SG_ FCA_ESA_CtrlSta : 101|1@1+ (1,0) [0|7] "" ADRV
+ SG_ Damping_Gain : 104|8@1+ (1,0) [0|255] "" CGW
 
 BO_ 304 GEAR_SHIFTER: 16 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -435,15 +471,30 @@ BO_ 437 CCNC_0x1b5: 32 CAMERA
 BO_ 442 BLINDSPOTS_REAR_CORNERS: 24 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" XXX
- SG_ LEFT_BLOCKED : 24|1@0+ (1,0) [0|1] "" XXX
- SG_ INDICATOR_LEFT_TWO : 30|1@0+ (1,0) [0|3] "" XXX
- SG_ INDICATOR_RIGHT_TWO : 32|1@1+ (1,0) [0|3] "" XXX
+ SG_ BCW_Sta : 24|1@0+ (1,0) [0|1] "" XXX
+ SG_ BCW_OnOffEquipSta : 28|2@1+ (1,0) [0|3] "" XXX
+ SG_ BCW_LeftIndSta : 30|1@0+ (1,0) [0|3] "" XXX
+ SG_ BCW_RightIndSta : 32|1@1+ (1,0) [0|3] "" XXX
+ SG_ BCW_LeftSndWrngSta : 34|2@1+ (1,0) [0|3] "" XXX
+ SG_ BCW_RightSndWrngSta : 36|10@1+ (1,0) [0|1023] "" XXX
  SG_ FL_INDICATOR : 46|6@0+ (1,0) [0|1] "" XXX
- SG_ FR_INDICATOR : 54|6@0+ (1,0) [0|63] "" XXX
- SG_ RIGHT_BLOCKED : 64|1@0+ (1,0) [0|1] "" XXX
- SG_ COLLISION_AVOIDANCE_ACTIVE : 68|1@0+ (1,0) [0|1] "" XXX
- SG_ INDICATOR_LEFT_THREE : 128|1@0+ (1,0) [0|1] "" XXX
- SG_ INDICATOR_RIGHT_THREE : 130|1@0+ (1,0) [0|1] "" XXX
+ SG_ FR_INDICATOR : 54|2@0+ (1,0) [0|3] "" XXX
+ SG_ BCW_SnstvtyModRetVal : 56|3@1+ (1,0) [0|7] "" XXX
+ SG_ BCW_IndSta : 59|3@1+ (1,0) [0|7] "" XXX
+ SG_ BCA_OnOffEquip2Sta : 62|2@1+ (1,0) [0|3] "" XXX
+ SG_ BCA_Sta : 64|1@0+ (1,0) [0|1] "" XXX
+ SG_ BCA_OnOffEquipSta : 68|1@0+ (1,0) [0|1] "" XXX
+ SG_ BCA_DRV_WarnSta : 76|4@1+ (1,0) [0|15] "" XXX
+ SG_ BCA_Plus_Deccel_Req : 80|4@1+ (1,0) [0|15] "" XXX
+ SG_ BCA_Plus_BrkCmdSta : 84|2@1+ (1,0) [0|3] "" XXX
+ SG_ BCA_Plus_LtWrngSta : 86|2@1+ (1,0) [0|3] "" XXX
+ SG_ BCA_Plus_RtWrngSta : 88|5@1+ (1,0) [0|31] "" XXX
+ SG_ BCA_Plus_FuncStat : 93|3@1+ (1,0) [0|7] "" XXX
+ SG_ BCA_Plus_Sta : 96|1@0+ (1,0) [0|1] "" XXX
+ SG_ Brake_Control_RL : 110|2@1+ (1,0) [0|3] "" XXX
+ SG_ Brake_Control_RR : 118|2@1+ (1,0) [0|3] "" XXX
+ SG_ OSMrrLamp_LeftIndSta : 128|2@1+ (1,0) [0|3] "" XXX
+ SG_ OSMrrLamp_RightIndSta : 130|6@1+ (1,0) [0|63] "" XXX
  SG_ FL_INDICATOR_ALT : 138|1@0+ (1,0) [0|1] "" XXX
  SG_ FR_INDICATOR_ALT : 141|1@0+ (1,0) [0|1] "" XXX
 
@@ -794,14 +845,29 @@ BO_ 1264 LOCAL_TIME: 8 XXX
  SG_ YEAR : 47|8@0+ (1,0) [0|255] "" XXX
  SG_ DATE : 48|5@1+ (1,0) [0|31] "" XXX
 
+CM_ SG_ 74 IMU_Crc1Val "The data area for CRC calculation is based on the data length (DLC) of the message DB.The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID- CRC Polynomial (0x1021) , Ini";
+CM_ SG_ 74 IMU_AlvCnt1Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
+CM_ SG_ 74 IMU_YawSigSta "This signal indicates failure status of yaw rate signal and yaw rate sensing element.0000B : No failure xxx1B : IMU_Yawrate_failurexx1xB : Initialization is runningx1xxB : Reserved1xxxB : ReservedThis signal represents the physica";
+CM_ SG_ 74 IMU_LatAccelSigSta "This signal indicates failure status of lateral acceleration signal and sensing element.0000B : No failurexxx1B : IMU_Lateral acceleration failurexx1xB : Initialization is runningx1xxB : Reserved1xxxB : ReservedThis signal represe";
+CM_ SG_ 74 IMU_AcuRstSta "This signal indicates the status of IMU.0000B : Normal mode xxx1B : IMU Reset modexx1xB : Reservedx1xxB : Reserved1xxxB : ReservedIf ACU reset is required, ACU will send IMU RESET bit(XXX1B) up to 30 times and perform a reset. If ";
+CM_ SG_ 74 IMU_YawRtVal "This signal indicates Information regarding yaw rate.physical range : -163.84..163.83 ˚/s = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.005[˚/s/digit] = (HEX)*0.005[˚/s/digit] - 163.84[˚/s] ";
+CM_ SG_ 74 IMU_LatAccelVal "This signal indicates Information regarding lateral acceleration.physical range : -4.1768g..4.1765g = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.000127465[g/digit] = (HEX)*0.000127465[g/digit] - 4.17677312[g]";
+
 CM_ SG_ 96 BRAKE_PRESSURE "User applied brake pedal pressure. Ramps from computer applied pressure on falling edge of cruise. Cruise cancels if !=0";
 CM_ SG_ 101 BRAKE_POSITION "User applied brake pedal position, max is ~700. Signed on some vehicles";
+CM_ BO_ 203 "Known in official DBC as ADAS_CMD_35_10ms";
 CM_ SG_ 203 ADAS_AngleActiveStat "ADAS Active AngleControlInterface State";
 CM_ SG_ 203 ADAS_AngleActiveStat_Lv2 "ADAS Active AngleControlInterface Level 2 State";
 CM_ SG_ 203 ADAS_AngleReq "(LFA) ADAS Steering Angle Request Value";
 CM_ SG_ 203 ADAS_AngleTorqueGain "(LFA) ADAS AngleControlInterface Angle Torque Reduction Gain Value";
 CM_ SG_ 203 FCA_ESA_ActiveStat "FCA_ESA Active State";
 CM_ SG_ 203 FCA_ESA_ToqueGain "FCA_ESA Torque Boost Gain Value";
+CM_ SG_ 229 ESC_YawSigSta "ESC_YawSigSta";
+CM_ SG_ 229 ESC_LatAccelSigSta "ESC_LatAccelSigSta";
+CM_ SG_ 229 ESC_LongAccelSigSta "ESC_LongAccelSigSta";
+CM_ SG_ 229 ESC_YawRtVal "ESC_YawRtVal";
+CM_ SG_ 229 ESC_LatAccelVal "ESC_LatAccelVal";
+CM_ SG_ 229 ESC_LongAccelVal "ESC_LongAccelVal";
 CM_ SG_ 234 WarningLamp "The signal indicates the ststus of the MDPS Warning lamp";
 CM_ SG_ 234 Type "Information regarding the type of MDPS. (C-MDPS / R-MDPS / SbW)";
 CM_ SG_ 234 EngineIdleRpmReq "This signal indicates the request status for engine idle rpm up according to MDPS fast rotation.";
@@ -823,8 +889,21 @@ CM_ SG_ 234 VSM_Stat "Information of VSM Torque Intervention Act Response";
 CM_ SG_ 234 ReprogramStat "Information regarding the reprogram state";
 CM_ SG_ 234 SteerTorqueSensor "Steering torque sensor value Physical Value > 0: Left Direction (CCW) Physical Value < 0: Right Direction (CW) this signal has direction information. '+' Value means Counter clock wise rotation. '-' value means Clock wise rotation.";
 CM_ SG_ 234 PA_SteerAngle "This value is used to inform PA of a compensated steering wheel angle by MDPS. The signal is signed 16bits. (PH) = (HEX) �� 0.1 (for 0 < HEX �� 32767)  or = (HEX - 65536) �� 0.1 (for HEX > 32767) [Deg] this signal has direction information. '+' V";
+CM_ SG_ 234 LoamStat "The signal represent status of the LOAM(Loss Of Assist Mitigation) Mode";
+CM_ SG_ 234 HDPSwVer "This signal indicates HDP-MDPS Control Requirement Spec Version";
+CM_ SG_ 234 ADAS_ActiveStat "State for angle control";
+CM_ SG_ 234 ADAS_AciPlugStat "This signal indicates whether the ADASAci function of MDPS is plugged in or not.";
+CM_ SG_ 234 ADAS_AciPlugStat "MDPS Fault Status for HDP Function";
+CM_ SG_ 234 EstSteerAngle "This value is used to inform of a compensated steering wheel angle by MDPS. The signal is signed 16bits, and made by motor position sensor. (PH) = (HEX) * 0.1 (for 0 < HEX <= 32767) or = (HEX - 65536) * 0.1 (for HEX > 32767) [Deg].";
+CM_ SG_ 234 ADAS_ActiveStat_Lv2 "States for angle control (LV2)";
+CM_ SG_ 234 ADAS_AciFault_Lv2 "MDPS Fault Status for LV2 Angle Control Function";
+CM_ SG_ 234 TPA_Stat "This signal indicates whether the TPA function of MDPS is plugged in or not.";
+CM_ SG_ 234 TPA_CanFailStat "This Signal should be used by only TPA. This signal indicates whether the MDPS is defective in TPA cooperation control. This signal is set as '1' only when MDPS Detects CAN Failure(TIMEOUT, Signal Error) of TPA CAN Message";
+CM_ SG_ 234 TPA_ModeStat "This signal indicates the status of the TPA steering function.";
+CM_ SG_ 234 TPA_SteerAngle "This value is used to inform TPA of a compensated steering wheel angle by MDPS. The signal is signed 16bits. (PH) = (HEX) * 0.1 (for 0 < HEX <= 32767) or = (HEX - 65536) * 0.1 (for HEX > 32767) [Deg]";
 CM_ BO_ 272 "Alternative LKAS message, used on cars such as 2023 Ioniq 6, 2nd gen Kona. Matches LKAS except size is 32 bytes";
-CM_ SG_ 272 LKA_AVAILABLE "Angle control cars: 3 when LKA is generally available, goes to 0 during changes with LFA";
+CM_ SG_ 272 ToiFltSta "This fault flag is set when a fault in the LKA system has been detected by the LKA ECU such that LKA can no longer function. CAN failures, internal video ECU failures, hard-wired component (e.g. master switch) failures and other system logic failures are";
+CM_ SG_ 272 LKA_RcgSta "Angle control cars: 3 when LKA is generally available, goes to 0 during changes with LFA";
 CM_ SG_ 272 ADAS_AngleReq "(LKAS) ADAS Steering Angle Request Value; Capped at 176.7; tracks MDPS->STEERING_ANGLE when not engaged, not STEERING_SENSORS->STEERING_ANGLE";
 CM_ SG_ 272 ADAS_AngleTorqueGain "(LKAS) ADAS AngleControlInterface Angle Torque Reduction Gain Value";
 CM_ BO_ 282 "Sent by the camera containing DAW (Driver Attention Warning) information and information about HBA (High Beam Assist).";
@@ -852,7 +931,7 @@ CM_ SG_ 298 LKA_LHLnWrnSta "LKA_LHLaneWarningStatus ##2G##LDW_LKA - LKA11 - CF_L
 CM_ SG_ 298 LKA_RHLnWrnSta "LKA_RHLaneWarningStatus ##2G##LDW_LKA - LKA11 - CF_LKA_RHWarning";
 CM_ SG_ 298 LKA_HndsoffSnd "LKA_HandsoffSound ##2G##LDW_LKA - LKA11 - CF_LKA_HandsOff_Snd";
 CM_ SG_ 298 LKA_StrSnd "LKA_SteeringSound ##2G##LDW_LKA - LKA11 - CF_LKA_Steer_Snd";
-CM_ SG_ 298 LKA_SysIndReq "LKA_SystemIndicatorRequest ##2G##LDW_LKA - LKA11 - CF_LKA_SymbolState";
+CM_ SG_ 298 LKA_ICON "LKA_SystemIndicatorRequest ##2G##LDW_LKA - LKA11 - CF_LKA_SymbolState";
 CM_ SG_ 298 ADAS_StrTqReqVal "This is the driver torque overlay demand value. A negative value represents a torque that would accelerate the steering wheel in a clockwise direction. This signal is always zero whilst the TOI is inactive.";
 CM_ SG_ 298 ADAS_ActToiSta "This is a flag that is set to 1 when requesting the steering to activate the torque overlay interface (TOI).  This must be done before an attempt is made to request non-zero steering torque overlay.";
 CM_ SG_ 298 ADAS_ToiFltSta "This fault flag is set when a fault in the LKA system has been detected by the LKA ECU such that LKA can no longer function. CAN failures, internal video ECU failures, hard-wired component (e.g. master switch) failures and other system logic failures are";
@@ -909,6 +988,7 @@ CM_ SG_ 437 RightLnHeadingAngle "This signal outputs the heading angle of right 
 CM_ SG_ 437 RightLnCurvature "This signal outputs the curvature of right line.";
 CM_ SG_ 437 ID_CIPV "Valid Object = 1 to 255 - ID detected by front camera can vary depending on vehicle environment. - Additional logic would be required to apply this signal for ISG.";
 CM_ SG_ 437 Relative_Velocity "+ : Preceding, - : Oncoming - Velocity detected by front camera can vary depending on vehicle environment. - Additional logic would be required to apply this signal for ISG. - Confirmaiton by Autonomous Driving Engineering Team is required to use ID_C";
+CM_ SG_ 416 SCC_ObjSta "state of in-path object and information of controllable state.";
 CM_ SG_ 480 NEW_SIGNAL_5 "todo: figure out why always set to 1";
 CM_ BO_ 506 "Sent by the camera containing speed limit information. ISLW stands for Intelligent Speed Limit Warning, and ISLA is Intelligent Speed Limit Assist. it also contains road sign information.";
 CM_ SG_ 506 ISLW_OptUsmSta "ISLW option information";
@@ -1014,23 +1094,34 @@ VAL_ 234 SteerMode 0 "Comfort Mode" 1 "Sport Mode" 2 "Sport+ Mode" 3 "Chauffeur 
 VAL_ 234 OutTorque 0 "0x0x000~0xFFD:real values" 4093 "0x0x000~0xFFD:real values" 4094 "RESERVED" 4095 "Error Indicator";
 VAL_ 234 VSM_ActStat 0 "VSM Control inactivated" 1 "VSM Control Activated" 2 "RESERVED" 3 "Invalid";
 VAL_ 234 ReprogramStat 0 "normal operation" 1 "reprogramming" 2 "RESERVED" 3 "Error Indicator";
-VAL_ 234 SteerTorqueSensor 0 "0x0x000~0x1FFD:real values" 8189 "0x0x000~0x1FFD:real values" 8190 "RESERVED" 8191 "Error Indicator";
-VAL_ 234 PA_SteerAngle 0 "0x0x000~0x7FFD:real values" 32765 "0x0x000~0x7FFD:real values" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "0x8000~0xFFFF:real values" 65535 "0x8000~0xFFFF:real values";
+VAL_ 234 SteerTorqueSensor 0 "0 (0x000~0x7FFD valid range)" 8189 "32765 (0x000~0x1FFD valid range)" 8190 "RESERVED" 8191 "Error Indicator";
+VAL_ 234 PA_SteerAngle 0 "0 (0x000~0x7FFD valid range)" 32765 "32765 (0x000~0x7FFD valid range)" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "32768 (0x8000~0xFFFF valid range)" 65535 "65535 (0x8000~0xFFFF valid range)";
 VAL_ 234 LoamStat 0 "Normal" 1 "Loam Flag Warning Display" 2 "RESERVED" 3 "Error Indicator";
 VAL_ 234 HDPSwVer 0 "HDP-MDPS Control Requirement Version" 1 "HDP-MDPS Control Requirement Version" 2 "HDP-MDPS Control Requirement Version" 3 "HDP-MDPS Control Requirement Version" 4 "HDP-MDPS Control Requirement Version" 5 "HDP-MDPS Control Requirement Version" 6 "HDP-MDPS Control Requirement Version" 7 "HDP-MDPS Control Requirement Version" 8 "HDP-MDPS Control Requirement Version" 9 "HDP-MDPS Control Requirement Version" 10 "HDP-MDPS Control Requirement Version" 11 "HDP-MDPS Control Requirement Version" 12 "HDP-MDPS Control Requirement Version" 13 "HDP-MDPS Control Requirement Version" 14 "HDP-MDPS Control Requirement Version" 15 "HDP-MDPS Control Requirement Version" 16 "HDP-MDPS Control Requirement Version" 17 "HDP-MDPS Control Requirement Version" 18 "HDP-MDPS Control Requirement Version" 19 "HDP-MDPS Control Requirement Version" 20 "HDP-MDPS Control Requirement Version" 21 "HDP-MDPS Control Requirement Version" 22 "HDP-MDPS Control Requirement Version" 23 "HDP-MDPS Control Requirement Version" 24 "HDP-MDPS Control Requirement Version" 25 "HDP-MDPS Control Requirement Version" 26 "HDP-MDPS Control Requirement Version" 27 "HDP-MDPS Control Requirement Version" 28 "HDP-MDPS Control Requirement Version" 29 "HDP-MDPS Control Requirement Version" 30 "HDP-MDPS Control Requirement Version" 31 "HDP-MDPS Control Requirement Version";
 VAL_ 234 ADAS_ActiveStat 0 "INIT" 1 "INACTIVE" 2 "ACTIVE35(ACTIVE)" 3 "ACTIVE33(Redundancy)" 4 "RESERVED" 5 "RESERVED" 6 "RESERVED" 7 "RESERVED" 8 "RESERVED" 9 "RESERVED" 10 "RESERVED" 11 "RESERVED" 12 "RESERVED" 13 "RESERVED" 14 "RESERVED" 15 "RESERVED";
 VAL_ 234 ADAS_AciPlugStat 0 "ADASAciNotPlugged-in" 1 "ADASAciPlugged-in" 2 "RESERVED" 3 "ErrorIndicator";
 VAL_ 234 ADAS_AciFault 0 "No Fault" 1 "MDPS Fault" 2 "Fault Except MDPS" 3 "Both Fault";
-VAL_ 234 EstSteerAngle 0 "0x0x000~0x7FFD:real values" 32765 "0x0x000~0x7FFD:real values" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "0x8000~0xFFFF:real values" 65535 "0x8000~0xFFFF:real values";
+VAL_ 234 EstSteerAngle 0 "0 (0x000~0x7FFD valid range)" 32765 "32765 (0x000~0x7FFD valid range)" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "32768 (0x8000~0xFFFF valid range)" 65535 "65535 (0x8000~0xFFFF valid range)";
 VAL_ 234 ADAS_ActiveStat_Lv2 0 "Not USED" 1 "INACTIVE" 2 "ACTIVE35(Active)" 3 "Reserved" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved" 8 "Reserved" 9 "Reserved" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Reserved" 15 "Reserved";
 VAL_ 234 ADAS_AciFault_Lv2 0 "No Fault" 1 "MDPS Fault" 2 "Fault Except MDPS" 3 "Both Fault" 4 "Temporarily Unavailable" 5 "Temporarily Unavailable and MDPS Fault" 6 "Temporarily Unavailable and Fault Except MDPS" 7 "Temporarily Unavailable and Both Fault";
 VAL_ 234 TPA_Stat 0 "The TPA function of MDPS is not plugged in (unplugged)" 1 "The TPA function of MDPS is plugged in" 2 "RESERVED" 3 "Error Indicator";
 VAL_ 234 TPA_CanFailStat 0 "No Failure" 1 "Failure about Tpa can message" 2 "RESERVED" 3 "Error Indicator";
 VAL_ 234 TPA_ModeStat 0 "RESERVED" 1 "Steering still in initialization phase" 2 "Steering ready, waits for TPA command" 3 "Steering set in standby by TPA" 4 "Steering requested to go to first activation step activation step" 5 "Steering requested to go to final activation step" 6 "Steering went to error internally" 7 "Steering aborted the automatic function" 14 "RESERVED" 15 "Error Indicator";
-VAL_ 234 TPA_SteerAngle 0 "0x0x000~0x7FFD:real values" 32765 "0x0x000~0x7FFD:real values" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "0x8000~0xFFFF:real values" 65535 "0x8000~0xFFFF:real values";
+VAL_ 234 TPA_SteerAngle 0 "0 (0x000~0x7FFD valid range)" 32765 "32765 (0x000~0x7FFD valid range)" 32766 "Not Initialized" 32767 "Error Indicator" 32768 "32768 (0x8000~0xFFFF valid range)" 65535 "65535 (0x8000~0xFFFF valid range)";
 VAL_ 234 LKA_FAULT 0 "ok" 1 "lka fault";
-VAL_ 272 LKA_MODE 1 "warning only" 2 "assist" 6 "off";
-VAL_ 272 LKA_ICON 0 "hidden" 1 "grey" 2 "green" 3 "flashing green";
+VAL_ 272 LKA_OptUsmSta 0 "None LKA/LDW Option (Default)" 1 "LDW" 2 "LKA" 3 "Reserved" 4 "LDW Only (None LKA)" 5 "LDW only OFF (None LKA)" 6 "LDW/LKA OFF" 7 "Invalid";
+VAL_ 272 LKA_RcgSta 0 "Not Recognized" 1 "Left Lane Recognition" 2 "Right Lane Recognition" 3 "Full Lane Recognition" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved";
+VAL_ 272 LKA_LHLnWrnSta 0 "No Warning" 1 "Lane Departure Warning" 2 "Reserved" 3 "Reserved";
+VAL_ 272 LKA_RHLnWrnSta 0 "No Warning" 1 "Lane Departure Warning" 2 "Reserved" 3 "Reserved";
+VAL_ 272 LKA_HndsoffSnd 0 "Off" 1 "Hands-off Sound Warning" 2 "Reserved" 3 "Reserved";
+VAL_ 272 LKA_StrSnd 0 "Off" 1 "Warning" 2 "Reserved" 3 "Reserved";
+VAL_ 272 LKA_ICON 0 "Off" 1 "Unavailable_(Grey On)" 2 "Lane Recognized_(Green On)" 3 "Lane Departure_(Green Blink)" 4 "System Fail_(Orange On)" 5 "Not Calibrated_(Orange Blink)" 6 "Regulation_(Orange On)" 7 "Reserved";
+VAL_ 272 StrTqReqVal 2046 "Reserved" 2047 "Invalid";
+VAL_ 272 ActToiSta 0 "De-activate TOI" 1 "Activate TOI" 2 "Reserved" 3 "Error indicator";
+VAL_ 272 ToiFltSta 0 "No Fault" 1 "Fault" 2 "Reserved" 3 "Error indicatorr";
+VAL_ 272 LKA_SysWrn 0 "No Info" 1 "Reserved" 2 "Reserved" 3 "Reserved" 4 "Hands-Off Warning 1" 5 "Hands-Off Warning 2" 6 "Hands-Off Warning 3" 7 "Reserved" 8 "Reserved" 9 "System Automatic off" 10 "Reserved" 11 "Reserved" 12 "Reserved" 13 "Reserved" 14 "Reserved" 15 "System Fail";
+VAL_ 272 LKA_UsmMod 0 "NONE" 1 "LKA 1 mode" 2 "Reserved" 3 "LDW";
+VAL_ 272 ADAS_ACIAnglTqRedcGainVal 0 "0x0x00~0xFA:Real Values" 250 "0x0x00~0xFA:Real Values" 251 "RESERVED" 252 "RESERVED" 253 "RESERVED" 254 "RESERVED" 255 "RESERVED";
 VAL_ 272 ADAS_AngleActiveStat_Lv2 0 "off" 1 "not active" 2 "active";
 VAL_ 282 HBA_SysOptSta 0 "None HBA Option (Default)" 1 "HBA Option" 2 "Reserved" 3 "Error indicator";
 VAL_ 282 HBA_SysSta 0 "HBA Disable" 1 "HBA Enable & High Beam Off" 2 "HBA Enable & High Beam On" 3 "Reserved" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "System Fail";
@@ -1045,7 +1136,7 @@ VAL_ 282 DAW_WrnMsgSta 0 "No Warning" 1 "Rest Recommend Warning" 2 "Hands-Off TM
 VAL_ 282 DAW_TimeRstReq 0 "No signal" 1 "Time reset" 2 "Reserved" 3 "Error indicator";
 VAL_ 282 DAW_SnstvtyModRetVal 0 "Default" 1 "Late" 2 "Normal" 3 "Reserved" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Invalid";
 VAL_ 282 SCCEquipStat 0 "Not Applied" 1 "Applied" 2 "Not used" 3 "Error Indicator";
-VAL_ 298 LKA_MODE 1 "warning only" 2 "assist" 6 "off";
+VAL_ 298 LKA_OptUsmSta 1 "warning only" 2 "assist" 6 "off";
 VAL_ 298 LKA_ICON 0 "hidden" 1 "grey" 2 "green" 3 "flashing green";
 VAL_ 298 LKA_OptUsmSta 0 "None LKA/LDW Option (Default)" 1 "LDW" 2 "LKA" 3 "Reserved" 4 "LDW Only (None LKA)" 5 "LDW only OFF (None LKA)" 6 "LDW/LKA OFF" 7 "Invalid";
 VAL_ 298 LKA_RcgSta 0 "Not Recognized" 1 "Left Lane Recognition" 2 "Right Lane Recognition" 3 "Full Lane Recognition" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved";
@@ -1053,7 +1144,7 @@ VAL_ 298 LKA_LHLnWrnSta 0 "No Warning" 1 "Lane Departure Warning" 2 "Reserved" 3
 VAL_ 298 LKA_RHLnWrnSta 0 "No Warning" 1 "Lane Departure Warning" 2 "Reserved" 3 "Reserved";
 VAL_ 298 LKA_HndsoffSnd 0 "Off" 1 "Hands-off Sound Warning" 2 "Reserved" 3 "Reserved";
 VAL_ 298 LKA_StrSnd 0 "Off" 1 "Warning" 2 "Reserved" 3 "Reserved";
-VAL_ 298 LKA_SysIndReq 0 "Off" 1 "Unavailable_(Grey On)" 2 "Lane Recognized_(Green On)" 3 "Lane Departure_(Green Blink)" 4 "System Fail_(Orange On)" 5 "Not Calibrated_(Orange Blink)" 6 "Regulation_(Orange On)" 7 "Reserved";
+VAL_ 298 LKA_ICON 0 "Off" 1 "Unavailable_(Grey On)" 2 "Lane Recognized_(Green On)" 3 "Lane Departure_(Green Blink)" 4 "System Fail_(Orange On)" 5 "Not Calibrated_(Orange Blink)" 6 "Regulation_(Orange On)" 7 "Reserved";
 VAL_ 298 ADAS_StrTqReqVal 2046 "Reserved" 2047 "Invalid";
 VAL_ 298 ADAS_ActToiSta 0 "De-activate TOI" 1 "Activate TOI" 2 "Reserved" 3 "Error indicator";
 VAL_ 298 ADAS_ToiFltSta 0 "No Fault" 1 "Fault" 2 "Reserved" 3 "Error indicatorr";

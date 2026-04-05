@@ -18,7 +18,7 @@ class CanBus(CanBusBase):
     super().__init__(CP, fingerprint)
 
     if lka_steering is None:
-      lka_steering = CP.flags & HyundaiFlags.CANFD_LKA_STEERING.value if CP is not None else False
+      lka_steering = CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG.value if CP is not None else False
 
     # On the CAN-FD platforms, the LKAS camera is on both A-CAN and E-CAN. LKA steering cars
     # have a different harness than the LFA steering variants in order to split
@@ -46,20 +46,18 @@ class CanBus(CanBusBase):
 
 def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_torque, apply_angle, angle_max_torque):
   enabled = CC.enabled
-  angle_control = CP.flags & HyundaiFlags.CANFD_ANGLE_STEERING
+  angle_control = CP.flags & HyundaiFlags.CANFD_ANGLE_STEER_MSG
   camera_scc = CP.flags & HyundaiFlags.CANFD_CAMERA_SCC
 
   common_values = {
-    "LKA_MODE": 2,
+    "LKA_OptUsmSta": 2,
     "LKA_ICON": 2 if enabled else 1,
-    "TORQUE_REQUEST": apply_torque,
-    "LKA_ASSIST": 0,
-    "STEER_REQ": 1 if lat_active else 0,
-    "STEER_MODE": 0,
-    "HAS_LANE_SAFETY": 0,  # hide LKAS settings
-    "NEW_SIGNAL_2": 0,
-    "DAMP_FACTOR": 100,  # can potentially tuned for better perf [3, 200]
-    "LKA_AVAILABLE": 0,
+    "StrTqReqVal": apply_torque,
+    "LKA_SysWrn": 0,
+    "ActToiSta": 1 if lat_active else 0,
+    "LKA_UsmMod": 0,  # hide LKAS settings
+    "LKA_RcgSta": 0,
+    "Damping_Gain": 100,  # can potentially tuned for better perf [3, 200]
   }
 
   lfa_values = copy.copy(common_values)
@@ -70,18 +68,17 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   # telling the ADAS ECU to forward our steering and disable stock LFA lane centering.
   ret = []
 
-  if CS.mdps is not None:
-    values = copy.copy(CS.mdps_info)
-    if angle_control:
-      if CS.lfa_alt_info is not None:
-        values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
-    else:
-      if CS.lfa_info is not None:
-        values["LKA_ACTIVE"] = 1 if CS.lfa_info["STEER_REQ"] == 1 else 0
+  values = copy.copy(CS.mdps_info)
+  if angle_control:
+    if CS.lfa_alt_info is not None:
+      values["ADAS_ActiveStat_Lv2"] = CS.lfa_alt_info["ADAS_AngleActiveStat_Lv2"]
+  else:
+    if CS.lfa_info is not None:
+      values["LKA_RcgSta"] = 1 if CS.lfa_info["ActToiSta"] == 1 else 0
 
-    if frame % 1000 < 40:
-      values["OutTorque"] += 220
-    ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
+  if frame % 1000 < 40:
+    values["OutTorque"] += 220
+  ret.append(packer.make_can_msg("MDPS", CAN.CAM, values))
 
   if frame % 10 == 0:
     if CP.exFlags & HyundaiExFlags.HOD:
@@ -99,11 +96,11 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
   if angle_control:
     if camera_scc:
       lfa_values |= {
-        "LKA_MODE": 0,  # TODO: not used by the stock system
-        "TORQUE_REQUEST": 0,  # we don't use torque
-        "STEER_REQ": 0,  # we don't use torque
+        "LKA_OptUsmSta": 0,  # TODO: not used by the stock system
+        "StrTqReqVal": 0,  # we don't use torque
+        "ActToiSta": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
-        "LKA_AVAILABLE": 3 if lat_active else 0,
+        "LKA_RcgSta": 3 if lat_active else 0,
         #"ADAS_AngleReq": 0,
         #"ADAS_AngleActiveStat_Lv2": 0,
         #"ADAS_AngleTorqueGain": 0,
@@ -118,18 +115,18 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
 
     else:
       lkas_values |= {
-        "LKA_MODE": 0,  # TODO: not used by the stock system
-        "TORQUE_REQUEST": 0,  # we don't use torque
-        "STEER_REQ": 0,  # we don't use torque
+        "LKA_OptUsmSta": 0,  # TODO: not used by the stock system
+        "StrTqReqVal": 0,  # we don't use torque
+        "ActToiSta": 0,  # we don't use torque
         # this goes 0 when LFA lane changes, 3 when LKA_ICON is >=green
-        "LKA_AVAILABLE": 3 if lat_active else 0,
+        "LKA_RcgSta": 3 if lat_active else 0,
         "ADAS_AngleReq": apply_angle,
         "ADAS_AngleActiveStat_Lv2": 2 if lat_active else 1,
         "ADAS_AngleTorqueGain": angle_max_torque if lat_active else 0,
       }
 
-    if CP.flags & HyundaiFlags.CANFD_LKA_STEERING:
-      lkas_msg = "LKAS_ALT" if CP.flags & HyundaiFlags.CANFD_LKA_STEERING_ALT else "LKAS"
+    if CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG:
+      lkas_msg = "LKAS_ALT" if CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG_ALT else "LKAS"
       if CP.openpilotLongitudinalControl:
         ret.append(packer.make_can_msg("LFA", CAN.ECAN, lfa_values))
       if not (CP.flags & HyundaiFlags.CANFD_CAMERA_SCC):
@@ -143,7 +140,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
 def create_suppress_lfa(packer, CP, CC, CS, CAN):
   enabled = CC.enabled
   #lfa_block_msg = CS.lfa_block_msg
-  #lka_steering_alt = CP.flags & HyundaiFlags.CANFD_LKA_STEERING_ALT
+  #lka_steering_alt = CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG_ALT
   #suppress_msg = "CAM_0x362" if lka_steering_alt else "CAM_0x2a4"
   #msg_bytes = 32 if lka_steering_alt else 24
   #values = {f"BYTE{i}": lfa_block_msg[f"BYTE{i}"] for i in range(3, msg_bytes) if i != 7}
@@ -172,7 +169,7 @@ def create_buttons(packer, CP, CAN, cnt, btn):
     "SET_ME_1": 1,
     "CRUISE_BUTTONS": btn,
   }
-  bus = CAN.ECAN if CP.flags & HyundaiFlags.CANFD_LKA_STEERING else CAN.CAM
+  bus = CAN.ECAN if CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG else CAN.CAM
   return packer.make_can_msg("CRUISE_BUTTONS", bus, values)
 
 
@@ -181,7 +178,7 @@ def create_buttons_canfd_alt(packer, CP, CAN, cnt, btn):
     "COUNTER": cnt % 256,
     "CRUISE_BUTTONS": btn,
   }
-  bus = CAN.ECAN if CP.flags & HyundaiFlags.CANFD_LKA_STEERING else CAN.CAM
+  bus = CAN.ECAN if CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG else CAN.CAM
   return packer.make_can_msg("CRUISE_BUTTONS_ALT", bus, values)
 
 
@@ -348,7 +345,7 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   nav_active = SpeedLimiter.instance().get_active()
   hdp_active = cruise_enabled and nav_active
   md = CS.MD
-  enable_corner_radar = CP.flags & HyundaiFlags.CANFD_LKA_STEERING
+  enable_corner_radar = CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG
   desire, lane_changing = _get_desire_and_lane_changing(md)
 
   # messages needed to car happy after disabling

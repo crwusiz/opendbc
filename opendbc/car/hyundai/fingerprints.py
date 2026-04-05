@@ -536,7 +536,7 @@ FW_VERSIONS = {
       b'\xf1\x00IGH MFC  AT KOR LHD 1.00 1.02 99211-G8100 191029',
     ],
   },
-  CAR.HYUNDAI_GRANDEUR_FL: {  # (IG)
+  CAR.HYUNDAI_GRANDEUR_PE: {  # (IG)
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00IG__ SCC F-CUP   1.00 1.00 99110-G8100         ',
     ],
@@ -547,7 +547,7 @@ FW_VERSIONS = {
       b'\xf1\x00IG  MFC  AT MES LHD 1.00 1.04 99211-G8100 200511',
     ],
   },
-  CAR.HYUNDAI_GRANDEUR_FL_HEV: {  # (IG)
+  CAR.HYUNDAI_GRANDEUR_PE_HEV: {  # (IG)
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00IGhe SCC FHCUP      1.00 1.00 99110-M9100         ',
       b'\xf1\x00IGhe SCC FHCUP      1.00 1.01 99110-M9000         ',
@@ -682,7 +682,7 @@ FW_VERSIONS = {
       b'\xf1\x00US4_ RDR -----      1.00 1.00 99110-CG000         ',
     ],
   },
-  CAR.HYUNDAI_SONATA_DN8_24: {  # (DN8)
+  CAR.HYUNDAI_SONATA_DN8_PE: {  # (DN8)
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00DN8_ RDR -----      1.00 1.00 99110-L1800         ',
     ],
@@ -823,6 +823,14 @@ FW_VERSIONS = {
       b'\xf1\x00DL3HMFC  AT KOR LHD 1.00 1.01 99210-L2000 191022',
       b'\xf1\x00DL3HMFC  AT KOR LHD 1.00 1.02 99210-L2000 200309',
       b'\xf1\x00DL3HMFC  AT KOR LHD 1.00 1.04 99210-L2000 210527',
+    ],
+  },
+  CAR.KIA_K5_DL3_PE_HEV: {  # (DL3)
+    (Ecu.fwdCamera, 0x7c4, None): [
+      b'\xf1\x00DL3HMFC  AT KOR LHD 1.00 1.02 99210-L2500 230911'
+    ],
+    (Ecu.fwdRadar, 0x7d0, None): [
+      b'\xf1\x00DL3_ RDR -----      1.00 1.01 99110-L2500         ',
     ],
   },
   CAR.KIA_STINGER: {  # (CK)
@@ -1165,14 +1173,6 @@ FW_VERSIONS = {
       b'\xf1\x00MV  MFC  AT CAN LHD 1.00 1.00 99211-DO100 240403',
     ],
   },
-  CAR.KIA_K5_DL3_24_HEV: {  # (DL3)
-    (Ecu.fwdCamera, 0x7c4, None): [
-      b'\xf1\x00DL3HMFC  AT KOR LHD 1.00 1.02 99210-L2500 230911'
-    ],
-    (Ecu.fwdRadar, 0x7d0, None): [
-      b'\xf1\x00DL3_ RDR -----      1.00 1.01 99110-L2500         ',
-    ],
-  },
   CAR.KIA_EV3: {  # (SV1)
     (Ecu.fwdRadar, 0x7d0, None): [
       b'\xf1\x00SV1__               1.00 1.02 99110EV700          ',
@@ -1180,6 +1180,20 @@ FW_VERSIONS = {
     (Ecu.fwdCamera, 0x7c4, None): [
       b'\xf1\x00SV11.011.031.012471000HKP_SV124_40712099211EV000',
       b'\xf1\x00SV11.011.041.012473000HKP_SV124_40801099211EV000',
+    ],
+  },
+  CAR.KIA_EV4: { # (CT1)
+    (Ecu.fwdRadar, 0x7d0, None): [
+      b'\xf1\x00CT1__               1.00 1.01 99110EZ000          ',
+    ],
+    (Ecu.fwdCamera, 0x7c4, None): [
+      b'\xf1\x00CT11.011.031.012551000HKP_CT125_50430099211EZ000',
+    ],
+  },
+  CAR.KIA_PV5: {  # (SW1)
+    (Ecu.fwdRadar, 0x7d0, None): [
+    ],
+    (Ecu.fwdCamera, 0x7c4, None): [
     ],
   },
 

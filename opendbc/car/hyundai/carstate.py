@@ -411,18 +411,16 @@ class CarState(CarStateBase):
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(50, left_blinker_sig, right_blinker_sig)
 
     if self.CP.enableBsm:
-      cp_bsm_info = cp_cam if (self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value) else cp
-
+      cp_bsm_info = cp_cam if (
+          self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value) else cp
       bsm_msg = cp_bsm_info.vl["BLINDSPOTS_REAR_CORNERS"]
-      if self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
-          left_sigs = ["FL_INDICATOR_ALT", "OSMrrLamp_LeftIndSta"]
-          right_sigs = ["FR_INDICATOR_ALT", "OSMrrLamp_RightIndSta"]
-      else:
-          left_sigs = ["FL_INDICATOR", "BCW_LeftIndSta"]
-          right_sigs = ["FR_INDICATOR", "BCW_RightIndSta"]
 
-      ret.leftBlindspot = any(bsm_msg[sig] != 0 for sig in left_sigs)
-      ret.rightBlindspot = any(bsm_msg[sig] != 0 for sig in right_sigs)
+      if self.CP.exFlags & HyundaiExFlags.CCNC_HDA2.value:
+        ret.leftBlindspot = bool(bsm_msg["OSMrrLamp_LeftIndSta"])
+        ret.rightBlindspot = bool(bsm_msg["OSMrrLamp_RightIndSta"])
+      else:
+        ret.leftBlindspot = bool(bsm_msg["BCW_LeftIndSta"])
+        ret.rightBlindspot = bool(bsm_msg["BCW_RightIndSta"])
 
     # cruise state
     # CAN FD cars enable on main button press, set available if no TCS faults preventing engagement

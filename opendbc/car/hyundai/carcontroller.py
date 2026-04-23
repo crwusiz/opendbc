@@ -20,6 +20,11 @@ MAX_FAULT_ANGLE = 85
 MAX_FAULT_ANGLE_FRAMES = 89
 MAX_FAULT_ANGLE_CONSECUTIVE_FRAMES = 2
 
+# On some HKG CAN and CAN FD non-CANFD_ALT_BUTTONS, the cancel button (CF_Clu_CruiseSwState / CRUISE_BUTTONS = 4) is
+# a pause/resume toggle, not a dedicated cancel. Firing it mid-brake inadvertently can cause a re-enable attempt
+# and triggers the "SCC Conditions Not Met" alert. Delaying the button send lets factory SCC disengage
+# naturally on brake press. We send ~100 ms later if it fails to do so, or if we want to cancel for another reason.
+CANCEL_BUTTON_DELAY_FRAMES = 10
 
 def process_hud_alert(enabled, fingerprint, hud_control):
   sys_warning = (hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw))
@@ -61,6 +66,7 @@ class CarController(CarControllerBase):
     self.last_button_frame = 0
     self.angle_limit_counter = 0
     self.turningSignalTimer = 0
+    self.cancel_counter = 0
 
   def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
@@ -173,6 +179,10 @@ class CarController(CarControllerBase):
       if self.CP.flags & HyundaiFlags.CANFD_ENABLE_BLINKERS:
         can_sends.append(make_tester_present_msg(0x7b1, self.CAN.ECAN, suppress_response=True))
 
+    # Delay the cancel button send so the brake can disengage factory SCC first.
+    # Reset whenever openpilot is no longer requesting cancel.
+    self.cancel_counter = self.cancel_counter + 1 if CC.cruiseControl.cancel else 0
+
     # *** CAN/CAN FD specific ***
     if self.CP.flags & HyundaiFlags.CANFD:
       can_sends.extend(self.create_canfd_msgs(apply_steer_req, apply_torque, set_speed_in_units, accel,
@@ -211,7 +221,7 @@ class CarController(CarControllerBase):
 
     # Button messages
     if not self.CP.openpilotLongitudinalControl:
-      if CC.cruiseControl.cancel:
+      if self.cancel_counter > CANCEL_BUTTON_DELAY_FRAMES:
         can_sends.append(hyundaican.create_clu11(self.packer, self.frame, self.CP, Buttons.CANCEL, CS.clu11))
       elif CC.cruiseControl.resume:
         # send resume at a max freq of 10Hz
@@ -283,10 +293,11 @@ class CarController(CarControllerBase):
       if (self.frame - self.last_button_frame) * DT_CTRL > 0.25:
         # cruise cancel
         if CC.cruiseControl.cancel:
+          # Here we send ACC message to cancel, not buttons. Don't delay
           if self.CP.flags & HyundaiFlags.CANFD_ALT_BUTTONS:
             can_sends.append(hyundaicanfd.create_acc_cancel(self.packer, self.CP, CS, self.CAN))
             self.last_button_frame = self.frame
-          else:
+          elif self.cancel_counter > CANCEL_BUTTON_DELAY_FRAMES:
             for _ in range(20):
               can_sends.append(hyundaicanfd.create_buttons(self.packer, self.CP, self.CAN, CS.buttons_counter + 1, Buttons.CANCEL))
             self.last_button_frame = self.frame

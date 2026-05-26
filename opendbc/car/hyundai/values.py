@@ -196,11 +196,11 @@ class HyundaiCarDocs(CarDocs):
 
 @dataclass
 class HyundaiPlatformConfig(PlatformConfig):
-  dbc_dict: DbcDict = field(default_factory=lambda: {Bus.pt: "hyundai_kia_generic"})
+  dbc_dict: DbcDict = field(default_factory=lambda: {Bus.pt: "hyundai_can_generated"})
 
   def init(self):
     if self.flags & HyundaiFlags.MANDO_RADAR:
-      self.dbc_dict = {Bus.pt: "hyundai_kia_generic", Bus.radar: 'hyundai_kia_mando_front_radar_generated'}
+      self.dbc_dict = {Bus.pt: "hyundai_can_generated", Bus.radar: 'hyundai_kia_mando_front_radar_generated'}
 
     if self.flags & HyundaiFlags.MIN_STEER_32_MPH:
       self.specs = self.specs.override(minSteerSpeed=32 * CV.MPH_TO_MS)
@@ -1097,6 +1097,9 @@ EV_CAR = CAR.with_flags(HyundaiFlags.EV)
 
 LEGACY_SAFETY_MODE_CAR = CAR.with_flags(HyundaiFlags.LEGACY)
 
-UNSUPPORTED_LONGITUDINAL_CAR = CAR.with_flags(HyundaiFlags.UNSUPPORTED_LONGITUDINAL) #| CAR.with_flags(HyundaiFlags.LEGACY)
+UNSUPPORTED_LONGITUDINAL_CAR = {
+  "legacy": CAR.with_flags(HyundaiFlags.LEGACY),
+  "can": CAR.with_flags(HyundaiFlags.UNSUPPORTED_LONGITUDINAL),
+}
 
 DBC = CAR.create_dbc_map()

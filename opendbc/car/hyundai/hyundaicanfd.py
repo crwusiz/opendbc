@@ -7,7 +7,7 @@ from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 from openpilot.common.params import Params
 from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
 
-from cereal import log
+from openpilot.cereal import log
 
 LaneChangeState = log.LaneChangeState
 LaneChangeDirection = log.LaneChangeDirection

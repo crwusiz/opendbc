@@ -73,7 +73,6 @@ class RadarInterface(RadarInterfaceBase):
     self.trigger_msg_scc = 416 if self.canfd else 0x420
 
     self.trigger_msg_tracks = self.radar_start_addr + self.radar_msg_count - 1
-    self.track_id = 0
 
     self.radar_off_can = CP.radarUnavailable
 

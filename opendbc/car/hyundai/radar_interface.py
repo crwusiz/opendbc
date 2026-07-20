@@ -13,9 +13,8 @@ RADAR_START_ADDR = 0x500
 RADAR_MSG_COUNT = 32
 RADAR_START_ADDR_CANFD1 = 0x210
 RADAR_MSG_COUNT1 = 16
-RADAR_START_ADDR_CANFD2 = 0x3A5  # Group 2, Group 1: 0x210 2개씩있어서 일단 보류.
+RADAR_START_ADDR_CANFD2 = 0x3A5 # Group 2, Group 1: 0x210 2개씩있어서 일단 보류.
 RADAR_MSG_COUNT2 = 32
-
 
 # POC for parsing corner radars: https://github.com/commaai/openpilot/pull/24221/
 
@@ -81,6 +80,7 @@ class RadarInterface(RadarInterfaceBase):
 
     self.frame = 0
 
+
   def update(self, can_strings):
     self.frame += 1
     if self.radar_off_can or (self.rcp_tracks is None and self.rcp_scc is None):
@@ -113,8 +113,8 @@ class RadarInterface(RadarInterfaceBase):
 
     return None
 
-  def _update(self, updated_messages):
 
+  def _update(self, updated_messages):
     t_id = 32
     for addr in range(self.radar_start_addr, self.radar_start_addr + self.radar_msg_count):
 
@@ -145,8 +145,6 @@ class RadarInterface(RadarInterfaceBase):
           self.pts[t_id].dRel = math.cos(azimuth) * msg['LONG_DIST']
           self.pts[t_id].yRel = 0.5 * -math.sin(azimuth) * msg['LONG_DIST']
           self.pts[t_id].vRel = msg['REL_SPEED']
-
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
       else:
         if t_id in self.pts:
           del self.pts[t_id]
@@ -167,7 +165,6 @@ class RadarInterface(RadarInterfaceBase):
           self.pts[t_id].dRel = msg['LONG_DIST2']
           self.pts[t_id].yRel = msg['LAT_DIST2']
           self.pts[t_id].vRel = msg['REL_SPEED2']
-          self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
         else:
           if t_id in self.pts:
             del self.pts[t_id]
@@ -181,8 +178,7 @@ class RadarInterface(RadarInterfaceBase):
       dRel = cpt["SCC_CONTROL"]['ObjectDistance']
       vRel = cpt["SCC_CONTROL"]['ObjectRelativeSpeed']
       new_pts = abs(dRel - self.dRel_last) > 3 or abs(vRel - self.vRel_last) > 1
-      vLead = vRel + self.v_ego
-      valid = 0 < dRel < 150 and not new_pts  # cpt["SCC_CONTROL"]['OBJ_STATUS'] and dRel < 150
+      valid = 0 < dRel < 150 and not new_pts
 
       if valid:
         if t_id not in self.pts:
@@ -191,7 +187,6 @@ class RadarInterface(RadarInterfaceBase):
         self.pts[t_id].dRel = dRel
         self.pts[t_id].yRel = 0
         self.pts[t_id].vRel = vRel
-        self.pts[t_id].vLead = vLead
       else:
         if t_id in self.pts:
           del self.pts[t_id]
@@ -199,7 +194,6 @@ class RadarInterface(RadarInterfaceBase):
       dRel = cpt["SCC11"]['ACC_ObjDist']
       vRel = cpt["SCC11"]['ACC_ObjRelSpd']
       new_pts = abs(dRel - self.dRel_last) > 3 or abs(vRel - self.vRel_last) > 1
-      vLead = vRel + self.v_ego
       valid = cpt["SCC11"]['ACC_ObjStatus'] and dRel < 150 and not new_pts
 
       if valid:
@@ -209,7 +203,6 @@ class RadarInterface(RadarInterfaceBase):
         self.pts[t_id].dRel = dRel
         self.pts[t_id].yRel = -cpt["SCC11"]['ACC_ObjLatPos']  # in car frame's y axis, left is negative
         self.pts[t_id].vRel = vRel
-        self.pts[t_id].vLead = vLead
       else:
         if t_id in self.pts:
           del self.pts[t_id]

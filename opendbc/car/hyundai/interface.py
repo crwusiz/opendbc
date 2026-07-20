@@ -188,9 +188,6 @@ class CarInterface(CarInterfaceBase):
 
     ret.radarUnavailable = RADAR_START_ADDR not in fingerprint[1] or Bus.radar not in DBC[ret.carFingerprint]
     ret.openpilotLongitudinalControl = (alpha_long and ret.alphaLongitudinalAvailable) or camera_scc
-    ret.startingState = True
-    ret.vEgoStarting = 0.1
-    ret.startAccel = 1.0
     ret.longitudinalActuatorDelay = 0.5
 
     if ret.openpilotLongitudinalControl:

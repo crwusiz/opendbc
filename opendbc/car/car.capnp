@@ -253,7 +253,8 @@ struct CarState {
     steerSpeed @13 :Float32;
     leadSpeed @14 :Float32;
     applyLimitSpeed @15 :Float32;
-    roadSigns @16 :Int32;
+    ignoreLimitTimer @16 :Float32;
+    roadSigns @17 :Int32;
   }
 
   struct Tpms {

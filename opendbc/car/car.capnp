@@ -338,6 +338,7 @@ struct CarState {
     errors @0 :List(OnroadEventDEPRECATED.EventName);
     gas @3 :Float32;
     brake @5 :Float32;
+    brakeLights @19 :Bool;
     steeringRateLimited @29 :Bool;
     canMonoTimes @12: List(UInt64);
     canRcvTimeout @49 :Bool;
@@ -345,8 +346,6 @@ struct CarState {
     clutchPressed @28 :Bool;
     engineRpm @46 :Float32;
   }
-
-  brakeLights @19 :Bool;
 }
 
 # ******* radar state @ 20hz *******

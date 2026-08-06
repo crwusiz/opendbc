@@ -33,6 +33,7 @@ def get_radar_can_parser(CP, radar_tracks, msg_start_addr, msg_count):
     messages = [(f"RADAR_TRACK_{addr:x}", 20) for addr in range(msg_start_addr, msg_start_addr + msg_count)]
     return CANParser('hyundai_kia_mando_front_radar_generated', messages, 1)
 
+
 def get_radar_can_parser_scc(CP):
   CAN = CanBus(CP)
   if CP.flags & HyundaiFlags.CANFD:
@@ -44,6 +45,7 @@ def get_radar_can_parser_scc(CP):
 
   bus = CAN.CAM if CP.flags & HyundaiFlags.CAMERA_SCC else bus
   return CANParser(DBC[CP.carFingerprint][Bus.pt], messages, bus)
+
 
 class RadarInterface(RadarInterfaceBase):
   def __init__(self, CP):
@@ -70,23 +72,11 @@ class RadarInterface(RadarInterfaceBase):
     self.trigger_msg_scc = 416 if self.canfd else 0x420
 
     self.trigger_msg_tracks = self.radar_start_addr + self.radar_msg_count - 1
-    self.track_id = 0
 
     self.radar_off_can = CP.radarUnavailable
 
     self.vRel_last = 0
     self.dRel_last = 0
-
-    # Initialize pts
-    total_tracks = self.radar_msg_count * (2 if self.radar_group1 else 1)
-    for track_id in range(total_tracks):
-      t_id = track_id + 32
-      self.pts[t_id] = structs.RadarData.RadarPoint()
-      self.pts[t_id].measured = False
-      self.pts[t_id].trackId = t_id
-
-    self.pts[SCC_TID] = structs.RadarData.RadarPoint()
-    self.pts[SCC_TID].trackId = SCC_TID
 
     self.frame = 0
 
@@ -123,8 +113,8 @@ class RadarInterface(RadarInterfaceBase):
 
     return None
 
-  def _update(self, updated_messages):
 
+  def _update(self, updated_messages):
     t_id = 32
     for addr in range(self.radar_start_addr, self.radar_start_addr + self.radar_msg_count):
 
@@ -137,59 +127,47 @@ class RadarInterface(RadarInterfaceBase):
       else:
         valid = msg['STATE'] in (3, 4)
 
-      self.pts[t_id].measured = bool(valid)
-      if not valid:
-        self.pts[t_id].dRel = 0
-        self.pts[t_id].yRel = 0
-        self.pts[t_id].vRel = 0
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-        self.pts[t_id].aRel = float('nan')
-        self.pts[t_id].yvRel = 0
-      elif self.radar_group1:
-        self.pts[t_id].dRel = msg['LONG_DIST1']
-        self.pts[t_id].yRel = msg['LAT_DIST1']
-        self.pts[t_id].vRel = msg['REL_SPEED1']
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-        self.pts[t_id].aRel = msg['REL_ACCEL1']
-        self.pts[t_id].yvRel = msg['LAT_SPEED1']
-      elif self.canfd:
-        self.pts[t_id].dRel = msg['LONG_DIST']
-        self.pts[t_id].yRel = msg['LAT_DIST']
-        self.pts[t_id].vRel = msg['REL_SPEED']
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-        self.pts[t_id].aRel = msg['REL_ACCEL']
-        self.pts[t_id].yvRel = msg['LAT_SPEED']
+      if valid:
+        if t_id not in self.pts:
+          self.pts[t_id] = structs.RadarData.RadarPoint()
+          self.pts[t_id].trackId = t_id
+
+        if self.radar_group1:
+          self.pts[t_id].dRel = msg['LONG_DIST1']
+          self.pts[t_id].yRel = msg['LAT_DIST1']
+          self.pts[t_id].vRel = msg['REL_SPEED1']
+        elif self.canfd:
+          self.pts[t_id].dRel = msg['LONG_DIST']
+          self.pts[t_id].yRel = msg['LAT_DIST']
+          self.pts[t_id].vRel = msg['REL_SPEED']
+        else:
+          azimuth = math.radians(msg['AZIMUTH'])
+          self.pts[t_id].dRel = math.cos(azimuth) * msg['LONG_DIST']
+          self.pts[t_id].yRel = 0.5 * -math.sin(azimuth) * msg['LONG_DIST']
+          self.pts[t_id].vRel = msg['REL_SPEED']
       else:
-        azimuth = math.radians(msg['AZIMUTH'])
-        self.pts[t_id].dRel = math.cos(azimuth) * msg['LONG_DIST']
-        self.pts[t_id].yRel = 0.5 * -math.sin(azimuth) * msg['LONG_DIST']
-        self.pts[t_id].vRel = msg['REL_SPEED']
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-        self.pts[t_id].aRel = msg['REL_ACCEL']
-        self.pts[t_id].yvRel = 0.0
+        if t_id in self.pts:
+          del self.pts[t_id]
 
       t_id += 1
+
     # radar group1은 하나의 msg에 2개의 레이더가 들어있음.
     if self.radar_group1:
       for addr in range(self.radar_start_addr, self.radar_start_addr + self.radar_msg_count):
         msg = self.rcp_tracks.vl[f"RADAR_TRACK_{addr:x}"]
 
         valid = msg['VALID_CNT2'] > 10
-        self.pts[t_id].measured = bool(valid)
-        if not valid:
-          self.pts[t_id].dRel = 0
-          self.pts[t_id].yRel = 0
-          self.pts[t_id].vRel = 0
-          self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-          self.pts[t_id].aRel = float('nan')
-          self.pts[t_id].yvRel = 0
-        else:
+        if valid:
+          if t_id not in self.pts:
+            self.pts[t_id] = structs.RadarData.RadarPoint()
+            self.pts[t_id].trackId = t_id
+
           self.pts[t_id].dRel = msg['LONG_DIST2']
           self.pts[t_id].yRel = msg['LAT_DIST2']
           self.pts[t_id].vRel = msg['REL_SPEED2']
-          self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-          self.pts[t_id].aRel = msg['REL_ACCEL2']
-          self.pts[t_id].yvRel = msg['LAT_SPEED2']
+        else:
+          if t_id in self.pts:
+            del self.pts[t_id]
 
         t_id += 1
 
@@ -200,44 +178,34 @@ class RadarInterface(RadarInterfaceBase):
       dRel = cpt["SCC_CONTROL"]['ObjectDistance']
       vRel = cpt["SCC_CONTROL"]['ObjectRelativeSpeed']
       new_pts = abs(dRel - self.dRel_last) > 3 or abs(vRel - self.vRel_last) > 1
-      vLead = vRel + self.v_ego
-      valid = 0 < dRel < 150 and not new_pts #cpt["SCC_CONTROL"]['OBJ_STATUS'] and dRel < 150
-      self.pts[t_id].measured = bool(valid)
-      if not valid:
-        self.pts[t_id].dRel = 0
-        self.pts[t_id].yRel = 0
-        self.pts[t_id].vRel = 0
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-        self.pts[t_id].aRel = float('nan')
-        self.pts[t_id].yvRel = 0
-      else:
+      valid = 0 < dRel < 150 and not new_pts
+
+      if valid:
+        if t_id not in self.pts:
+          self.pts[t_id] = structs.RadarData.RadarPoint()
+          self.pts[t_id].trackId = t_id
         self.pts[t_id].dRel = dRel
         self.pts[t_id].yRel = 0
         self.pts[t_id].vRel = vRel
-        self.pts[t_id].vLead = vLead
-        self.pts[t_id].aRel = float('nan')
-        self.pts[t_id].yvRel = 0 #float('nan')
+      else:
+        if t_id in self.pts:
+          del self.pts[t_id]
     else:
       dRel = cpt["SCC11"]['ACC_ObjDist']
       vRel = cpt["SCC11"]['ACC_ObjRelSpd']
       new_pts = abs(dRel - self.dRel_last) > 3 or abs(vRel - self.vRel_last) > 1
-      vLead = vRel + self.v_ego
       valid = cpt["SCC11"]['ACC_ObjStatus'] and dRel < 150 and not new_pts
-      self.pts[t_id].measured = bool(valid)
-      if not valid:
-        self.pts[t_id].dRel = 0
-        self.pts[t_id].yRel = 0
-        self.pts[t_id].vRel = 0
-        self.pts[t_id].vLead = self.pts[t_id].vRel + self.v_ego
-        self.pts[t_id].aRel = float('nan')
-        self.pts[t_id].yvRel = 0
-      else:
+
+      if valid:
+        if t_id not in self.pts:
+          self.pts[t_id] = structs.RadarData.RadarPoint()
+          self.pts[t_id].trackId = t_id
         self.pts[t_id].dRel = dRel
         self.pts[t_id].yRel = -cpt["SCC11"]['ACC_ObjLatPos']  # in car frame's y axis, left is negative
         self.pts[t_id].vRel = vRel
-        self.pts[t_id].vLead = vLead
-        self.pts[t_id].aRel = float('nan')
-        self.pts[t_id].yvRel = 0 #float('nan')
+      else:
+        if t_id in self.pts:
+          del self.pts[t_id]
 
     self.dRel_last = dRel
     self.vRel_last = vRel

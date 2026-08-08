@@ -342,7 +342,9 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   cruise_enabled = CC.enabled
   lat_active = CC.latActive
   ccnc = CP.exFlags & HyundaiExFlags.CCNC
-  nav_active = SpeedLimiter.instance().get_active()
+  speed_limiter = SpeedLimiter.instance()
+  speed_limiter.recv()
+  nav_active = speed_limiter.get_active()
   hdp_active = cruise_enabled and nav_active
   md = CS.MD
   enable_corner_radar = CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG

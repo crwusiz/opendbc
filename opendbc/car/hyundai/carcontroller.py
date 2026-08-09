@@ -5,7 +5,7 @@ from opendbc.car.lateral import apply_driver_steer_torque_limits, apply_std_stee
 from opendbc.car.common.conversions import UnitConverter
 from opendbc.car.hyundai import hyundaicanfd, hyundaican
 from opendbc.car.hyundai.hyundaicanfd import CanBus
-from opendbc.car.hyundai.values import HyundaiFlags, Buttons, CarControllerParams, CAR, CAN_GEARS
+from opendbc.car.hyundai.values import HyundaiFlags, Buttons, CarControllerParams, CAR
 from opendbc.car.interfaces import CarControllerBase, ACCEL_MIN, ACCEL_MAX
 
 from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
@@ -249,7 +249,7 @@ class CarController(CarControllerBase):
     elif CS.scc13 is not None:
       can_sends.append(hyundaican.create_acc_opt_none(self.packer, CS))
 
-    if self.CP.carFingerprint in CAN_GEARS["send_mdps12"]:  # send mdps12 to LKAS to prevent LKAS error
+    if self.CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG:
       can_sends.append(hyundaican.create_mdps12(self.packer, self.frame, CS.mdps12))
 
     # 2 Hz front radar options

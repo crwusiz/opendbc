@@ -174,6 +174,7 @@ class HyundaiFlags(IntFlag):
   ALT_LIMITS_2 = 2 ** 26
 
   CANFD_ANGLE_STEER_MSG = 2 ** 27
+  SEND_MDPS12 = 2 ** 28
 
 class HyundaiExFlags(IntFlag):
   AUTOHOLD = 1
@@ -596,6 +597,7 @@ class CAR(Platforms):
       HyundaiCarDocs("KIA K9 (RJ)", car_parts=CarParts.common([CarHarness.hyundai_c])),
     ],
     CarSpecs(mass=2005, wheelbase=3.15, steerRatio=16.5),
+    flags=HyundaiFlags.SEND_MDPS12,
   )
   KIA_SPORTAGE = HyundaiPlatformConfig(
     [
@@ -844,6 +846,7 @@ class CAR(Platforms):
       HyundaiCarDocs("Genesis G90 2017-18", "All", car_parts=CarParts.common([CarHarness.hyundai_c])),
     ],
     CarSpecs(mass=2185, wheelbase=3.16, steerRatio=12.0),
+    flags=HyundaiFlags.SEND_MDPS12,
   )
 
   # Canfd Genesis

@@ -5,7 +5,7 @@ from opendbc.car.crc import CRC16_XMODEM
 from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 
 from openpilot.common.params import Params
-from openpilot.selfdrive.controls.neokii.navi_controller import SpeedLimiter
+from openpilot.selfdrive.addon.navi_controller import SpeedLimiter
 
 from openpilot.cereal import log
 

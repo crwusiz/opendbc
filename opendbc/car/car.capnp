@@ -245,10 +245,8 @@ struct CarState {
     vEgo @4 :Float32;
     vEgoCluster @5 :Float32;
     vCruiseKph @6 :Float32;
-    cruiseMaxSpeed @7 :Float32;
-    applyMaxSpeed @8 :Float32;
-    ignoreLimitTimer @9 :Float32;
-    roadSigns @10 :Int32;
+    ignoreLimitTimer @7 :Float32;
+    roadSigns @8 :Int32;
   }
 
   struct Tpms {

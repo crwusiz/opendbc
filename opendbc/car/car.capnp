@@ -235,7 +235,7 @@ struct CarState {
   charging @43 :Bool;
 
   # neokii
-  exState @72 :ExState;
+  exState @78 :ExState;
 
   struct ExState {
     vCluRatio @0 :Float32;

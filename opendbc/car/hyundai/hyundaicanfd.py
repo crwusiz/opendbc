@@ -324,20 +324,7 @@ def create_fca_warning_light(packer, CP, CAN, frame):
   return ret
 
 
-def create_tcs_messages(packer, CAN, CS):
-  ret = []
-  if CS.tcs_info_373 is not None:
-    values = copy.copy(CS.tcs_info_373)
-    values["DriverBraking"] = 0
-    values["DriverBrakingLowSens"] = 0
-    #values["NEW_SIGNAL_1"] = 0 # accel과 관련..  옆두부 꺼지는것과 관련? 확인필요
-    #values["ACC_REQ"] = 1 # 옆두부 꺼지는것과 관련? 확인필요.. 항상 켜지게함..
-    values["NEW_SIGNAL_1"] = 0 if values["ACC_REQ"] == 1 else 1 # 옆두부..
-    ret.append(packer.make_can_msg("TCS", CAN.CAM, values))
-  return ret
-
-
-def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
+def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
   main_enabled = CS.out.cruiseState.available
   cruise_enabled = CC.enabled
   lat_active = CC.latActive
@@ -346,7 +333,6 @@ def create_adrv_messages(packer, CP, CC, CS, CAN, frame, set_speed, hud):
   speed_limiter.recv()
   nav_active = speed_limiter.get_active()
   hdp_active = cruise_enabled and nav_active
-  md = CS.MD
   enable_corner_radar = CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG
   desire, lane_changing = _get_desire_and_lane_changing(md)
 

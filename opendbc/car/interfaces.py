@@ -114,7 +114,7 @@ class CarInterfaceBase(ABC):
   def apply(self, c: structs.CarControl, now_nanos: int | None = None, MD = None) -> tuple[structs.CarControl.Actuators, list[CanData]]:
     if now_nanos is None:
       now_nanos = int(time.monotonic() * 1e9)
-    self.CS.MD = MD
+    self.CC.MD = MD
     return self.CC.update(c, self.CS, now_nanos)
 
   @staticmethod
@@ -289,8 +289,6 @@ class CarStateBase(ABC):
     self.v_ego_kf = KF1D(x0=x0, A=A, C=C[0], K=K)
     self.v_ego_clu_kf = KF1D(x0=x0, A=A, C=C[0], K=K)
 
-    self.MD = None
-
   @abstractmethod
   def update(self, can_parsers) -> structs.CarState:
     pass
@@ -375,6 +373,7 @@ class CarControllerBase(ABC):
     self.CP = CP
     self.frame = 0
     self.secoc_key: bytes = b"00" * 16
+    self.MD = None
 
   @abstractmethod
   def update(self, CC: structs.CarControl, CS: CarStateBase, now_nanos: int) -> tuple[structs.CarControl.Actuators, list[CanData]]:

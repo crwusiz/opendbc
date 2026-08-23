@@ -283,7 +283,8 @@ class CarController(CarControllerBase):
 
     if self.CP.openpilotLongitudinalControl:
       if lka_steering:
-        can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.CAN, self.frame, set_speed_in_units, hud_control))
+        can_sends.extend(hyundaicanfd.create_adrv_messages(self.packer, self.CP, CC, CS, self.MD, self.CAN, self.frame,
+                                                          set_speed_in_units, hud_control))
       else:
         can_sends.extend(hyundaicanfd.create_fca_warning_light(self.packer, self.CP, self.CAN, self.frame))
       if self.frame % 2 == 0:

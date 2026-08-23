@@ -437,7 +437,7 @@ class CarState(CarStateBase):
       ret.cruiseState.speed = cp_cruise_info.vl["SCC_CONTROL"]["VSetDis"] * speed_factor
 
       self.cruise_info = copy.copy(cp_cruise_info.vl["SCC_CONTROL"])
-      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1 and cp_cruise_info.vl["SCC_CONTROL"]["ACCMode"] not in (1, 2)
+      ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1
 
     speed_limit_cam = False
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:

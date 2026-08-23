@@ -513,7 +513,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
           'BYTE_7': 0x01,
           'BYTE_8': 0x00,
         }
-        ret.append(packer.make_can_msg("NEW_MSG_4B9", CAN.CAM, values))
+        ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))
       elif frame % 500 in [40, 50, 60]:
         values = {
           'BYTE_1': 0xff,
@@ -525,7 +525,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
           'BYTE_7': 0xff,
           'BYTE_8': 0xff,
         }
-        ret.append(packer.make_can_msg("NEW_MSG_4B9", CAN.CAM, values))
+        ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))
 
     return ret
 

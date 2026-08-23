@@ -243,7 +243,6 @@ struct CarState {
     tpms @2 :Tpms;
     navLimitSpeed @3 :Int32;
     ignoreLimitTimer @4 :Float32;
-    roadSigns @5 :Int32;
   }
 
   struct Tpms {
@@ -264,6 +263,12 @@ struct CarState {
   rightLongDist @69 : Float32; # distance to right lane line in the direction of travel
   leftLaneLine @70 : Int16; # -1: no lane, 0: dashed, 1: solid, +10: white, +20: yellow, ex) 21: solid yellow
   rightLaneLine @71 : Int16; # -1: no lane, 0: dashed, 1: solid, +10: white, +20: yellow, ex) 21: solid yellow
+  leftRearLongDist @72 :Float32; # rear-left corner radar longitudinal distance
+  rightRearLongDist @73 :Float32; # rear-right corner radar longitudinal distance
+  leftRearLatDist @74 :Float32; # rear-left corner radar lateral distance
+  rightRearLatDist @75 :Float32; # rear-right corner radar lateral distance
+  speedBumpDistance @76 :Float32; # distance to a speed bump received from the stock navigation CAN, meters
+  schoolZoneActive @77 :Bool; # stock-navigation kind 7 currently indicates a 30 km/h speed-limit zone
 
   struct WheelSpeeds {
     # optional wheel speeds

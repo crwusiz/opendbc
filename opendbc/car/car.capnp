@@ -234,24 +234,6 @@ struct CarState {
   fuelGauge @41 :Float32; # battery or fuel tank level from [0.0, 1.0]
   charging @43 :Bool;
 
-  # neokii
-  exState @78 :ExState;
-
-  struct ExState {
-    vCluRatio @0 :Float32;
-    autoHold @1 :Int32;
-    tpms @2 :Tpms;
-    navLimitSpeed @3 :Int32;
-    ignoreLimitTimer @4 :Float32;
-  }
-
-  struct Tpms {
-    fl @0 :Float32;
-    fr @1 :Float32;
-    rl @2 :Float32;
-    rr @3 :Float32;
-  }
-
   speedLimit @62 :Float32;
   speedLimitDistance @63 :Float32;
   vEgoClu @64 :Float32;
@@ -269,6 +251,27 @@ struct CarState {
   rightRearLatDist @75 :Float32; # rear-right corner radar lateral distance
   speedBumpDistance @76 :Float32; # distance to a speed bump received from the stock navigation CAN, meters
   schoolZoneActive @77 :Bool; # stock-navigation kind 7 currently indicates a 30 km/h speed-limit zone
+  vehicleNaviActive @78 :Bool; # a valid stock-navigation CAN profile is currently relevant
+  vehicleNaviSectionActive @79 :Bool; # stock-navigation kind 7 indicates a non-school speed-limit section
+  vehicleNaviSpeed @80 :Float32; # raw speed from the active stock-navigation CAN profile, kph
+
+  # neokii
+  exState @81 :ExState;
+
+  struct ExState {
+    vCluRatio @0 :Float32;
+    autoHold @1 :Int32;
+    tpms @2 :Tpms;
+    navLimitSpeed @3 :Int32;
+    ignoreLimitTimer @4 :Float32;
+  }
+
+  struct Tpms {
+    fl @0 :Float32;
+    fr @1 :Float32;
+    rl @2 :Float32;
+    rr @3 :Float32;
+  }
 
   struct WheelSpeeds {
     # optional wheel speeds

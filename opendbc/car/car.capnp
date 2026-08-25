@@ -251,9 +251,9 @@ struct CarState {
   rightRearLatDist @75 :Float32; # rear-right corner radar lateral distance
   speedBumpDistance @76 :Float32; # distance to a speed bump received from the stock navigation CAN, meters
   schoolZoneActive @77 :Bool; # stock-navigation kind 7 currently indicates a 30 km/h speed-limit zone
-  vehicleNaviActive @78 :Bool; # a valid stock-navigation CAN profile is currently relevant
-  vehicleNaviSectionActive @79 :Bool; # stock-navigation kind 7 indicates a non-school speed-limit section
-  vehicleNaviSpeed @80 :Float32; # raw speed from the active stock-navigation CAN profile, kph
+  naviActive @78 :Bool; # a valid stock-navigation CAN profile is currently relevant
+  naviSectionActive @79 :Bool; # stock-navigation kind 7 indicates a non-school speed-limit section
+  naviSpeed @80 :Float32; # raw speed from the active stock-navigation CAN profile, kph
 
   # neokii
   exState @81 :ExState;

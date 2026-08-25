@@ -25,6 +25,7 @@ VEHICLE_NAVI_PASSED_EVENT_DISTANCE = 30.0
 VEHICLE_NAVI_MAX_EVENTS = 32
 VEHICLE_NAVI_CAMERA_KINDS = (0, 1, 2)
 VEHICLE_NAVI_SCHOOL_ZONE_MAX_DISTANCE = 1000.0
+VEHICLE_NAVI_POSITION_TIMEOUT_NS = 1_000_000_000
 
 # Cancel button can sometimes be ACC pause/resume button, main button can also enable on some cars
 ENABLE_BUTTONS = (Buttons.RES_ACCEL, Buttons.SET_DECEL, Buttons.CANCEL)
@@ -97,6 +98,7 @@ class CarState(CarStateBase):
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None
     self.navi_msg_4a3 = None
+    self.navi_position_4b4 = None
     self.navi_segment_4b9 = None
     self.navi_profile_4be = None
     self.msg_0x362 = None
@@ -141,6 +143,7 @@ class CarState(CarStateBase):
     self.vehicleNaviEvents = []
     self.vehicleNaviSegmentTimestamp = 0
     self.vehicleNaviProfileTimestamp = 0
+    self.vehicleNaviAvailable = False
     self.vehicleNaviRouteResetTimestamp = 0
     self.vehicleNaviCameraTarget = None
     self.vehicleNaviSpeedZoneActive = False
@@ -470,9 +473,24 @@ class CarState(CarStateBase):
     ret.vehicleNaviActive = False
     ret.vehicleNaviSectionActive = False
     ret.vehicleNaviSpeed = 0.0
+    profile_timestamp = self._vehicle_navi_message_timestamp(cp, "Hud_Navi_V2_PROLONG_E")
+    self.vehicleNaviAvailable = self.vehicleNaviAvailable or profile_timestamp > 0
+    ret.vehicleNaviAvailable = self.vehicleNaviAvailable
     self.vehicleNaviCameraTarget = None
     if not (self.vehicleNaviCanControl or self.vehicleNaviSchoolZoneControl):
       return False
+
+    # 0x4B4 is periodic while the stock navigation is running. Its range
+    # average speed is zero outside a section-camera zone and valid inside it.
+    # It is therefore authoritative for the current section state; 0x4BE is
+    # sparse future spot data and must not be used alone to hold this state.
+    position_timestamp = self._vehicle_navi_message_timestamp(cp, "Hud_Navi_V2_POS_PE")
+    position_seen = position_timestamp > 0
+    position_age = int(getattr(cp, "_last_update_nanos", position_timestamp)) - position_timestamp
+    position_recent = position_seen and 0 <= position_age <= VEHICLE_NAVI_POSITION_TIMEOUT_NS
+    range_avg_speed = (int(self.navi_position_4b4.get("RangeAvgSpeed", 0))
+                       if position_recent and self.navi_position_4b4 is not None else 0)
+    range_section_active = 0 < range_avg_speed < 511
 
     if self.navi_segment_4b9 is not None:
       timestamp = self._vehicle_navi_message_timestamp(cp, "Hud_Navi_V2_SEG_E")
@@ -506,6 +524,13 @@ class CarState(CarStateBase):
           elif self.vehicleNaviCanControl:
             self._add_vehicle_navi_event(*event, profile["offset"])
 
+    if position_seen:
+      if not range_section_active or not self.vehicleNaviCanControl or 0 < ret.speedLimit <= 30:
+        self._clear_vehicle_navi_speed_zone()
+      elif 30 < ret.speedLimit < 255:
+        self.vehicleNaviSpeedZoneActive = True
+        self.vehicleNaviSpeedZoneSpeed = ret.speedLimit
+
     self.vehicleNaviEvents = [event for event in self.vehicleNaviEvents
                               if event["target"] >= self.totalDistance - VEHICLE_NAVI_PASSED_EVENT_DISTANCE]
     upcoming = [event for event in self.vehicleNaviEvents if event["target"] > self.totalDistance]
@@ -514,7 +539,7 @@ class CarState(CarStateBase):
     if bumps:
       ret.speedBumpDistance = bumps[0]["target"] - self.totalDistance
 
-    if self.vehicleNaviSpeedZoneActive and not speed_limit_cam:
+    if self.vehicleNaviSpeedZoneActive and (not position_seen and not speed_limit_cam):
       self._clear_vehicle_navi_speed_zone()
 
     if self.vehicleNaviSchoolZoneActive:
@@ -645,6 +670,11 @@ class CarState(CarStateBase):
       ret.brakeHoldActive = cp.vl["ESP_STATUS"]["AUTO_HOLD"] == 1
 
     speed_limit_cam = False
+
+    self.navi_position_4b4 = cp.vl["Hud_Navi_V2_POS_PE"]
+    self.navi_segment_4b9 = cp.vl["Hud_Navi_V2_SEG_E"]
+    self.navi_profile_4be = cp.vl["Hud_Navi_V2_PROLONG_E"]
+
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
       self.cruise_info = copy.copy(cp_cam.vl["SCC_CONTROL"])
       self.lfa_info = copy.copy(cp_cam.vl["LFA"])
@@ -738,9 +768,9 @@ class CarState(CarStateBase):
         if int(self.navi_msg_4a3["MapSource"]) == 2:
           speed_limit_cam = True
 
-        distance_time_changed = self._update_vehicle_speed_camera_params()
-        speed_limit_cam = self._update_vehicle_navi_events(cp, ret, speed_limit_cam) or speed_limit_cam
-        self.update_speed_limit(ret, speed_limit_cam, distance_time_changed)
+    distance_time_changed = self._update_vehicle_speed_camera_params()
+    speed_limit_cam = self._update_vehicle_navi_events(cp, ret, speed_limit_cam) or speed_limit_cam
+    self.update_speed_limit(ret, speed_limit_cam, distance_time_changed)
 
     if self.CP.flags & HyundaiFlags.EV:
       ret.cruiseState.nonAdaptive = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["MSLA_ENABLED"] == 1
@@ -819,7 +849,7 @@ class CarState(CarStateBase):
     return ret
 
   def get_can_parsers_canfd(self, CP):
-    msgs = [("Hud_Navi_V2_SEG_E", math.nan), ("Hud_Navi_V2_PROLONG_E", math.nan)]
+    msgs = [("Hud_Navi_V2_POS_PE", math.nan), ("Hud_Navi_V2_SEG_E", math.nan), ("Hud_Navi_V2_PROLONG_E", math.nan)]
     if not CP.flags & HyundaiFlags.CANFD_ALT_BUTTONS:
       # TODO: this can be removed once we add dynamic support to vl_all
       msgs += [

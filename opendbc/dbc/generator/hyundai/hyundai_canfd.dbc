@@ -50,6 +50,8 @@ BO_ 96 ESP_STATUS: 32 XXX
  SG_ BRAKE_PRESSURE : 128|11@1+ (1,0) [0|2047] "" XXX
  SG_ BRAKE_PRESSED : 148|1@1+ (1,0) [0|3] "" XXX
  SG_ AUTO_HOLD : 192|2@1+ (1,0) [0|3] "" XXX
+ SG_ AVH_I_LAMP : 218|2@1+ (1,0) [0|3] "" XXX
+ SG_ AVH_LAMP : 220|3@1+ (1,0) [0|7] "" XXX
 
 BO_ 101 BRAKE: 32 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -870,6 +872,9 @@ CM_ SG_ 74 IMU_YawRtVal "This signal indicates Information regarding yaw rate.ph
 CM_ SG_ 74 IMU_LatAccelVal "This signal indicates Information regarding lateral acceleration.physical range : -4.1768g..4.1765g = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.000127465[g/digit] = (HEX)*0.000127465[g/digit] - 4.17677312[g]";
 
 CM_ SG_ 96 BRAKE_PRESSURE "User applied brake pedal pressure. Ramps from computer applied pressure on falling edge of cruise. Cruise cancels if !=0";
+CM_ SG_ 96 AUTO_HOLD "AVH status. Indicates whether the vehicle is held with the hydraulic service brake";
+CM_ SG_ 96 AVH_I_LAMP "AutoHold indicator lamp state. 0 on, 1 off";
+CM_ SG_ 96 AVH_LAMP "AutoHold mode and lamp state. 0 off, 1 failure, 2 active, 3 ready";
 CM_ SG_ 101 BRAKE_POSITION "User applied brake pedal position, max is ~700. Signed on some vehicles";
 CM_ BO_ 203 "Known in official DBC as ADAS_CMD_35_10ms";
 CM_ SG_ 203 ADAS_AngleActiveStat "ADAS Active AngleControlInterface State";
@@ -1086,6 +1091,9 @@ VAL_ 53 GEAR 0 "P" 5 "D" 6 "N" 7 "R";
 VAL_ 64 GEAR 0 "P" 5 "D" 6 "N" 7 "R";
 VAL_ 69 GEAR 0 "P" 5 "D" 6 "N" 7 "R";
 VAL_ 96 TRACTION_AND_STABILITY_CONTROL 0 "On" 5 "Limited" 1 "Off";
+VAL_ 96 AUTO_HOLD 0 "No apply" 1 "Vehicle is held by the service brake" 2 "Being released" 3 "Error Indicator";
+VAL_ 96 AVH_I_LAMP 0 "Lamp on" 1 "Lamp off" 2 "Reserved" 3 "Reserved";
+VAL_ 96 AVH_LAMP 0 "AVH off" 1 "AVH failure" 2 "AVH active" 3 "AVH ready" 4 "Reserved" 5 "Reserved" 6 "Reserved" 7 "Reserved";
 VAL_ 112 GEAR 0 "P" 5 "D" 6 "N" 7 "R";
 VAL_ 203 ADAS_AngleActiveStat 0 "INIT" 1 "INACTIVE" 2 "ACTIVE35(ACTIVE)" 3 "ACTIVE33(Redundancy)" 4 "RESERVED" 5 "RESERVED" 6 "RESERVED" 7 "RESERVED" 8 "RESERVED" 9 "RESERVED" 10 "RESERVED" 11 "RESERVED" 12 "RESERVED" 13 "RESERVED" 14 "RESERVED" 15 "RESERVED";
 VAL_ 203 ADAS_AngleActiveStat_Lv2 0 "INIT" 1 "INACTIVE" 2 "ACTIVE35(ACTIVE)" 3 "RESERVED" 4 "RESERVED" 5 "RESERVED" 6 "RESERVED" 7 "RESERVED" 8 "RESERVED" 9 "RESERVED" 10 "RESERVED" 11 "RESERVED" 12 "RESERVED" 13 "RESERVED" 14 "RESERVED" 15 "RESERVED";

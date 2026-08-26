@@ -16,11 +16,9 @@ class CarControllerParams:
   ANGLE_LIMITS: AngleSteeringLimits = AngleSteeringLimits(
     # LKAS angle command is unlimited, but LFA is limited to 176.7 deg (but does not fault if requesting above)
     175,  # deg
-    # seen changing at 0.2 deg/frame down, 0.1 deg/frame up at 100Hz
-    #([5, 25], [0.3, 0.15]),
-    #([5, 25], [0.36, 0.26]),
-    ([0, 5., 25.], [1.0, 0.6, 0.2]),
-    ([0, 5., 25.], [1.5, 0.9, 0.3]),
+    # Keep low-speed commands close to the observed stock rates to avoid visible steering reversals near standstill.
+    ([0., 2., 5., 25.], [0.2, 0.35, 0.6, 0.2]),
+    ([0., 2., 5., 25.], [0.3, 0.5, 0.9, 0.3]),
   )
 
   # Stock LFA system is seen sending 250 max, but for LKAS events it's 175 max.
@@ -30,8 +28,10 @@ class CarControllerParams:
   #ANGLE_TORQUE_UP_RATE = 1  # Indicates how fast the torque ramps up after user intervention.
   #ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
   ANGLE_PARAMS = {
-    'SMOOTHING_ANGLE_VEGO_MATRIX': [0, 8.5, 11, 13.8, 22.22],
-    'SMOOTHING_ANGLE_ALPHA_MATRIX': [0.05, 0.1, 0.3, 0.6, 1],
+    'SMOOTHING_ANGLE_VEGO_MATRIX': [0., 0.3, 2., 8.5, 11., 13.8, 22.22],
+    'SMOOTHING_ANGLE_ALPHA_MATRIX': [0.03, 0.03, 0.05, 0.1, 0.3, 0.6, 1.0],
+    'LOW_SPEED_TORQUE_FADE_BP': [0.3, 2.0],
+    'LOW_SPEED_TORQUE_FADE_V': [0.0, 1.0],
     'CURVATURE_BP': [0.0, 0.002, 0.006, 0.012, 0.020],
     'TORQUE_FACTOR': [0.25, 0.50, 0.65, 0.75, 1.0],
     'MAX_TORQUE_RANGE': [0.5, 1.0],

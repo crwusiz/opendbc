@@ -86,18 +86,21 @@ class CarController(CarControllerBase):
 
     # angle control
     else:
+      angle_control_speed = abs(CS.out.vEgoRaw)
       new_angle = actuators.steeringAngleDeg
-      adjusted_alpha = float(np.interp(CS.out.vEgoRaw,
-                                       self.params.ANGLE_PARAMS['SMOOTHING_ANGLE_VEGO_MATRIX'],
-                                       self.params.ANGLE_PARAMS['SMOOTHING_ANGLE_ALPHA_MATRIX']))
+
+      # Anchor smoothing to the measured angle while the driver is intervening. Resetting to the requested angle
+      # can create a large command step when the requested and measured angles differ.
+      if CS.out.steeringPressed:
+        self.apply_angle_last = CS.out.steeringAngleDeg
+
+      adjusted_alpha = float(np.interp(angle_control_speed,
+                                        self.params.ANGLE_PARAMS['SMOOTHING_ANGLE_VEGO_MATRIX'],
+                                        self.params.ANGLE_PARAMS['SMOOTHING_ANGLE_ALPHA_MATRIX']))
       new_angle = (new_angle * adjusted_alpha + (1 - adjusted_alpha) * self.apply_angle_last)
 
-      # Reset apply_angle_last if the driver is intervening
-      if CS.out.steeringPressed:
-        self.apply_angle_last = actuators.steeringAngleDeg
-
-      self.apply_angle_last = apply_std_steer_angle_limits(new_angle, self.apply_angle_last, CS.out.vEgoRaw,
-                                                           CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
+      self.apply_angle_last = apply_std_steer_angle_limits(new_angle, self.apply_angle_last, angle_control_speed,
+                                                            CS.out.steeringAngleDeg, CC.latActive, self.params.ANGLE_LIMITS)
 
       current_torque = abs(CS.out.steeringTorque)
       curvature = abs(actuators.curvature)
@@ -105,21 +108,22 @@ class CarController(CarControllerBase):
       min_torque = self.params.ANGLE_MIN_TORQUE
       max_torque = self.params.ANGLE_MAX_TORQUE
 
-      speed_multiplier = np.interp(CS.out.vEgoRaw, [0, 15, 30.0], [1.0, 1.2, 1.4])
+      speed_multiplier = np.interp(angle_control_speed, [0, 15, 30.0], [1.0, 1.2, 1.4])
       scaled_torque = [min(factor * max_torque * speed_multiplier, max_torque)
                        for factor in self.params.ANGLE_PARAMS['TORQUE_FACTOR']]
 
-      dynamic_up_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [2.0, 1.5, 1.0]))
-      dynamic_down_rate = float(np.interp(CS.out.vEgoRaw, [0, 15, 30], [4.0, 3.5, 3.0]))
+      dynamic_up_rate = float(np.interp(angle_control_speed, [0, 15, 30], [2.0, 1.5, 1.0]))
+      dynamic_down_rate = float(np.interp(angle_control_speed, [0, 15, 30], [4.0, 3.5, 3.0]))
 
       # Override handling
-      if current_torque > max_torque:
-        torque_diff = current_torque - max_torque
-        available_reduction = self.lkas_max_torque - min_torque
-        reduction_factor = np.max([dynamic_down_rate,
-                                   torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'],
-                                   available_reduction / self.params.ANGLE_PARAMS['OVERRIDE_CYCLES']])
-        self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, min_torque)
+      if CS.out.steeringPressed or current_torque > max_torque:
+        if self.lkas_max_torque > min_torque:
+          torque_diff = max(current_torque - max_torque, 0.0)
+          available_reduction = self.lkas_max_torque - min_torque
+          reduction_factor = np.max([dynamic_down_rate,
+                                     torque_diff / self.params.ANGLE_PARAMS['TORQUE_DIFF_SCALE'],
+                                     available_reduction / self.params.ANGLE_PARAMS['OVERRIDE_CYCLES']])
+          self.lkas_max_torque = max(self.lkas_max_torque - reduction_factor, min_torque)
 
       # Normal torque adjustment
       else:
@@ -133,6 +137,12 @@ class CarController(CarControllerBase):
                                              [0, self.params.ANGLE_PARAMS['NEAR_CENTER_THRESHOLD']],
                                              self.params.ANGLE_PARAMS['MAX_TORQUE_RANGE']))
           target_torque = min(target_torque, max_torque * max_torque_scale)
+
+        # Limit EPS authority near standstill so residual curvature noise cannot move the wheel aggressively.
+        low_speed_torque_weight = float(np.interp(angle_control_speed,
+                                                  self.params.ANGLE_PARAMS['LOW_SPEED_TORQUE_FADE_BP'],
+                                                  self.params.ANGLE_PARAMS['LOW_SPEED_TORQUE_FADE_V']))
+        target_torque = min_torque + low_speed_torque_weight * (target_torque - min_torque)
 
         # Torque ramping logic
         if self.lkas_max_torque > target_torque:

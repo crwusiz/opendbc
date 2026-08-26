@@ -243,8 +243,10 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
   const AngleSteeringLimits HYUNDAI_CANFD_ANGLE_STEERING_LIMITS = {
     .max_angle = 1800,
     .angle_deg_to_can = 10,
-    .angle_rate_up_lookup = {{0, 5., 25.}, {1.0, 0.6, 0.2}},
-    .angle_rate_down_lookup = {{0, 5., 25.}, {1.5, 0.9, 0.3}},
+    // Safety checks use speed - 1 m/s and lookup_t is limited to three points. These shifted curves envelope
+    // CarControllerParams.ANGLE_LIMITS without rejecting its low-speed commands.
+    .angle_rate_up_lookup = {{0., 4., 24.}, {0.275, 0.6, 0.2}},
+    .angle_rate_down_lookup = {{0., 4., 24.}, {0.4, 0.9, 0.3}},
   };
 
   bool tx = true;

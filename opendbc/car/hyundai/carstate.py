@@ -197,7 +197,7 @@ class CarState(CarStateBase):
     )
     ret.standstill = cp.vl["WHL_SPD11"]["WHL_SPD_FL"] <= STANDSTILL_THRESHOLD and cp.vl["WHL_SPD11"]["WHL_SPD_RR"] <= STANDSTILL_THRESHOLD
 
-    ret.exState.vCluRatio = (ret.vEgo / ret.vEgoClu) if (ret.vEgoClu > 3. and ret.vEgo > 3.) else 1.0
+    ret.vCluRatio = (ret.vEgo / ret.vEgoClu) if (ret.vEgoClu > 3. and ret.vEgo > 3.) else 1.0
 
     self.cluster_speed_counter += 1
     if self.cluster_speed_counter > CLUSTER_SAMPLE_RATE:
@@ -311,7 +311,7 @@ class CarState(CarStateBase):
     ret.lowSpeedAlert = self.low_speed_alert
 
     if self.CP.exFlags & HyundaiExFlags.TPMS:
-      tpms = ret.exState.tpms
+      tpms = ret.tpms
       tpms_unit = cp.vl["TPMS11"]["UNIT"] * 0.725 if int(cp.vl["TPMS11"]["UNIT"]) > 0 else 1.
       tpms.fl = tpms_unit * cp.vl["TPMS11"]["PRESSURE_FL"]
       tpms.fr = tpms_unit * cp.vl["TPMS11"]["PRESSURE_FR"]
@@ -319,10 +319,10 @@ class CarState(CarStateBase):
       tpms.rr = tpms_unit * cp.vl["TPMS11"]["PRESSURE_RR"]
 
     if self.CP.exFlags & HyundaiExFlags.AUTOHOLD:
-      ret.exState.autoHold = cp.vl["ESP11"]["AVH_STAT"]
+      ret.autoHold = cp.vl["ESP11"]["AVH_STAT"]
 
     if self.CP.exFlags & HyundaiExFlags.NAVI:
-      ret.exState.navLimitSpeed = cp.vl["Navi_HU"]["SpeedLim_Nav_Clu"]
+      ret.naviLimitSpeed = cp.vl["Navi_HU"]["SpeedLim_Nav_Clu"]
       speedLimit = cp.vl["Navi_HU"]["SpeedLim_Nav_Clu"]
       speedLimitCam = cp.vl["Navi_HU"]["SpeedLim_Nav_Cam"]
       ret.speedLimit = speedLimit if speedLimit < 255 and speedLimitCam == 1 else 0
@@ -383,7 +383,7 @@ class CarState(CarStateBase):
     self.parse_wheel_speeds(ret, *wheel_speeds)
     ret.standstill = all(speed <= STANDSTILL_THRESHOLD for speed in wheel_speeds)
 
-    ret.exState.vCluRatio = (ret.vEgo / ret.vEgoClu) if (ret.vEgoClu > 3. and ret.vEgo > 3.) else 1.0
+    ret.vCluRatio = (ret.vEgo / ret.vEgoClu) if (ret.vEgoClu > 3. and ret.vEgo > 3.) else 1.0
 
     ret.steeringRateDeg = cp.vl["STEERING_SENSORS"]["STEERING_RATE"]
     ret.steeringAngleDeg = cp.vl["STEERING_SENSORS"]["STEERING_ANGLE"]
@@ -574,7 +574,7 @@ class CarState(CarStateBase):
     ret.blockPcmEnable = False
 
     if self.CP.exFlags & HyundaiExFlags.TPMS:
-      tpms = ret.exState.tpms
+      tpms = ret.tpms
       tpms_unit = cp.vl["TPMS"]["UNIT"] * 0.725 if int(cp.vl["TPMS"]["UNIT"]) > 0 else 1.
       tpms.fl = tpms_unit * cp.vl["TPMS"]["PRESSURE_FL"]
       tpms.fr = tpms_unit * cp.vl["TPMS"]["PRESSURE_FR"]
@@ -582,13 +582,13 @@ class CarState(CarStateBase):
       tpms.rr = tpms_unit * cp.vl["TPMS"]["PRESSURE_RR"]
 
     if self.CP.exFlags & HyundaiExFlags.AUTOHOLD:
-      ret.exState.autoHold = cp.vl["ESP_STATUS"]["AUTO_HOLD"]
+      ret.autoHold = cp.vl["ESP_STATUS"]["AUTO_HOLD"]
 
     if self.CP.exFlags & HyundaiExFlags.NAVI:
       if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC and self.CP.exFlags & HyundaiExFlags.CCNC.value:
-        ret.exState.navLimitSpeed = cp_cam.vl["CCNC_0x162"]["SPEEDLIMIT"]
+        ret.naviLimitSpeed = cp_cam.vl["CCNC_0x162"]["SPEEDLIMIT"]
       else:
-        ret.exState.navLimitSpeed = cp.vl["CLUSTER_SPEED_LIMIT"]["NavSpeedLimit"]
+        ret.naviLimitSpeed = cp.vl["CLUSTER_SPEED_LIMIT"]["NavSpeedLimit"]
 
     self.canfd_buttons = cp.vl[self.cruise_btns_msg_canfd]
 

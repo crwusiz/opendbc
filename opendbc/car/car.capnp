@@ -260,16 +260,11 @@ struct CarState {
   naviCurveCurvature @84 :Float32; # decoded ADASIS v2 curvature of the controlling spot, 1/m
   naviCurveRouteActive @85 :Bool; # 0x4B9 confirms that the stock navigation has a calculated route
   naviCurveRouteState @86 :UInt8; # 0x4B9 CalculatedRoute: 0 MPP, 1 calculated route, 2 recalculating, 3 invalid
-
-  exState @87 :ExState;
-
-  struct ExState {
-    vCluRatio @0 :Float32;
-    autoHold @1 :Int32;
-    tpms @2 :Tpms;
-    navLimitSpeed @3 :Int32;
-    ignoreLimitTimer @4 :Float32;
-  }
+  naviLimitSpeed @87 :Int32;
+  vCluRatio @88 :Float32;
+  autoHold @89 :Int32;
+  tpms @90 :Tpms;
+  ignoreLimitTimer @91 :Float32;
 
   struct Tpms {
     fl @0 :Float32;

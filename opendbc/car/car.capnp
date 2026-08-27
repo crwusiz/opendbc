@@ -254,9 +254,14 @@ struct CarState {
   naviActive @78 :Bool; # a valid stock-navigation CAN profile is currently relevant
   naviSectionActive @79 :Bool; # stock-navigation kind 7 indicates a non-school speed-limit section
   naviSpeed @80 :Float32; # raw speed from the active stock-navigation CAN profile, kph
+  naviAvailable @81 :Bool; # stock-navigation 0x4BE has been observed during this drive
+  naviCurveDistance @82 :Float32; # distance to the controlling stock-navigation 0x4BA curvature spot, meters
+  naviCurveSpeed @83 :Float32; # 100% reference speed calculated from the 0x4BA curvature, kph
+  naviCurveCurvature @84 :Float32; # decoded ADASIS v2 curvature of the controlling spot, 1/m
+  naviCurveRouteActive @85 :Bool; # 0x4B9 confirms that the stock navigation has a calculated route
+  naviCurveRouteState @86 :UInt8; # 0x4B9 CalculatedRoute: 0 MPP, 1 calculated route, 2 recalculating, 3 invalid
 
-  # neokii
-  exState @81 :ExState;
+  exState @87 :ExState;
 
   struct ExState {
     vCluRatio @0 :Float32;

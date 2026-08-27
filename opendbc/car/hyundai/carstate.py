@@ -432,7 +432,9 @@ class CarState(CarStateBase):
 
     navi_position = cp.vl["Hud_Navi_V2_POS_PE"]
     navi_segment = cp.vl["Hud_Navi_V2_SEG_E"]
+    navi_profile_short = cp.vl["Hud_Navi_V2_PROSHORT_E_00"]
     navi_profile = cp.vl["Hud_Navi_V2_PROLONG_E"]
+    navi_info = None
 
     if self.CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value:
       self.cruise_info = copy.copy(cp_cam.vl["SCC_CONTROL"])
@@ -520,6 +522,7 @@ class CarState(CarStateBase):
 
       if self.has_navi_msg_4a3:
         navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"]
+        navi_info = navi_msg_4a3
         speedLimit = navi_msg_4a3["SpeedLimit"]
         if not self.is_metric:
           speedLimit *= CV.MPH_TO_KPH
@@ -527,7 +530,8 @@ class CarState(CarStateBase):
         if int(navi_msg_4a3["MapSource"]) == 2:
           speed_limit_cam = True
 
-    self.navi_state.update(cp, ret, speed_limit_cam, navi_position, navi_segment, navi_profile)
+    self.navi_state.update(cp, ret, speed_limit_cam, navi_position, navi_segment, navi_profile,
+                           profile_short=navi_profile_short, hda_info=navi_info)
 
     if self.CP.flags & HyundaiFlags.EV:
       ret.cruiseState.nonAdaptive = cp.vl["MANUAL_SPEED_LIMIT_ASSIST"]["MSLA_ENABLED"] == 1
@@ -606,7 +610,8 @@ class CarState(CarStateBase):
     return ret
 
   def get_can_parsers_canfd(self, CP):
-    msgs = [("Hud_Navi_V2_POS_PE", math.nan), ("Hud_Navi_V2_SEG_E", math.nan), ("Hud_Navi_V2_PROLONG_E", math.nan)]
+    msgs = [("Hud_Navi_V2_POS_PE", math.nan), ("Hud_Navi_V2_SEG_E", math.nan),
+            ("Hud_Navi_V2_PROSHORT_E_00", math.nan), ("Hud_Navi_V2_PROLONG_E", math.nan)]
     if not CP.flags & HyundaiFlags.CANFD_ALT_BUTTONS:
       # TODO: this can be removed once we add dynamic support to vl_all
       msgs += [

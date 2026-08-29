@@ -1,7 +1,29 @@
 import math
 from types import SimpleNamespace
 
-from opendbc.car.hyundai.navi_state import NAVI_POSITION_TIMEOUT_NS, NaviState
+from opendbc.car.hyundai.navi_state import NAVI_POSITION_TIMEOUT_NS, NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES, NaviState
+
+
+class FakeParams:
+  def __init__(self, values=None):
+    self.values = {
+      "VehicleNaviCanControl": False,
+      "VehicleNaviSchoolZoneControl": False,
+      "VehicleNaviCurveControl": False,
+      "VehicleNaviCurveMppControl": False,
+      "VehicleNaviCurveSpeedFactor": 100,
+      "VehicleNaviCurveCtrlEnd": 3,
+      "VehicleSpeedCameraDistanceTime": 60,
+      "AutoCurveSpeedLowerLimit": 30,
+      "AutoNaviSpeedDecelRate": 120,
+    }
+    self.values.update(values or {})
+
+  def get_bool(self, key):
+    return bool(self.values[key])
+
+  def get_int(self, key):
+    return int(self.values[key])
 
 
 def _navi_state():
@@ -13,6 +35,27 @@ def _navi_state():
 
 def _ret(speed_limit=100.0):
   return SimpleNamespace(speedLimit=speed_limit)
+
+
+def test_navi_controls_follow_params():
+  params = FakeParams({
+    "VehicleNaviCanControl": True,
+    "VehicleNaviSchoolZoneControl": True,
+    "VehicleNaviCurveControl": True,
+    "VehicleNaviCurveSpeedFactor": 120,
+    "VehicleNaviCurveCtrlEnd": 4,
+    "VehicleSpeedCameraDistanceTime": 75,
+  })
+  state = NaviState(params)
+
+  assert state.can_control
+  assert state.school_zone_control
+  assert state.curve_speed_factor == 1.2
+  assert state.curve_control_end == 4.0
+
+  state.speed_camera_params_counter = NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES - 1
+  assert state._update_speed_camera_params()
+  assert state.speed_camera_distance_time == 7.5
 
 
 def test_navi_range_average_holds_section_until_zero():
@@ -156,6 +199,7 @@ def test_navi_curve_profile_publishes_reference_speed_and_distance():
   state.curve_route_active = True
   state.profile_short = {
     "Offset": 313,
+    "Distance": 5,
     "Value0": 599,
     "ProfileType": 1,
   }
@@ -167,29 +211,48 @@ def test_navi_curve_profile_publishes_reference_speed_and_distance():
   assert math.isclose(ret.naviCurveCurvature, 0.00112)
   assert math.isclose(ret.naviCurveSpeed, math.sqrt(1.9 / 0.00112) * 3.6)
   assert ret.naviCurveRouteActive
+  assert state.curves[0]["span"] == 10.0
 
 
-def test_navi_curve_holds_until_neutral_curvature_end():
+def test_navi_curve_releases_passed_apex_and_uses_following_spot():
   state = _navi_state()
   state.curves = [
-    {"target": 100.0, "curvature": 0.01, "speed": 50.0},
-    {"target": 180.0, "curvature": 0.0002, "speed": 250.0},
+    {"target": 100.0, "span": 10.0, "curvature": 0.01, "speed": 50.0},
+    {"target": 140.0, "span": 10.0, "curvature": 0.004, "speed": 80.0},
   ]
   ret = SimpleNamespace()
   cp = SimpleNamespace(ts_nanos={})
 
-  state.total_distance = 110.0
+  state.total_distance = 100.0
   state._update_curve_profile(cp, ret)
   assert ret.naviCurveDistance == 0.0
   assert ret.naviCurveSpeed == 50.0
 
-  state.total_distance = 179.9
+  state.total_distance = 100.1
   state._update_curve_profile(cp, ret)
-  assert ret.naviCurveSpeed == 50.0
+  assert math.isclose(ret.naviCurveDistance, 39.9)
+  assert ret.naviCurveSpeed == 80.0
 
-  state.total_distance = 180.0
+
+def test_navi_curve_without_following_spot_releases_after_apex():
+  state = _navi_state()
+  state.curves = [{"target": 100.0, "span": 10.0, "curvature": 0.01, "speed": 50.0}]
+  ret = SimpleNamespace()
+  cp = SimpleNamespace(ts_nanos={})
+
+  state.total_distance = 100.1
   state._update_curve_profile(cp, ret)
   assert ret.naviCurveSpeed == 0.0
+
+
+def test_navi_curve_skips_only_short_hairpin_speed_spot():
+  state = _navi_state()
+  state._add_curve({"offset": 100.0, "span": 10.0, "curvature": 0.12288})
+  assert state.curves == []
+
+  state._add_curve({"offset": 110.0, "span": 10.0, "curvature": 0.04864})
+  assert len(state.curves) == 1
+  assert math.isclose(state.curves[0]["speed"], math.sqrt(1.9 / 0.04864) * 3.6)
 
 
 def test_navi_route_recalculation_clears_curve_profile():

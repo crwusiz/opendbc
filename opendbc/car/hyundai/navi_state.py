@@ -15,12 +15,20 @@ NAVI_CONTROLLED_ACCESS_ROAD_CLASSES = (1, 2)  # Freeway, arterial/city freeway
 NAVI_SCHOOL_ZONE_MAX_DISTANCE = 1000.0
 NAVI_POSITION_TIMEOUT_NS = 1_000_000_000
 NAVI_CURVE_MAX_DISTANCE = 1500.0
-NAVI_CURVE_END_FALLBACK_DISTANCE = 120.0
+NAVI_CURVE_DISTANCE_FACTOR = 2.0
+NAVI_CURVE_SHORT_SPOT_MAX_DISTANCE = 10.0
+NAVI_CURVE_SHORT_SPOT_MAX_SPEED = 20.0
 NAVI_CURVE_TARGET_LAT_ACCEL = 1.9
+
+VehicleNaviCurveSpeedFactor = 100
+VehicleNaviCurveCtrlEnd = 3
+AutoCurveSpeedLowerLimit = 30
+AutoNaviSpeedDecelRate = 200
 
 
 class NaviState:
-  def __init__(self):
+  def __init__(self, params=None):
+    self.params = params
     self.total_distance = 0.0
     self.speed_limit_distance = 0.0
 
@@ -29,8 +37,8 @@ class NaviState:
     self.school_zone_control = True
     self.curve_speed_factor = 1.0
     self.curve_lower_limit = 30.0
-    self.curve_decel_rate = 2.0
-    self.curve_control_end = 6.0
+    self.curve_decel_rate = 1.2
+    self.curve_control_end = 3.0
     self.speed_camera_params_counter = 0
     self.events = []
     self.curves = []
@@ -55,9 +63,20 @@ class NaviState:
     self.profile_short = None
     self.profile = None
 
+    self._read_control_params()
+
   @staticmethod
   def _speed_camera_distance_time(raw_value):
     return min(200, max(10, raw_value)) / 10.0
+
+  def _read_control_params(self):
+    if self.params is None:
+      return
+
+    self.curve_speed_factor = min(2.0, max(0.5, VehicleNaviCurveSpeedFactor * 0.01))
+    self.curve_lower_limit = max(5.0, AutoCurveSpeedLowerLimit)
+    self.curve_decel_rate = max(0.01, AutoNaviSpeedDecelRate * 0.01)
+    self.curve_control_end = max(0.0, VehicleNaviCurveCtrlEnd)
 
   def _update_speed_camera_params(self):
     self.speed_camera_params_counter += 1
@@ -65,7 +84,9 @@ class NaviState:
       return False
 
     self.speed_camera_params_counter = 0
-    distance_time = self._speed_camera_distance_time(60)
+    self._read_control_params()
+    distance_time_tenths = 60
+    distance_time = self._speed_camera_distance_time(distance_time_tenths)
     changed = distance_time != self.speed_camera_distance_time
     self.speed_camera_distance_time = distance_time
     return changed
@@ -148,6 +169,7 @@ class NaviState:
       return None
 
     offset = int(values.get("Offset", 8191))
+    distance = int(values.get("Distance", 1023))
     raw_curvature = int(values.get("Value0", 1023))
     if not 0 <= offset <= NAVI_CURVE_MAX_DISTANCE or raw_curvature == 1023:
       return None
@@ -157,6 +179,7 @@ class NaviState:
       return None
     return {
       "offset": offset,
+      "span": distance * NAVI_CURVE_DISTANCE_FACTOR if 0 <= distance < 1023 else 0.0,
       "curvature": curvature,
       "raw_curvature": raw_curvature,
     }
@@ -170,11 +193,16 @@ class NaviState:
   def _add_curve(self, curve):
     target = self.total_distance + curve["offset"]
     reference_speed = self._curve_reference_speed(curve["curvature"])
+    # A single 10 m map node with a hairpin-level value is commonly a turn-node
+    # discontinuity, not a road curve long enough to justify an 18 km/h cap.
+    short_spot = 0.0 < curve["span"] <= NAVI_CURVE_SHORT_SPOT_MAX_DISTANCE
+    if short_spot and reference_speed <= NAVI_CURVE_SHORT_SPOT_MAX_SPEED:
+      return
     nearest = min(self.curves, key=lambda item: abs(item["target"] - target), default=None)
     if nearest is not None and abs(nearest["target"] - target) <= 2.0:
-      nearest.update(target=target, curvature=curve["curvature"], speed=reference_speed)
+      nearest.update(target=target, span=curve["span"], curvature=curve["curvature"], speed=reference_speed)
     else:
-      self.curves.append({"target": target, "curvature": curve["curvature"], "speed": reference_speed})
+      self.curves.append({"target": target, "span": curve["span"], "curvature": curve["curvature"], "speed": reference_speed})
     self.curves.sort(key=lambda item: item["target"])
     self.curves = self.curves[:NAVI_MAX_CURVES]
 
@@ -193,23 +221,14 @@ class NaviState:
         if curve is not None and timestamp > self.route_reset_timestamp:
           self._add_curve(curve)
 
-    # Keep passed curve spots until a following near-straight spot identifies the
-    # actual curve end. This avoids releasing the speed cap at an arbitrary
-    # distance after the apex while the vehicle is still in the curve.
-    self.curves = [curve for curve in self.curves
-                   if curve["target"] >= self.total_distance - NAVI_CURVE_END_FALLBACK_DISTANCE]
+    # Release each curvature spot as soon as its apex is passed. The following
+    # lower-curvature spots then raise the target speed before the curve exit.
+    self.curves = [curve for curve in self.curves if curve["target"] >= self.total_distance]
     candidates = []
     for curve in self.curves:
       if curve["speed"] >= 250:
         continue
       distance = curve["target"] - self.total_distance
-      if distance < 0:
-        curve_end = next((point["target"] for point in self.curves
-                          if point["target"] > curve["target"] and point["speed"] >= 250), None)
-        hold_until = curve_end if curve_end is not None else curve["target"] + NAVI_CURVE_END_FALLBACK_DISTANCE
-        if self.total_distance >= hold_until:
-          continue
-        distance = 0.0
       target_speed = max(self.curve_lower_limit, curve["speed"] * self.curve_speed_factor)
       safe_speed = target_speed / CV.MS_TO_KPH
       decel_distance = max(0.0, distance - safe_speed * self.curve_control_end)

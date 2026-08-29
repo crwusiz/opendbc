@@ -122,7 +122,7 @@ class CarState(CarStateBase):
     self.rightLnPosition = 0.0
     self.rightLnQualStat = 0
 
-    self.navi_state = NaviState()
+    self.navi_state = NaviState(Params())
 
     self.DistanceGapSet = 0
 

@@ -1,6 +1,5 @@
 import numpy as np
 
-from openpilot.common.params import Params
 
 class Conversions:
   # Speed
@@ -23,14 +22,27 @@ class Conversions:
 
 class UnitConverter:
   def __init__(self):
+    from openpilot.common.params import Params
+
     self.params = Params()
     self.is_metric = self.params.get_bool("IsMetric")
 
-  def to_ms(self, speed: float) -> float:
-    return speed * Conversions.KPH_TO_MS if self.is_metric else speed * Conversions.MPH_TO_MS
+  def clu_to_ms(self, speed_clu: float) -> float:
+    return speed_clu * Conversions.KPH_TO_MS if self.is_metric else speed_clu * Conversions.MPH_TO_MS
 
-  def to_clu(self, speed: float) -> float:
-    return speed * Conversions.MS_TO_KPH if self.is_metric else speed * Conversions.MS_TO_MPH
+  def ms_to_clu(self, speed_ms: float) -> float:
+    return speed_ms * Conversions.MS_TO_KPH if self.is_metric else speed_ms * Conversions.MS_TO_MPH
 
-  def to_current_unit(self, speed_kph: float) -> float:
+  @staticmethod
+  def ms_to_kph(speed_ms: float) -> float:
+    return speed_ms * Conversions.MS_TO_KPH
+
+  @staticmethod
+  def kph_to_ms(speed_kph: float) -> float:
+    return speed_kph * Conversions.KPH_TO_MS
+
+  def clu_to_kph(self, speed_clu: float) -> float:
+    return speed_clu if self.is_metric else speed_clu * Conversions.MPH_TO_KPH
+
+  def kph_to_clu(self, speed_kph: float) -> float:
     return speed_kph if self.is_metric else speed_kph * Conversions.KPH_TO_MPH

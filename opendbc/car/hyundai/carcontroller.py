@@ -171,7 +171,7 @@ class CarController(CarControllerBase):
     # accel + longitudinal
     accel = float(np.clip(actuators.accel, ACCEL_MIN, ACCEL_MAX))
     stopping = actuators.longControlState == LongCtrlState.stopping
-    set_speed_in_units = self.conv.to_clu(hud_control.setSpeed)
+    set_speed_in_units = self.conv.ms_to_clu(hud_control.setSpeed)
 
     can_sends = []
 

@@ -1,7 +1,7 @@
 import math
 
 from opendbc.car import DT_CTRL
-from opendbc.car.common.conversions import Conversions as CV
+from opendbc.car.common.conversions import UnitConverter
 
 
 NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES = round(1.0 / DT_CTRL)
@@ -188,7 +188,7 @@ class NaviState:
   def _curve_reference_speed(curvature):
     if abs(curvature) < 1e-7:
       return 250.0
-    return min(250.0, max(5.0, math.sqrt(NAVI_CURVE_TARGET_LAT_ACCEL / abs(curvature)) * CV.MS_TO_KPH))
+    return min(250.0, max(5.0, UnitConverter.ms_to_kph(math.sqrt(NAVI_CURVE_TARGET_LAT_ACCEL / abs(curvature)))))
 
   def _add_curve(self, curve):
     target = self.total_distance + curve["offset"]
@@ -230,9 +230,9 @@ class NaviState:
         continue
       distance = curve["target"] - self.total_distance
       target_speed = max(self.curve_lower_limit, curve["speed"] * self.curve_speed_factor)
-      safe_speed = target_speed / CV.MS_TO_KPH
+      safe_speed = UnitConverter.kph_to_ms(target_speed)
       decel_distance = max(0.0, distance - safe_speed * self.curve_control_end)
-      preview_speed = math.sqrt(safe_speed ** 2 + 2 * self.curve_decel_rate * decel_distance) * CV.MS_TO_KPH
+      preview_speed = UnitConverter.ms_to_kph(math.sqrt(safe_speed ** 2 + 2 * self.curve_decel_rate * decel_distance))
       candidates.append((preview_speed, distance, curve))
 
     if candidates:

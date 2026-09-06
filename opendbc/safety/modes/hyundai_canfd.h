@@ -46,6 +46,16 @@
   HYUNDAI_CANFD_ADRV_TX_MSGS(e1)                \
   HYUNDAI_CANFD_ADRV_TX_MSGS(e2)                \
 
+#define HYUNDAI_CANFD_LFA_STEER_MSG_CAMERA_SCC_TX_MSGS(longitudinal) \
+  HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(2)                          \
+  HYUNDAI_CANFD_LFA_STEER_MSG_COMMON_TX_MSGS(0)                    \
+  HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(0, (longitudinal))       \
+  {0x160, 0, 16, .check_relay = (longitudinal)}, /* ADRV_0x160 */  \
+  {0x161, 0, 32, .check_relay = (longitudinal)}, /* CCNC_0x161 */  \
+  {0x162, 0, 32, .check_relay = (longitudinal)}, /* CCNC_0x162 */  \
+  {0xEA,  2, 24, .check_relay = (longitudinal)}, /* MDPS       */  \
+  {0x7C4, 2,  8, .check_relay = (longitudinal)}, /* 0x7C4      */  \
+
 // *** 2. RX Checks (Safety) ***
 // EV, ICE, HYBRID: ACCELERATOR (0x35), ACCELERATOR_BRAKE_ALT (0x100), ACCELERATOR_ALT (0x105)
 #define HYUNDAI_CANFD_COMMON_RX_CHECKS(pt_bus)                                                                                       \
@@ -84,9 +94,10 @@ typedef struct {
   int hz;
   uint32_t timeout;
   uint32_t timestamp;
-} CanFdBlockEntry;
+} HyundaiCanfdBlockEntry;
 
-CanFdBlockEntry op_on_bus0_block_list[] = {
+// Lists are terminated by an entry with address 0 and named by the TX destination bus.
+static HyundaiCanfdBlockEntry op_on_bus0_block_list[] = {
   {0x50, 100, 0, 0},   // LKAS
   {0x51, 100, 0, 0},   // ADRV_0x51
   {0x110, 100, 0, 0},  // LKAS_ALT
@@ -114,7 +125,7 @@ CanFdBlockEntry op_on_bus0_block_list[] = {
   {0, 0, 0, 0}
 };
 
-CanFdBlockEntry op_on_bus2_block_list[] = {
+static HyundaiCanfdBlockEntry op_on_bus2_block_list[] = {
   {0x4A3, 5, 0, 0},    // Hud_Navi_ISLW_PE
   {0x175, 50, 0, 0},   // TCS
   {0x1FA, 10, 0, 0},   // CLUSTER_SPEED_LIMIT
@@ -126,6 +137,34 @@ CanFdBlockEntry op_on_bus2_block_list[] = {
   {0x7C4, 5, 0, 0},    // VEHICLE DIAGNOSTICS
   {0, 0, 0, 0}
 };
+
+static void hyundai_canfd_init_block_timeouts(HyundaiCanfdBlockEntry *block_list) {
+  for (int i = 0; block_list[i].addr != 0; i++) {
+    if (block_list[i].hz > 0) {
+      // One message period plus a 20 ms margin. Preserve existing TX timestamps.
+      block_list[i].timeout = (1000000U / block_list[i].hz) + 20000U;
+    }
+  }
+}
+
+static void hyundai_canfd_update_block_timestamps(HyundaiCanfdBlockEntry *block_list, int addr, uint32_t now) {
+  for (int i = 0; block_list[i].addr != 0; i++) {
+    if (block_list[i].addr == addr) {
+      block_list[i].timestamp = now;
+    }
+  }
+}
+
+static bool hyundai_canfd_block_list_active(const HyundaiCanfdBlockEntry *block_list, int addr, uint32_t now) {
+  bool block_msg = false;
+  for (int i = 0; block_list[i].addr != 0; i++) {
+    if ((block_list[i].addr == addr) && ((now - block_list[i].timestamp) < block_list[i].timeout)) {
+      block_msg = true;
+      break;
+    }
+  }
+  return block_msg;
+}
 
 
 static uint8_t hyundai_canfd_get_counter(const CANPacket_t *msg) {
@@ -281,7 +320,7 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
     bool is_resume = (button == HYUNDAI_BTN_RESUME);
     bool is_set = (button == HYUNDAI_BTN_SET);
 
-    bool allowed = (is_cancel && cruise_engaged_prev) || (is_resume && controls_allowed) || (is_set && controls_allowed);
+    bool allowed = (is_cancel && cruise_engaged_prev) || ((is_resume || is_set) && controls_allowed);
     if (!allowed) {
       tx = false;
     }
@@ -315,21 +354,10 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
 
   // *** Update Timestamps for Block Logic ***
   if (tx) {
-    uint32_t now = microsecond_timer_get();
-
-    // Check List 1 (OP sending to Bus 0)
-    for (int i = 0; op_on_bus0_block_list[i].addr != 0; i++) {
-      if (op_on_bus0_block_list[i].addr == msg->addr) {
-        op_on_bus0_block_list[i].timestamp = now;
-      }
-    }
-
-    // Check List 2 (OP sending to Bus 2)
-    for (int i = 0; op_on_bus2_block_list[i].addr != 0; i++) {
-      if (op_on_bus2_block_list[i].addr == msg->addr) {
-        op_on_bus2_block_list[i].timestamp = now;
-      }
-    }
+    const uint32_t now = microsecond_timer_get();
+    // Both lists track matching addresses regardless of the TX bus.
+    hyundai_canfd_update_block_timestamps(op_on_bus0_block_list, msg->addr, now);
+    hyundai_canfd_update_block_timestamps(op_on_bus2_block_list, msg->addr, now);
   }
 
   return tx;
@@ -337,31 +365,15 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
 
 static bool hyundai_canfd_fwd_hook(int bus_num, int addr) {
   bool block_msg = false;
-  uint32_t now = microsecond_timer_get();
+  const uint32_t now = microsecond_timer_get();
 
   // Bus 2 -> Bus 0 block_msg
   if (bus_num == 2) {
-    for (int i = 0; op_on_bus0_block_list[i].addr != 0; i++) {
-      if ((op_on_bus0_block_list[i].addr == addr) &&
-          ((now - op_on_bus0_block_list[i].timestamp) < op_on_bus0_block_list[i].timeout)) {
-        block_msg = true;
-        break;
-      }
-    }
+    block_msg = hyundai_canfd_block_list_active(op_on_bus0_block_list, addr, now);
   }
   // Bus 0 -> Bus 2 block_msg
   else if (bus_num == 0) {
-    for (int i = 0; op_on_bus2_block_list[i].addr != 0; i++) {
-      if ((op_on_bus2_block_list[i].addr == addr) &&
-          ((now - op_on_bus2_block_list[i].timestamp) < op_on_bus2_block_list[i].timeout)) {
-        block_msg = true;
-        break;
-      }
-    }
-
-    if (addr == 0x4B9) {
-      block_msg = true;
-    }
+    block_msg = hyundai_canfd_block_list_active(op_on_bus2_block_list, addr, now) || (addr == 0x4B9);
   }
 
   return block_msg;
@@ -372,19 +384,8 @@ static safety_config hyundai_canfd_init(uint16_t param) {
   const uint16_t HYUNDAI_PARAM_CANFD_ALT_BUTTONS = 32;
   const uint16_t HYUNDAI_PARAM_CANFD_ANGLE_STEER_MSG = 1024;
 
-  // Initialize Timeouts based on Hz (1,000,000 us / Hz) + Margin
-  for (int i = 0; op_on_bus0_block_list[i].addr != 0; i++) {
-    if (op_on_bus0_block_list[i].hz > 0) {
-      op_on_bus0_block_list[i].timeout = (1000000U / op_on_bus0_block_list[i].hz) + 20000U; // +20ms Margin
-    }
-  }
-
-  for (int i = 0; op_on_bus2_block_list[i].addr != 0; i++) {
-    if (op_on_bus2_block_list[i].hz > 0) {
-      op_on_bus2_block_list[i].timeout = (1000000U / op_on_bus2_block_list[i].hz) + 20000U; // +20ms Margin
-    }
-  }
-
+  hyundai_canfd_init_block_timeouts(op_on_bus0_block_list);
+  hyundai_canfd_init_block_timeouts(op_on_bus2_block_list);
 
   static const CanMsg HYUNDAI_CANFD_LKA_STEER_MSG_TX_MSGS[] = {
     HYUNDAI_CANFD_LKA_STEER_MSG_COMMON_TX_MSGS(0, 1)
@@ -431,16 +432,6 @@ static safety_config hyundai_canfd_init(uint16_t param) {
     {0x160, 1, 16, .check_relay = true},   // ADRV_0x160
   };
 
-#define HYUNDAI_CANFD_LFA_STEER_MSG_CAMERA_SCC_TX_MSGS(longitudinal) \
-    HYUNDAI_CANFD_CRUISE_BUTTON_TX_MSGS(2)                          \
-    HYUNDAI_CANFD_LFA_STEER_MSG_COMMON_TX_MSGS(0)                    \
-    HYUNDAI_CANFD_SCC_CONTROL_COMMON_TX_MSGS(0, (longitudinal))     \
-    {0x160, 0, 16, .check_relay = (longitudinal)}, /* ADRV_0x160 */ \
-    {0x161, 0, 32, .check_relay = (longitudinal)}, /* CCNC_0x161 */ \
-    {0x162, 0, 32, .check_relay = (longitudinal)}, /* CCNC_0x162 */ \
-    {0xEA,  2, 24, .check_relay = (longitudinal)}, /* MDPS       */ \
-    {0x7C4, 2,  8, .check_relay = (longitudinal)}, /* 0x7C4      */ \
-
   hyundai_common_init(param);
 
   gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
@@ -459,7 +450,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
       };
 
       ret = hyundai_camera_scc ?
-        BUILD_SAFETY_CFG(hyundai_canfd_lka_steer_msg_long_rx_checks_camera_scc, HYUNDAI_CANFD_LKA_STEER_MSG_LONG_TX_MSGS) : \
+        BUILD_SAFETY_CFG(hyundai_canfd_lka_steer_msg_long_rx_checks_camera_scc, HYUNDAI_CANFD_LKA_STEER_MSG_LONG_TX_MSGS) :
         BUILD_SAFETY_CFG(hyundai_canfd_lka_steer_msg_long_rx_checks, HYUNDAI_CANFD_LKA_STEER_MSG_LONG_TX_MSGS);
     } else {
       // Longitudinal checks for LFA steering
@@ -471,7 +462,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
         HYUNDAI_CANFD_ALT_BUTTONS_RX_CHECKS(0)
       };
 
-      static CanMsg hyundai_canfd_lfa_steering_camera_scc_tx_msgs[] = {
+      static const CanMsg hyundai_canfd_lfa_steering_camera_scc_tx_msgs[] = {
         HYUNDAI_CANFD_LFA_STEER_MSG_CAMERA_SCC_TX_MSGS(true)
       };
 
@@ -539,7 +530,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
         HYUNDAI_CANFD_SCC_ADDR_CHECK(2)
       };
 
-      static CanMsg hyundai_canfd_lfa_steering_camera_scc_tx_msgs[] = {
+      static const CanMsg hyundai_canfd_lfa_steering_camera_scc_tx_msgs[] = {
         HYUNDAI_CANFD_LFA_STEER_MSG_CAMERA_SCC_TX_MSGS(false)
       };
 

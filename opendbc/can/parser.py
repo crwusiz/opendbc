@@ -228,7 +228,7 @@ class CANParser:
         not bus_timeout and self.error_print_count < 100 and elapsed_seconds >= 5):
 
         status = "NOT SEEN" if missing else "TIMED OUT"
-        log_file = "/data/can_missing.log" if missing else "/data/can_timeout.log"
+        log_file = "/data/log/can_missing.log" if missing else "/data/log/can_timeout.log"
 
         print(f"0x{state.address:X} '{state.name}' {status}")
 

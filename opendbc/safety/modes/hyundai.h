@@ -187,7 +187,6 @@ static void hyundai_rx_hook(const CANPacket_t *msg) {
   }
 
   gas_pressed = brake_pressed = false;
-  }
 }
 
 static bool hyundai_tx_hook(const CANPacket_t *msg) {

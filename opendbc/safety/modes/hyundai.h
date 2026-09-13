@@ -69,15 +69,18 @@ static uint8_t hyundai_get_counter(const CANPacket_t *msg) {
   uint8_t cnt = 0;
   if (msg->addr == 0x260U) {
     cnt = (msg->data[7] >> 4) & 0x3U;
-  } else if (msg->addr == 0x386U) {
+  }
+  if (msg->addr == 0x386U) {
     cnt = ((msg->data[3] >> 6) << 2) | (msg->data[1] >> 6);
-  } else if (msg->addr == 0x394U) {
+  }
+  if (msg->addr == 0x394U) {
     cnt = (msg->data[1] >> 5) & 0x7U;
-  } else if (msg->addr == 0x421U) {
+  }
+  if (msg->addr == 0x421U) {
     cnt = msg->data[7] & 0xFU;
-  } else if (msg->addr == 0x4F1U) {
+  }
+  if (msg->addr == 0x4F1U) {
     cnt = (msg->data[3] >> 4) & 0xFU;
-  } else {
   }
   return cnt;
 }
@@ -87,13 +90,15 @@ static uint32_t hyundai_get_checksum(const CANPacket_t *msg) {
   uint8_t chksum = 0;
   if (msg->addr == 0x260U) {
     chksum = msg->data[7] & 0xFU;
-  } else if (msg->addr == 0x386U) {
+  }
+  if (msg->addr == 0x386U) {
     chksum = ((msg->data[7] >> 6) << 2) | (msg->data[5] >> 6);
-  } else if (msg->addr == 0x394U) {
+  }
+  if (msg->addr == 0x394U) {
     chksum = msg->data[6] & 0xFU;
-  } else if (msg->addr == 0x421U) {
+  }
+  if (msg->addr == 0x421U) {
     chksum = msg->data[7] >> 4;
-  } else {
   }
   return chksum;
 }
@@ -214,6 +219,7 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
 
     //int aeb_decel_cmd = msg->data[2];
     //bool aeb_req = GET_BIT(msg, 54U);
+    //bool aeb_stop_req = GET_BIT(msg, 55U);
 
     bool violation = false;
 
@@ -221,6 +227,7 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
     violation |= longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS);
     //violation |= (aeb_decel_cmd != 0);
     //violation |= aeb_req;
+    //violation |= aeb_stop_req;
 
     if (violation) {
       tx = false;
@@ -242,7 +249,7 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
 
   // UDS: Only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (msg->addr == 0x7D0U) {
-    if ((GET_BYTES(msg, 0, 4) != 0x00803E02U) || (GET_BYTES(msg, 4, 4) != 0x0U)) {
+    if (GET_BYTES_64(msg, 0, 8) != 0x0000000000803E02ULL) {
       tx = false;
     }
   }

@@ -222,11 +222,12 @@ static void hyundai_canfd_rx_hook(const CANPacket_t *msg) {
   // gas press, different for EV, hybrid, and ICE models
   if (msg_matches(msg, 0x35U, pt_bus) && hyundai_ev_gas_signal) {
     gas_pressed = msg->data[5] != 0U;
-  } else if (msg_matches(msg, 0x105U, pt_bus) && hyundai_hybrid_gas_signal) {
-    gas_pressed = GET_BIT(msg, 103U) || (msg->data[13] != 0U) || GET_BIT(msg, 112U);
-  } else if (msg_matches(msg, 0x100U, pt_bus) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
+  }
+  if (msg_matches(msg, 0x105U, pt_bus) && hyundai_hybrid_gas_signal) {
+    gas_pressed = ((msg->data[12] >> 7) | msg->data[13] | (msg->data[14] & 1U)) != 0U;
+  }
+  if (msg_matches(msg, 0x100U, pt_bus) && !hyundai_ev_gas_signal && !hyundai_hybrid_gas_signal) {
     gas_pressed = GET_BIT(msg, 176U);
-  } else {
   }
 
   // brake press
@@ -325,7 +326,7 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
 
   // UDS: only tester present ("\x02\x3E\x80\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (((msg->addr == 0x730U) && hyundai_canfd_lka_steer_msg) || ((msg->addr == 0x7D0U) && !hyundai_camera_scc)) {
-    if ((GET_BYTES(msg, 0, 4) != 0x00803E02U) || (GET_BYTES(msg, 4, 4) != 0x0U)) {
+    if (GET_BYTES_64(msg, 0, 8) != 0x0000000000803E02ULL) {
       tx = false;
     }
   }

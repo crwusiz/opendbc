@@ -80,7 +80,8 @@ static bool toyota_get_quality_flag_valid(const CANPacket_t *msg) {
   bool valid = false;
   if (msg->addr == 0x260U) {
     valid = !GET_BIT(msg, 3U);  // STEER_TORQUE_SENSOR.STEER_ANGLE_INITIALIZING
-  } else if (msg->addr == 0xaaU) {  // WHEEL_SPEEDS
+  }
+  if (msg->addr == 0xaaU) {  // WHEEL_SPEEDS
     // each wheel speed is 1-bit fault + 15-bit speed
     valid = true;
     for (uint8_t i = 0U; i < 4U; i += 1U) {
@@ -89,7 +90,6 @@ static bool toyota_get_quality_flag_valid(const CANPacket_t *msg) {
         break;
       }
     }
-  } else {
   }
   return valid;
 }
@@ -251,7 +251,7 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
   // AEB: block all actuation. only used when DSU is unplugged
   if (msg_matches(msg, 0x283U, 0U)) {
     // only allow the checksum, which is the last byte
-    bool block = (GET_BYTES(msg, 0, 4) != 0U) || (msg->data[4] != 0U) || (msg->data[5] != 0U);
+    bool block = GET_BYTES_64(msg, 0, 6) != 0U;
     if (block) {
       tx = false;
     }
@@ -339,7 +339,7 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
   // UDS: Only tester present ("\x0F\x02\x3E\x00\x00\x00\x00\x00") allowed on diagnostics address
   if (msg->addr == 0x750U) {
     // this address is sub-addressed. only allow tester present to radar (0xF)
-    bool invalid_uds_msg = (GET_BYTES(msg, 0, 4) != 0x003E020FU) || (GET_BYTES(msg, 4, 4) != 0x0U);
+    bool invalid_uds_msg = GET_BYTES_64(msg, 0, 8) != 0x00000000003E020FULL;
     if (invalid_uds_msg) {
       tx = false;
     }

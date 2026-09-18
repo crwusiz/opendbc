@@ -1,13 +1,12 @@
-import copy
 import numpy as np
 from opendbc.car import CanBusBase
 from opendbc.car.crc import CRC16_XMODEM
 from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 
+import copy
+from openpilot.cereal import log
 from openpilot.common.params import Params
 from openpilot.selfdrive.addon.navi_controller import SpeedLimiter
-
-from openpilot.cereal import log
 
 LaneChangeState = log.LaneChangeState
 LaneChangeDirection = log.LaneChangeDirection

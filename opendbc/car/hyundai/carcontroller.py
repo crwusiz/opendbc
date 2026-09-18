@@ -26,6 +26,7 @@ MAX_FAULT_ANGLE_CONSECUTIVE_FRAMES = 2
 # naturally on brake press. We send ~100 ms later if it fails to do so, or if we want to cancel for another reason.
 CANCEL_BUTTON_DELAY_FRAMES = 10
 
+
 def process_hud_alert(enabled, fingerprint, hud_control):
   sys_warning = (hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw))
 

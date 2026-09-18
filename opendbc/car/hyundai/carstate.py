@@ -1,18 +1,18 @@
 from collections import deque
 import copy
 import math
-import ast
 
 from opendbc.can import CANDefine, CANParser
 from opendbc.car import Bus, create_button_events, structs
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.hyundai.hyundaicanfd import CanBus
-from opendbc.car.hyundai.navi_state import NaviState
 from opendbc.car.hyundai.values import HyundaiFlags, CAR, DBC, Buttons, CarControllerParams, HyundaiExFlags
 from opendbc.car.interfaces import CarStateBase
 
+import ast
 from openpilot.selfdrive.addon.cruise_controller import CruiseStateManager
 from openpilot.common.params import Params
+from opendbc.car.hyundai.navi_state import NaviState
 
 ButtonType = structs.CarState.ButtonEvent.Type
 

@@ -7,6 +7,7 @@ from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.structs import CarParams
 from opendbc.car.docs_definitions import CarHarness, CarDocs, CarParts
 from opendbc.car.fw_query_definitions import FwQueryConfig, Request, p16
+
 from opendbc.car.lateral import AngleSteeringLimits
 
 Ecu = CarParams.Ecu

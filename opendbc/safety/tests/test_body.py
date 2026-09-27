@@ -3,14 +3,6 @@ import unittest
 
 from opendbc.car.structs import CarParams
 import opendbc.safety.tests.common as common
-from opendbc.car.body.bodycan import body_checksum
-
-
-def checksum(msg):
-  addr, dat, bus = msg
-  dat = bytearray(dat)
-  dat[-1] = body_checksum(addr, None, dat)
-  return addr, bytes(dat), bus
 
 
 class TestBody(common.SafetyTest):
@@ -20,12 +12,10 @@ class TestBody(common.SafetyTest):
   TX_MSGS = [[0x250, 0], [0x251, 0],
              [0x1, 0], [0x1, 1], [0x1, 2], [0x1, 3]]
   FWD_BUS_LOOKUP = {}
-  counter = 0
 
   def _motors_data_msg(self, speed_l, speed_r):
-    values = {"SPEED_L": speed_l, "SPEED_R": speed_r, "COUNTER": self.counter % 16}
-    self.__class__.counter += 1
-    return self.packer.make_can_msg_safety("MOTORS_DATA", 0, values, fix_checksum=checksum)
+    values = {"SPEED_L": speed_l, "SPEED_R": speed_r}
+    return self.packer.make_can_msg_safety("MOTORS_DATA", 0, values)
 
   def _torque_cmd_msg(self, torque_l, torque_r):
     values = {"TORQUE_L": torque_l, "TORQUE_R": torque_r}

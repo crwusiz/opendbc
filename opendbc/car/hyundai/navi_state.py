@@ -1,29 +1,15 @@
-import math
-
 from opendbc.car import DT_CTRL
-from opendbc.car.common.conversions import UnitConverter
 
 
 NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES = round(1.0 / DT_CTRL)
 NAVI_MAX_EVENT_DISTANCE = 2500.0
 NAVI_PASSED_EVENT_DISTANCE = 30.0
 NAVI_MAX_EVENTS = 32
-NAVI_MAX_CURVES = 64
 NAVI_CAMERA_KINDS = (0, 1, 2)
 NAVI_CONTROLLED_ACCESS_LINK_CLASSES = (1, 2, 3)  # Freeway, IC, JC
 NAVI_CONTROLLED_ACCESS_ROAD_CLASSES = (1, 2)  # Freeway, arterial/city freeway
 NAVI_SCHOOL_ZONE_MAX_DISTANCE = 1000.0
 NAVI_POSITION_TIMEOUT_NS = 1_000_000_000
-NAVI_CURVE_MAX_DISTANCE = 1500.0
-NAVI_CURVE_DISTANCE_FACTOR = 2.0
-NAVI_CURVE_SHORT_SPOT_MAX_DISTANCE = 10.0
-NAVI_CURVE_SHORT_SPOT_MAX_SPEED = 20.0
-NAVI_CURVE_TARGET_LAT_ACCEL = 1.9
-
-VehicleNaviCurveSpeedFactor = 100
-VehicleNaviCurveCtrlEnd = 3
-AutoCurveSpeedLowerLimit = 30
-AutoNaviSpeedDecelRate = 200
 
 
 class NaviState:
@@ -35,20 +21,12 @@ class NaviState:
     self.speed_camera_distance_time = 6.0
     self.can_control = True
     self.school_zone_control = True
-    self.curve_speed_factor = 1.0
-    self.curve_lower_limit = 30.0
-    self.curve_decel_rate = 1.2
-    self.curve_control_end = 3.0
     self.speed_camera_params_counter = 0
     self.events = []
-    self.curves = []
     self.segment_timestamp = 0
-    self.curve_timestamp = 0
     self.profile_timestamp = 0
     self.available = False
     self.route_reset_timestamp = 0
-    self.curve_route_active = False
-    self.curve_route_state = 3
     self.road_class = 7
     self.camera_target = None
     self.speed_zone_active = False
@@ -60,23 +38,11 @@ class NaviState:
     self.hda_info = None
     self.position = None
     self.segment = None
-    self.profile_short = None
     self.profile = None
-
-    self._read_control_params()
 
   @staticmethod
   def _speed_camera_distance_time(raw_value):
     return min(200, max(10, raw_value)) / 10.0
-
-  def _read_control_params(self):
-    if self.params is None:
-      return
-
-    self.curve_speed_factor = min(2.0, max(0.5, VehicleNaviCurveSpeedFactor * 0.01))
-    self.curve_lower_limit = max(5.0, AutoCurveSpeedLowerLimit)
-    self.curve_decel_rate = max(0.01, AutoNaviSpeedDecelRate * 0.01)
-    self.curve_control_end = max(0.0, VehicleNaviCurveCtrlEnd)
 
   def _update_speed_camera_params(self):
     self.speed_camera_params_counter += 1
@@ -84,7 +50,6 @@ class NaviState:
       return False
 
     self.speed_camera_params_counter = 0
-    self._read_control_params()
     distance_time_tenths = 60
     distance_time = self._speed_camera_distance_time(distance_time_tenths)
     changed = distance_time != self.speed_camera_distance_time
@@ -94,9 +59,6 @@ class NaviState:
   def _clear_events(self):
     self.events = []
     self.camera_target = None
-
-  def _clear_curves(self):
-    self.curves = []
 
   def _clear_school_zone(self):
     self.school_zone_active = False
@@ -134,112 +96,6 @@ class NaviState:
       "update": int(values.get("Update", 0)),
       "profile_type": int(values.get("ProfileType", 31)),
     }
-
-  @staticmethod
-  def _decode_adasis_curvature(value):
-    """Decode the standard ADASIS v2 10-bit piecewise curvature profile."""
-    value = int(value)
-    if not 0 <= value < 1023:
-      return None
-
-    coded = value - 511
-    magnitude = abs(coded)
-    sign = -1 if coded < 0 else 1
-    if magnitude <= 64:
-      decoded = coded
-    elif magnitude <= 128:
-      decoded = 2 * (coded - sign * 32)
-    elif magnitude <= 192:
-      decoded = 4 * (coded - sign * 80)
-    elif magnitude <= 256:
-      decoded = 8 * (coded - sign * 136)
-    elif magnitude <= 320:
-      decoded = 16 * (coded - sign * 196)
-    elif magnitude <= 384:
-      decoded = 32 * (coded - sign * 258)
-    elif magnitude <= 448:
-      decoded = 64 * (coded - sign * 321)
-    else:
-      decoded = 128 * (coded - sign * 384)
-    return decoded / 100000.0
-
-  @staticmethod
-  def _decode_curve(values):
-    if int(values.get("ProfileType", 0)) != 1:
-      return None
-
-    offset = int(values.get("Offset", 8191))
-    distance = int(values.get("Distance", 1023))
-    raw_curvature = int(values.get("Value0", 1023))
-    if not 0 <= offset <= NAVI_CURVE_MAX_DISTANCE or raw_curvature == 1023:
-      return None
-
-    curvature = NaviState._decode_adasis_curvature(raw_curvature)
-    if curvature is None:
-      return None
-    return {
-      "offset": offset,
-      "span": distance * NAVI_CURVE_DISTANCE_FACTOR if 0 <= distance < 1023 else 0.0,
-      "curvature": curvature,
-      "raw_curvature": raw_curvature,
-    }
-
-  @staticmethod
-  def _curve_reference_speed(curvature):
-    if abs(curvature) < 1e-7:
-      return 250.0
-    return min(250.0, max(5.0, UnitConverter.ms_to_kph(math.sqrt(NAVI_CURVE_TARGET_LAT_ACCEL / abs(curvature)))))
-
-  def _add_curve(self, curve):
-    target = self.total_distance + curve["offset"]
-    reference_speed = self._curve_reference_speed(curve["curvature"])
-    # A single 10 m map node with a hairpin-level value is commonly a turn-node
-    # discontinuity, not a road curve long enough to justify an 18 km/h cap.
-    short_spot = 0.0 < curve["span"] <= NAVI_CURVE_SHORT_SPOT_MAX_DISTANCE
-    if short_spot and reference_speed <= NAVI_CURVE_SHORT_SPOT_MAX_SPEED:
-      return
-    nearest = min(self.curves, key=lambda item: abs(item["target"] - target), default=None)
-    if nearest is not None and abs(nearest["target"] - target) <= 2.0:
-      nearest.update(target=target, span=curve["span"], curvature=curve["curvature"], speed=reference_speed)
-    else:
-      self.curves.append({"target": target, "span": curve["span"], "curvature": curve["curvature"], "speed": reference_speed})
-    self.curves.sort(key=lambda item: item["target"])
-    self.curves = self.curves[:NAVI_MAX_CURVES]
-
-  def _update_curve_profile(self, cp, ret):
-    ret.naviCurveDistance = 0.0
-    ret.naviCurveSpeed = 0.0
-    ret.naviCurveCurvature = 0.0
-    ret.naviCurveRouteActive = self.curve_route_active
-    ret.naviCurveRouteState = self.curve_route_state
-
-    if self.profile_short is not None:
-      timestamp = self._message_timestamp(cp, "Hud_Navi_V2_PROSHORT_E_00")
-      if timestamp > self.curve_timestamp:
-        self.curve_timestamp = timestamp
-        curve = self._decode_curve(self.profile_short)
-        if curve is not None and timestamp > self.route_reset_timestamp:
-          self._add_curve(curve)
-
-    # Release each curvature spot as soon as its apex is passed. The following
-    # lower-curvature spots then raise the target speed before the curve exit.
-    self.curves = [curve for curve in self.curves if curve["target"] >= self.total_distance]
-    candidates = []
-    for curve in self.curves:
-      if curve["speed"] >= 250:
-        continue
-      distance = curve["target"] - self.total_distance
-      target_speed = max(self.curve_lower_limit, curve["speed"] * self.curve_speed_factor)
-      safe_speed = UnitConverter.kph_to_ms(target_speed)
-      decel_distance = max(0.0, distance - safe_speed * self.curve_control_end)
-      preview_speed = UnitConverter.ms_to_kph(math.sqrt(safe_speed ** 2 + 2 * self.curve_decel_rate * decel_distance))
-      candidates.append((preview_speed, distance, curve))
-
-    if candidates:
-      _, distance, curve = min(candidates, key=lambda item: item[0])
-      ret.naviCurveDistance = distance
-      ret.naviCurveSpeed = curve["speed"]
-      ret.naviCurveCurvature = curve["curvature"]
 
   @staticmethod
   def _classify_profile(profile):
@@ -307,26 +163,12 @@ class NaviState:
         segment = self._decode_segment(self.segment)
         if segment["functional_road_class"] != 7:
           self.road_class = segment["functional_road_class"]
-        if segment["calculated_route"] == 1:
-          if self.curve_route_state != 1:
-            self._clear_curves()
-          self.curve_route_state = 1
-          self.curve_route_active = True
-        elif segment["calculated_route"] == 0:
-          if self.curve_route_state != 0:
-            self._clear_curves()
-          self.curve_route_state = 0
-          self.curve_route_active = False
         if segment["calculated_route"] == 2:
-          self.curve_route_state = 2
-          self.curve_route_active = False
           self.route_reset_timestamp = timestamp
           self._clear_events()
-          self._clear_curves()
           self._clear_speed_zone()
           self._clear_school_zone()
 
-    self._update_curve_profile(cp, ret)
     on_controlled_access_road = self._is_controlled_access_road()
     if on_controlled_access_road:
       self._clear_school_zone()
@@ -427,11 +269,10 @@ class NaviState:
       self.speed_limit_distance = self.total_distance
       ret.speedLimitDistance = 0.0
 
-  def update(self, cp, ret, speed_limit_cam, position, segment, profile, profile_short=None, hda_info=None):
+  def update(self, cp, ret, speed_limit_cam, position, segment, profile, hda_info=None):
     self.hda_info = hda_info
     self.position = position
     self.segment = segment
-    self.profile_short = profile_short
     self.profile = profile
 
     distance_time_changed = self._update_speed_camera_params()

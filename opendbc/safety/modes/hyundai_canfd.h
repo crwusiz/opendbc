@@ -523,7 +523,7 @@ static safety_config hyundai_canfd_init(uint16_t param) {
         HYUNDAI_CANFD_SCC_ADDR_CHECK(2)
       };
 
-      static const const CanMsg hyundai_canfd_lfa_steering_camera_scc_tx_msgs[] = {
+      static const CanMsg hyundai_canfd_lfa_steering_camera_scc_tx_msgs[] = {
         HYUNDAI_CANFD_LFA_STEER_MSG_CAMERA_SCC_TX_MSGS(false)
       };
 

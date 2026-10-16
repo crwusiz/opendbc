@@ -1,7 +1,7 @@
 import math
 from types import SimpleNamespace
 
-from opendbc.car.hyundai.navi_state import NAVI_POSITION_TIMEOUT_NS, NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES, NaviState
+from opendbc.car.hyundai.navi_state import NAVI, NaviState
 
 
 class FakeParams:
@@ -53,7 +53,7 @@ def test_navi_controls_follow_params():
   assert state.curve_speed_factor == 1.2
   assert state.curve_control_end == 4.0
 
-  state.speed_camera_params_counter = NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES - 1
+  state.speed_camera_params_counter = NAVI.SPEED_CAMERA_PARAM_UPDATE_FRAMES - 1
   assert state._update_speed_camera_params()
   assert state.speed_camera_distance_time == 7.5
 
@@ -84,7 +84,7 @@ def test_navi_stale_range_average_releases_section():
   ret = _ret()
 
   assert not state._update_events(cp, ret, True)
-  cp._last_update_nanos += NAVI_POSITION_TIMEOUT_NS + 1
+  cp._last_update_nanos += NAVI.POSITION_TIMEOUT_NS + 1
   assert not state._update_events(cp, ret, True)
   assert not state.speed_zone_active
   assert not ret.naviSectionActive

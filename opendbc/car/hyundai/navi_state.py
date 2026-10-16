@@ -1,29 +1,31 @@
 import math
+from types import SimpleNamespace
 
 from opendbc.car import DT_CTRL
 from opendbc.car.common.conversions import UnitConverter
 
 
-NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES = round(1.0 / DT_CTRL)
-NAVI_MAX_EVENT_DISTANCE = 2500.0
-NAVI_PASSED_EVENT_DISTANCE = 30.0
-NAVI_MAX_EVENTS = 32
-NAVI_MAX_CURVES = 64
-NAVI_CAMERA_KINDS = (0, 1, 2)
-NAVI_CONTROLLED_ACCESS_LINK_CLASSES = (1, 2, 3)  # Freeway, IC, JC
-NAVI_CONTROLLED_ACCESS_ROAD_CLASSES = (1, 2)  # Freeway, arterial/city freeway
-NAVI_SCHOOL_ZONE_MAX_DISTANCE = 1000.0
-NAVI_POSITION_TIMEOUT_NS = 1_000_000_000
-NAVI_CURVE_MAX_DISTANCE = 1500.0
-NAVI_CURVE_DISTANCE_FACTOR = 2.0
-NAVI_CURVE_SHORT_SPOT_MAX_DISTANCE = 10.0
-NAVI_CURVE_SHORT_SPOT_MAX_SPEED = 20.0
-NAVI_CURVE_TARGET_LAT_ACCEL = 1.9
-
-VehicleNaviCurveSpeedFactor = 100
-VehicleNaviCurveCtrlEnd = 3
-AutoCurveSpeedLowerLimit = 30
-AutoNaviSpeedDecelRate = 200
+NAVI = SimpleNamespace(
+  SPEED_CAMERA_PARAM_UPDATE_FRAMES=round(1.0 / DT_CTRL),
+  MAX_EVENT_DISTANCE=2500.0,
+  PASSED_EVENT_DISTANCE=30.0,
+  MAX_EVENTS=32,
+  MAX_CURVES=64,
+  CAMERA_KINDS=(0, 1, 2),
+  CONTROLLED_ACCESS_LINK_CLASSES=(1, 2, 3),  # Freeway, IC, JC
+  CONTROLLED_ACCESS_ROAD_CLASSES=(1, 2),  # Freeway, arterial/city freeway
+  SCHOOL_ZONE_MAX_DISTANCE=1000.0,
+  POSITION_TIMEOUT_NS=1_000_000_000,
+  CURVE_MAX_DISTANCE=1500.0,
+  CURVE_DISTANCE_FACTOR=2.0,
+  CURVE_SHORT_SPOT_MAX_DISTANCE=10.0,
+  CURVE_SHORT_SPOT_MAX_SPEED=20.0,
+  CURVE_TARGET_LAT_ACCEL=1.9,
+  CURVE_SPEED_FACTOR=100,
+  CURVE_CONTROL_END=3,
+  CURVE_LOWER_LIMIT=30,
+  CURVE_DECEL_RATE=200,
+)
 
 
 class NaviState:
@@ -73,14 +75,14 @@ class NaviState:
     if self.params is None:
       return
 
-    self.curve_speed_factor = min(2.0, max(0.5, VehicleNaviCurveSpeedFactor * 0.01))
-    self.curve_lower_limit = max(5.0, AutoCurveSpeedLowerLimit)
-    self.curve_decel_rate = max(0.01, AutoNaviSpeedDecelRate * 0.01)
-    self.curve_control_end = max(0.0, VehicleNaviCurveCtrlEnd)
+    self.curve_speed_factor = min(2.0, max(0.5, NAVI.CURVE_SPEED_FACTOR * 0.01))
+    self.curve_lower_limit = max(5.0, NAVI.CURVE_LOWER_LIMIT)
+    self.curve_decel_rate = max(0.01, NAVI.CURVE_DECEL_RATE * 0.01)
+    self.curve_control_end = max(0.0, NAVI.CURVE_CONTROL_END)
 
   def _update_speed_camera_params(self):
     self.speed_camera_params_counter += 1
-    if self.speed_camera_params_counter < NAVI_SPEED_CAMERA_PARAM_UPDATE_FRAMES:
+    if self.speed_camera_params_counter < NAVI.SPEED_CAMERA_PARAM_UPDATE_FRAMES:
       return False
 
     self.speed_camera_params_counter = 0
@@ -122,8 +124,8 @@ class NaviState:
 
   def _is_controlled_access_road(self):
     link_class = int(self.hda_info.get("LinkClass", 0)) if self.hda_info is not None else 0
-    return (link_class in NAVI_CONTROLLED_ACCESS_LINK_CLASSES or
-            self.road_class in NAVI_CONTROLLED_ACCESS_ROAD_CLASSES)
+    return (link_class in NAVI.CONTROLLED_ACCESS_LINK_CLASSES or
+            self.road_class in NAVI.CONTROLLED_ACCESS_ROAD_CLASSES)
 
   @staticmethod
   def _decode_profile(values):
@@ -171,7 +173,7 @@ class NaviState:
     offset = int(values.get("Offset", 8191))
     distance = int(values.get("Distance", 1023))
     raw_curvature = int(values.get("Value0", 1023))
-    if not 0 <= offset <= NAVI_CURVE_MAX_DISTANCE or raw_curvature == 1023:
+    if not 0 <= offset <= NAVI.CURVE_MAX_DISTANCE or raw_curvature == 1023:
       return None
 
     curvature = NaviState._decode_adasis_curvature(raw_curvature)
@@ -179,7 +181,7 @@ class NaviState:
       return None
     return {
       "offset": offset,
-      "span": distance * NAVI_CURVE_DISTANCE_FACTOR if 0 <= distance < 1023 else 0.0,
+      "span": distance * NAVI.CURVE_DISTANCE_FACTOR if 0 <= distance < 1023 else 0.0,
       "curvature": curvature,
       "raw_curvature": raw_curvature,
     }
@@ -188,15 +190,15 @@ class NaviState:
   def _curve_reference_speed(curvature):
     if abs(curvature) < 1e-7:
       return 250.0
-    return min(250.0, max(5.0, UnitConverter.ms_to_kph(math.sqrt(NAVI_CURVE_TARGET_LAT_ACCEL / abs(curvature)))))
+    return min(250.0, max(5.0, UnitConverter.ms_to_kph(math.sqrt(NAVI.CURVE_TARGET_LAT_ACCEL / abs(curvature)))))
 
   def _add_curve(self, curve):
     target = self.total_distance + curve["offset"]
     reference_speed = self._curve_reference_speed(curve["curvature"])
     # A single 10 m map node with a hairpin-level value is commonly a turn-node
     # discontinuity, not a road curve long enough to justify an 18 km/h cap.
-    short_spot = 0.0 < curve["span"] <= NAVI_CURVE_SHORT_SPOT_MAX_DISTANCE
-    if short_spot and reference_speed <= NAVI_CURVE_SHORT_SPOT_MAX_SPEED:
+    short_spot = 0.0 < curve["span"] <= NAVI.CURVE_SHORT_SPOT_MAX_DISTANCE
+    if short_spot and reference_speed <= NAVI.CURVE_SHORT_SPOT_MAX_SPEED:
       return
     nearest = min(self.curves, key=lambda item: abs(item["target"] - target), default=None)
     if nearest is not None and abs(nearest["target"] - target) <= 2.0:
@@ -204,7 +206,7 @@ class NaviState:
     else:
       self.curves.append({"target": target, "span": curve["span"], "curvature": curve["curvature"], "speed": reference_speed})
     self.curves.sort(key=lambda item: item["target"])
-    self.curves = self.curves[:NAVI_MAX_CURVES]
+    self.curves = self.curves[:NAVI.MAX_CURVES]
 
   def _update_curve_profile(self, cp, ret):
     ret.naviCurveDistance = 0.0
@@ -253,7 +255,7 @@ class NaviState:
       if kind == 7 and profile["offset"] == 0 and 1 < speed_code <= 31:
         return "speed_limit_zone", (speed_code - 1) * 5, kind
 
-    if not 0 < profile["offset"] <= NAVI_MAX_EVENT_DISTANCE:
+    if not 0 < profile["offset"] <= NAVI.MAX_EVENT_DISTANCE:
       return None
     if value == 6:
       return "bump", 0, 6
@@ -262,7 +264,7 @@ class NaviState:
       return None
     kind = value & 0xf
     speed_code = value >> 4
-    if kind not in NAVI_CAMERA_KINDS or not 1 < speed_code <= 31:
+    if kind not in NAVI.CAMERA_KINDS or not 1 < speed_code <= 31:
       return None
     return "camera", (speed_code - 1) * 5, kind
 
@@ -275,7 +277,7 @@ class NaviState:
 
     self.events.append({"type": event_type, "speed": speed, "kind": kind, "target": target})
     self.events.sort(key=lambda item: item["target"])
-    self.events = self.events[:NAVI_MAX_EVENTS]
+    self.events = self.events[:NAVI.MAX_EVENTS]
 
   def _update_events(self, cp, ret, speed_limit_cam):
     ret.speedBumpDistance = 0.0
@@ -295,7 +297,7 @@ class NaviState:
     position_timestamp = self._message_timestamp(cp, "Hud_Navi_V2_POS_PE")
     position_seen = position_timestamp > 0
     position_age = int(getattr(cp, "_last_update_nanos", position_timestamp)) - position_timestamp
-    position_recent = position_seen and 0 <= position_age <= NAVI_POSITION_TIMEOUT_NS
+    position_recent = position_seen and 0 <= position_age <= NAVI.POSITION_TIMEOUT_NS
     range_avg_speed = (int(self.position.get("RangeAvgSpeed", 0))
                        if position_recent and self.position is not None else 0)
     range_section_active = 0 < range_avg_speed < 511
@@ -363,7 +365,7 @@ class NaviState:
         self.speed_zone_speed = ret.speedLimit
 
     self.events = [event for event in self.events
-                   if event["target"] >= self.total_distance - NAVI_PASSED_EVENT_DISTANCE and
+                   if event["target"] >= self.total_distance - NAVI.PASSED_EVENT_DISTANCE and
                    (not on_controlled_access_road or
                     (event["type"] != "bump" and not (event["type"] == "camera" and event["speed"] == 30)))]
     upcoming = [event for event in self.events if event["target"] > self.total_distance]
@@ -378,7 +380,7 @@ class NaviState:
     if self.school_zone_active:
       camera_status_ended = (self.school_zone_uses_camera_status and
                              (not speed_limit_cam or ret.speedLimit != 30))
-      distance_expired = self.total_distance - self.school_zone_start_distance >= NAVI_SCHOOL_ZONE_MAX_DISTANCE
+      distance_expired = self.total_distance - self.school_zone_start_distance >= NAVI.SCHOOL_ZONE_MAX_DISTANCE
       if camera_status_ended or distance_expired:
         self._clear_school_zone()
 

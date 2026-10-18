@@ -259,7 +259,9 @@ def test_cluster_navigation_icon_uses_native_navigation_availability(monkeypatch
   out = structs.CarState(naviAvailable=native)
   out.cruiseState.available = main
   cs = SimpleNamespace(out=out, lfahda_cluster_info=None, cruise_buttons_msg=None, adrv_msg_160=None,
-                       adrv_msg_1ea=None, ccnc_msg_162=None, ccnc_msg_161={key: 0 for key in definition.sigs})
+                       adrv_msg_1ea=None, ccnc_msg_162=None, ccnc_msg_161={key: 0 for key in definition.sigs},
+                       left_lane_line_warning=hyundaicanfd.LaneLineWarning(),
+                       right_lane_line_warning=hyundaicanfd.LaneLineWarning())
   cp = structs.CarParams(flags=int(HyundaiFlags.CANFD_CAMERA_SCC), exFlags=int(HyundaiExFlags.CCNC))
   control = structs.CarControl(enabled=enabled)
   messages = hyundaicanfd.create_adrv_messages(packer, cp, control, cs, None,

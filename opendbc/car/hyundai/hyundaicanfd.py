@@ -1,5 +1,5 @@
 import numpy as np
-from opendbc.car import CanBusBase
+from opendbc.car import CanBusBase, DT_CTRL
 from opendbc.car.crc import CRC16_XMODEM
 from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
 from opendbc.car.hyundai.navi_state import NAVI
@@ -12,6 +12,28 @@ from openpilot.selfdrive.addon.navi_controller import SpeedLimiter
 LaneChangeState = log.LaneChangeState
 LaneChangeDirection = log.LaneChangeDirection
 TurnDirection = log.Desire
+
+
+class LaneLineWarning:
+  CLEAR_FRAMES = round(0.7 / DT_CTRL)
+
+  def __init__(self):
+    self.active = False
+    self.clear_start_frame: int | None = None
+
+  def update(self, warning: bool, frame: int) -> bool:
+    # Show warnings immediately; release only after continuously clear input.
+    if warning:
+      self.active = True
+      self.clear_start_frame = None
+    elif self.active:
+      if self.clear_start_frame is None:
+        self.clear_start_frame = frame
+      if frame - self.clear_start_frame >= self.CLEAR_FRAMES:
+        self.active = False
+        self.clear_start_frame = None
+    return self.active
+
 
 class CanBus(CanBusBase):
   def __init__(self, CP, fingerprint=None, lka_steering=None) -> None:
@@ -436,6 +458,9 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
       else:
         lane_line_warn_left = CS.out.leftLaneLine // 10 == 2
         lane_line_warn_right = CS.out.rightLaneLine // 10 == 2
+
+      lane_line_warn_left = CS.left_lane_line_warning.update(lane_line_warn_left or CS.out.leftBlindspot, frame)
+      lane_line_warn_right = CS.right_lane_line_warning.update(lane_line_warn_right or CS.out.rightBlindspot, frame)
 
       lane_line_probs = getattr(md, "laneLineProbs", ()) if md is not None else ()
       values["LANELINE_LEFT"] = _get_lane_value(

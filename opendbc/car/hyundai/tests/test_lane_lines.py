@@ -24,7 +24,9 @@ def cluster(monkeypatch):
   out = structs.CarState(leftLaneLine=10, rightLaneLine=11)
   out.cruiseState.available = True
   state = SimpleNamespace(out=out, ccnc_msg_161=stock, ccnc_msg_162=None, adrv_msg_160=None,
-                          adrv_msg_1ea=None, lfahda_cluster_info=None, cruise_buttons_msg=None)
+                          adrv_msg_1ea=None, lfahda_cluster_info=None, cruise_buttons_msg=None,
+                          left_lane_line_warning=hyundaicanfd.LaneLineWarning(),
+                          right_lane_line_warning=hyundaicanfd.LaneLineWarning())
   control = structs.CarControl(enabled=True, latActive=True)
   control.hudControl.leftLaneVisible = True
   control.hudControl.rightLaneVisible = True
@@ -121,6 +123,101 @@ def test_type_check_mode_allows_green_dashed_yellow_line(cluster):
   cluster.state.out.leftLaneLine = 20
   cluster.model.meta.laneChangeAvailableLeft = True
   assert _lane_values(cluster) == (10, 4)
+
+
+@pytest.mark.parametrize('mode,warning_line,blindspot,clear_line,available,expected', [
+  (0, 21, False, 11, True, 6), (0, 21, False, 11, False, 2),
+  (0, 21, False, 10, True, 10), (0, 21, False, 10, False, 8),
+  (0, 11, True, 11, True, 6), (0, 10, True, 10, True, 10),
+  (1, 21, False, 20, True, 10), (1, 11, False, 10, False, 8),
+])
+def test_warning_is_immediate_and_requires_700ms_clear(cluster, mode, warning_line, blindspot, clear_line, available, expected):
+  cluster.params['LaneLineCheck'] = mode
+  cluster.model.meta.laneChangeAvailableLeft = available
+  cluster.state.out.leftLaneLine = clear_line
+  assert _lane_values(cluster, 0)[0] == expected
+
+  cluster.state.out.leftLaneLine = warning_line
+  cluster.state.out.leftBlindspot = blindspot
+  assert _lane_values(cluster, 5)[0] == 4
+
+  cluster.state.out.leftLaneLine = clear_line
+  cluster.state.out.leftBlindspot = False
+  for frame in range(10, 80, 5):
+    assert _lane_values(cluster, frame)[0] == 4
+  assert _lane_values(cluster, 80)[0] == expected
+  assert cluster.state.out.leftLaneLine == clear_line
+  assert not cluster.state.out.leftBlindspot
+  assert cluster.model.meta.laneChangeAvailableLeft == available
+
+
+def test_recurring_warning_restarts_clear_timer(cluster):
+  cluster.model.meta.laneChangeAvailableLeft = True
+  cluster.state.out.leftLaneLine = 21
+  assert _lane_values(cluster, 5) == (4, 2)
+  cluster.state.out.leftLaneLine = 10
+  for frame in range(10, 65, 5):
+    assert _lane_values(cluster, frame) == (4, 2)
+
+  cluster.state.out.leftBlindspot = True
+  assert _lane_values(cluster, 65) == (4, 2)
+  cluster.state.out.leftBlindspot = False
+  for frame in range(70, 140, 5):
+    assert _lane_values(cluster, frame) == (4, 2)
+  assert _lane_values(cluster, 140) == (10, 2)
+
+
+def test_left_and_right_warning_clear_timers_are_independent(cluster):
+  cluster.model.meta.laneChangeAvailableLeft = True
+  cluster.model.meta.laneChangeAvailableRight = True
+  cluster.state.out.leftLaneLine = 20
+  cluster.state.out.rightLaneLine = 21
+  assert _lane_values(cluster, 5) == (4, 4)
+
+  cluster.state.out.leftLaneLine = 10
+  for frame in range(10, 105, 5):
+    if frame == 30:
+      cluster.state.out.rightLaneLine = 11
+    assert _lane_values(cluster, frame) == (4 if frame < 80 else 10, 4 if frame < 100 else 6)
+
+
+def test_all_warning_sources_must_clear_before_release_timer_starts(cluster):
+  cluster.model.meta.laneChangeAvailableLeft = True
+  cluster.state.out.leftLaneLine = 21
+  assert _lane_values(cluster, 5) == (4, 2)
+  cluster.state.out.leftLaneLine = 10
+  cluster.state.out.leftBlindspot = True
+  for frame in range(10, 80, 5):
+    assert _lane_values(cluster, frame) == (4, 2)
+  cluster.state.out.leftBlindspot = False
+  for frame in range(80, 150, 5):
+    assert _lane_values(cluster, frame) == (4, 2)
+  assert _lane_values(cluster, 150) == (10, 2)
+
+
+@pytest.mark.parametrize('missing_source', ['camera', 'model', 'hud'])
+def test_missing_lane_is_hidden_immediately_during_warning_hold(cluster, missing_source):
+  cluster.model.meta.laneChangeAvailableLeft = True
+  cluster.state.out.leftLaneLine = 21
+  assert _lane_values(cluster, 5) == (4, 2)
+  cluster.state.out.leftLaneLine = 10
+  assert _lane_values(cluster, 10) == (4, 2)
+
+  if missing_source == 'camera':
+    cluster.state.out.leftLaneLine = -1
+  elif missing_source == 'model':
+    cluster.model.laneLineProbs = [0., 0., 0.9, 0.]
+  else:
+    cluster.control.hudControl.leftLaneVisible = False
+  assert _lane_values(cluster, 15) == (1, 2)
+
+  cluster.state.out.leftLaneLine = 10
+  cluster.model.laneLineProbs = [0., 0.9, 0.9, 0.]
+  cluster.control.hudControl.leftLaneVisible = True
+  assert _lane_values(cluster, 20) == (4, 2)
+  for frame in range(25, 80, 5):
+    assert _lane_values(cluster, frame) == (4, 2)
+  assert _lane_values(cluster, 80) == (10, 2)
 
 
 @pytest.mark.parametrize('message,probability_signal', [('CAM_0x362', 'LANE_PROB'), ('CAM_0x2a4', 'LANE_LINE_PROB')])

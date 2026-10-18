@@ -509,17 +509,8 @@ class CarState(CarStateBase):
           lane_info = cp_alt.vl["CAM_0x2a4"]
 
         if lane_info is not None:
-          left_lane_prob = lane_info["LEFT_LANE_PROB"]
-          right_lane_prob = lane_info["RIGHT_LANE_PROB"]
-          left_lane_type = lane_info["LEFT_LANE_TYPE"]
-          # 0: dashed, 1: solid, 2: undecided, 3: road edge, 4: DLM Inner Solid, 5: DLM InnerDashed, 6:DLM Inner Undecided, 7: Botts Dots, 8: Barrier
-          right_lane_type = lane_info["RIGHT_LANE_TYPE"]
-          left_lane_color = lane_info["LEFT_LANE_COLOR"]
-          right_lane_color = lane_info["RIGHT_LANE_COLOR"]
-          left_lane_info = left_lane_color * 10 + left_lane_type
-          right_lane_info = right_lane_color * 10 + right_lane_type
-          ret.leftLaneLine = left_lane_info
-          ret.rightLaneLine = right_lane_info
+          ret.leftLaneLine = self._get_lane_line_info(lane_info, "LEFT")
+          ret.rightLaneLine = self._get_lane_line_info(lane_info, "RIGHT")
 
       if self.has_navi_msg_4a3 and not self.navi_state.wrapped:
         navi_msg_4a3 = cp.vl["Hud_Navi_ISLW_PE"]
@@ -610,6 +601,16 @@ class CarState(CarStateBase):
         ret.cruiseState.available = self.main_enabled
 
     return ret
+
+  @staticmethod
+  def _get_lane_line_info(lane_info, side):
+    # 0x362 and 0x2a4 use different probability names. Preserve explicit absence
+    # as -1 so a missing line is distinct from a detected dashed line (type 0).
+    probability = lane_info.get(f"{side}_LANE_PROB", lane_info.get(f"{side}_LANE_LINE_PROB", 0))
+    color = int(lane_info[f"{side}_LANE_COLOR"])
+    if probability <= 0 or color not in (1, 2, 3):
+      return -1
+    return color * 10 + int(lane_info[f"{side}_LANE_TYPE"])
 
   def get_can_parsers_canfd(self, CP):
     alt_msgs = []

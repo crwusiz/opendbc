@@ -437,13 +437,18 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
         lane_line_warn_left = CS.out.leftLaneLine // 10 == 2
         lane_line_warn_right = CS.out.rightLaneLine // 10 == 2
 
+      lane_line_probs = getattr(md, "laneLineProbs", ()) if md is not None else ()
       values["LANELINE_LEFT"] = _get_lane_value(
         lane_line_warn_left, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible, frame,
         lane_change_available=md is not None and getattr(md.meta, "laneChangeAvailableLeft", False),
+        lane_line=CS.out.leftLaneLine,
+        lane_prob=lane_line_probs[1] if len(lane_line_probs) > 1 else None,
       )
       values["LANELINE_RIGHT"] = _get_lane_value(
         lane_line_warn_right, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible, frame,
         lane_change_available=md is not None and getattr(md.meta, "laneChangeAvailableRight", False),
+        lane_line=CS.out.rightLaneLine,
+        lane_prob=lane_line_probs[2] if len(lane_line_probs) > 2 else None,
       )
 
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
@@ -676,11 +681,19 @@ def _make_ccnc_values(values, CS, lat_active, frame, hud, lane_line=True, corner
     if blink_pairs:
       _apply_radar_blink(values, blink_pairs, frame, t=blink_t)
 
-def _get_lane_value(lane_line_warn, blindspot, depart, visible, frame, lane_change_available=False):
+def _get_lane_value(lane_line_warn, blindspot, depart, visible, frame, lane_change_available=False, lane_line=0, lane_prob=None):
+  lane_detected = lane_line > 0 if lane_prob is None else 0.5 < lane_prob <= 1.0
+  if not visible or lane_line < 0 or not lane_detected:
+    return 1  # HIDDEN; 0 draws a gray lane line.
+
   if depart:
     return 4 if (frame // 50) % 2 == 0 else 1
 
-  if not visible:
-    return 0
+  if lane_line_warn or blindspot:
+    return 4
 
-  return 4 if lane_line_warn or blindspot else 6 if lane_change_available else 2
+  # A missing OEM type (0) can still use model visibility, but cannot identify dashes.
+  dashed = lane_line > 0 and lane_line % 10 in (0, 5)
+  if dashed:
+    return 10 if lane_change_available else 8
+  return 6 if lane_change_available else 2

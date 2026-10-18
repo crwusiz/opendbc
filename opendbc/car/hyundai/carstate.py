@@ -5,7 +5,7 @@ import math
 from opendbc.can import CANDefine, CANParser
 from opendbc.car import Bus, create_button_events, structs
 from opendbc.car.common.conversions import Conversions as CV
-from opendbc.car.hyundai.hyundaicanfd import CanBus, LaneLineWarning
+from opendbc.car.hyundai.hyundaicanfd import CanBus, LaneLineVisibility, LaneLineWarning
 from opendbc.car.hyundai.values import HyundaiFlags, CAR, DBC, Buttons, CarControllerParams, HyundaiExFlags
 from opendbc.car.interfaces import CarStateBase
 
@@ -89,6 +89,8 @@ class CarState(CarStateBase):
     self.ccnc_msg_162 = None
     self.left_lane_line_warning = LaneLineWarning()
     self.right_lane_line_warning = LaneLineWarning()
+    self.left_lane_line_visibility = LaneLineVisibility()
+    self.right_lane_line_visibility = LaneLineVisibility()
     self.adrv_msg_200 = None
     self.adrv_msg_1ea = None
     self.adrv_msg_160 = None

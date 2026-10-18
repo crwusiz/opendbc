@@ -26,7 +26,9 @@ def cluster(monkeypatch):
   state = SimpleNamespace(out=out, ccnc_msg_161=stock, ccnc_msg_162=None, adrv_msg_160=None,
                           adrv_msg_1ea=None, lfahda_cluster_info=None, cruise_buttons_msg=None,
                           left_lane_line_warning=hyundaicanfd.LaneLineWarning(),
-                          right_lane_line_warning=hyundaicanfd.LaneLineWarning())
+                          right_lane_line_warning=hyundaicanfd.LaneLineWarning(),
+                          left_lane_line_visibility=hyundaicanfd.LaneLineVisibility(),
+                          right_lane_line_visibility=hyundaicanfd.LaneLineVisibility())
   control = structs.CarControl(enabled=True, latActive=True)
   control.hudControl.leftLaneVisible = True
   control.hudControl.rightLaneVisible = True
@@ -73,14 +75,25 @@ def test_left_and_right_lane_styles_are_independent(cluster):
   (-1, 0.9, True), (10, 0., True), (10, 0.5, True), (10, 0.9, False),
   (0, 0., True), (10, float('nan'), True), (10, float('inf'), True),
 ])
-def test_missing_lane_is_hidden_even_with_stale_warning(cluster, lane_line, lane_prob, visible):
+def test_warning_is_preserved_even_when_lane_is_unseen(cluster, lane_line, lane_prob, visible):
   cluster.state.out.leftLaneLine = lane_line
   cluster.model.laneLineProbs = [0., lane_prob, 0.9, 0.]
   cluster.model.meta.laneChangeAvailableLeft = True
   cluster.state.out.leftBlindspot = True
   cluster.control.hudControl.leftLaneVisible = visible
-  cluster.control.hudControl.leftLaneDepart = True
-  assert _lane_values(cluster, 5) == (1, 2)
+  assert _lane_values(cluster, 5) == (4, 2)
+  assert _lane_values(cluster, 105) == (4, 2)
+
+
+@pytest.mark.parametrize('probability', [float('nan'), float('inf'), -0.1, 1.1])
+def test_invalid_probability_without_warning_hides_lane(cluster, probability):
+  cluster.model.laneLineProbs = [0., probability, 0.9, 0.]
+  assert _lane_values(cluster) == (14, 2)
+
+
+def test_hud_invisibility_without_warning_uses_ordinary_hidden_value(cluster):
+  cluster.control.hudControl.leftLaneVisible = False
+  assert _lane_values(cluster) == (14, 2)
 
 
 def test_model_visibility_without_oem_type_uses_solid_style(cluster):
@@ -93,23 +106,62 @@ def test_oem_detection_is_used_without_model_data(cluster):
   assert _lane_values(cluster) == (8, 2)
   cluster.state.out.leftLaneLine = 0
   cluster.state.out.rightLaneLine = 0
-  assert _lane_values(cluster) == (1, 1)
+  assert _lane_values(cluster) == (14, 14)
 
 
-def test_missing_lane_releases_previous_dashed_style(cluster):
-  cluster.model.meta.laneChangeAvailableLeft = True
-  assert _lane_values(cluster) == (10, 2)
+def test_low_probability_requires_one_second_before_hiding(cluster):
+  assert _lane_values(cluster, 0) == (8, 2)
   cluster.model.laneLineProbs = [0., 0., 0.9, 0.]
-  assert _lane_values(cluster) == (1, 2)
-  cluster.model.laneLineProbs = [0., 0.9, 0.9, 0.]
-  cluster.state.out.leftLaneLine = 11
-  assert _lane_values(cluster) == (6, 2)
+  for frame in range(5, 105, 5):
+    assert _lane_values(cluster, frame) == (8, 2)
+  assert _lane_values(cluster, 105) == (14, 2)
+  cluster.model.laneLineProbs = [0., 0.1, 0.9, 0.]
+  assert _lane_values(cluster, 110) == (14, 2)
+  cluster.model.laneLineProbs = [0., 0.12, 0.9, 0.]
+  assert _lane_values(cluster, 115) == (8, 2)
+
+
+def test_visibility_band_preserves_state_and_restarts_low_timer(cluster):
+  cluster.model.laneLineProbs = [0., 0.05, 0.9, 0.]
+  assert _lane_values(cluster, 5) == (8, 2)
+  assert _lane_values(cluster, 100) == (8, 2)
+  cluster.model.laneLineProbs = [0., 0.08, 0.9, 0.]
+  assert _lane_values(cluster, 105) == (8, 2)
+  cluster.model.laneLineProbs = [0., 0.05, 0.9, 0.]
+  assert _lane_values(cluster, 110) == (8, 2)
+  assert _lane_values(cluster, 205) == (8, 2)
+  assert _lane_values(cluster, 210) == (14, 2)
+
+
+def test_visibility_timers_are_independent(cluster):
+  cluster.model.laneLineProbs = [0., 0.05, 0.9, 0.]
+  assert _lane_values(cluster, 5) == (8, 2)
+  cluster.model.laneLineProbs = [0., 0.05, 0.05, 0.]
+  assert _lane_values(cluster, 20) == (8, 2)
+  assert _lane_values(cluster, 105) == (14, 2)
+  assert _lane_values(cluster, 120) == (14, 14)
+
+
+@pytest.mark.parametrize('mode', [0, 1])
+def test_unknown_oem_line_does_not_create_warning_or_green(cluster, mode):
+  cluster.params['LaneLineCheck'] = mode
+  cluster.state.out.leftLaneLine = -1
+  cluster.model.meta.laneChangeAvailableLeft = True
+  assert _lane_values(cluster)[0] == 2
 
 
 def test_visible_lane_retains_departure_blink(cluster):
   cluster.control.hudControl.leftLaneDepart = True
   assert _lane_values(cluster, 5) == (4, 2)
   assert _lane_values(cluster, 55) == (1, 2)
+
+
+def test_departure_warning_blinks_even_when_lane_is_unseen(cluster):
+  cluster.model.laneLineProbs = [0., 0., 0.9, 0.]
+  cluster.control.hudControl.leftLaneVisible = False
+  cluster.control.hudControl.leftLaneDepart = True
+  assert _lane_values(cluster, 105) == (4, 2)
+  assert _lane_values(cluster, 155) == (1, 2)
 
 
 def test_lane_warning_overrides_dashed_style(cluster):
@@ -196,7 +248,7 @@ def test_all_warning_sources_must_clear_before_release_timer_starts(cluster):
 
 
 @pytest.mark.parametrize('missing_source', ['camera', 'model', 'hud'])
-def test_missing_lane_is_hidden_immediately_during_warning_hold(cluster, missing_source):
+def test_missing_lane_does_not_suppress_warning_hold(cluster, missing_source):
   cluster.model.meta.laneChangeAvailableLeft = True
   cluster.state.out.leftLaneLine = 21
   assert _lane_values(cluster, 5) == (4, 2)
@@ -209,7 +261,7 @@ def test_missing_lane_is_hidden_immediately_during_warning_hold(cluster, missing
     cluster.model.laneLineProbs = [0., 0., 0.9, 0.]
   else:
     cluster.control.hudControl.leftLaneVisible = False
-  assert _lane_values(cluster, 15) == (1, 2)
+  assert _lane_values(cluster, 15) == (4, 2)
 
   cluster.state.out.leftLaneLine = 10
   cluster.model.laneLineProbs = [0., 0.9, 0.9, 0.]
@@ -218,6 +270,65 @@ def test_missing_lane_is_hidden_immediately_during_warning_hold(cluster, missing
   for frame in range(25, 80, 5):
     assert _lane_values(cluster, frame) == (4, 2)
   assert _lane_values(cluster, 80) == (10, 2)
+
+
+def test_warning_clear_delay_expires_into_hidden_lane(cluster):
+  cluster.state.out.leftLaneLine = 21
+  cluster.model.laneLineProbs = [0., 0., 0.9, 0.]
+  assert _lane_values(cluster, 5) == (4, 2)
+  assert _lane_values(cluster, 105) == (4, 2)
+  cluster.state.out.leftLaneLine = 10
+  for frame in range(110, 180, 5):
+    assert _lane_values(cluster, frame) == (4, 2)
+  assert _lane_values(cluster, 180) == (14, 2)
+
+
+def test_model_availability_and_cluster_colors_follow_warning_and_detection_timers(cluster, monkeypatch):
+  from openpilot.selfdrive.controls.lib import desire_helper
+
+  monkeypatch.setattr(desire_helper, 'Params', lambda: SimpleNamespace(get=lambda *args, **kwargs: 0,
+                                                                      get_bool=lambda *args: False))
+  helper = desire_helper.DesireHelper()
+  radar = log.RadarState.new_message()
+  cluster.state.out.vEgo = 20.
+  cluster.model.laneLineProbs = [0.9] * 4
+  cluster.model.roadEdgeStds = [1., 1.]
+  for field, positions in (('laneLines', (-5.4, -1.8, 1.8, 5.4)), ('roadEdges', (-8., 8.))):
+    for line, y in zip(cluster.model.init(field, len(positions)), positions, strict=True):
+      line.x, line.y = [0., 30., 60.], [y] * 3
+
+  def step(frame):
+    model_data = {key: getattr(cluster.model, key) for key in ('laneLineProbs', 'roadEdgeStds', 'laneLines', 'roadEdges')}
+    helper.update(cluster.state.out, True, 0., model_data, radar)
+    cluster.model.meta.laneChangeAvailableLeft = helper.lane_change_available_left
+    cluster.model.meta.laneChangeAvailableRight = helper.lane_change_available_right
+    return _lane_values(cluster, frame)[0]
+
+  for frame in range(0, 100, 5):
+    color = step(frame)
+  assert color == 10
+  cluster.state.out.leftBlindspot = True
+  assert step(100) == 4
+  cluster.state.out.leftBlindspot = False
+  for frame in range(105, 300, 5):
+    assert step(frame) == (4 if frame < 175 else 8)
+  assert step(300) == 10
+
+  radar.leadsLeft = [{'present': True, 'dRel': 4., 'vRel': 0.}]
+  assert step(305) == 8
+  radar.leadsLeft = []
+  for frame in range(310, 335, 5):
+    assert step(frame) == 8
+  assert step(335) == 10
+
+  cluster.model.laneLineProbs = [0.9, 0., 0.9, 0.9]
+  for frame in range(340, 440, 5):
+    assert step(frame) == 8
+  assert step(440) == 14
+  cluster.model.laneLineProbs = [0.9, 0.1, 0.9, 0.9]
+  assert step(445) == 14
+  cluster.model.laneLineProbs = [0.9, 0.12, 0.9, 0.9]
+  assert step(450) == 8
 
 
 @pytest.mark.parametrize('message,probability_signal', [('CAM_0x362', 'LANE_PROB'), ('CAM_0x2a4', 'LANE_LINE_PROB')])

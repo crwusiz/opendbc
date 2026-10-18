@@ -1,4 +1,5 @@
 import numpy as np
+from math import isfinite
 from opendbc.car import CanBusBase, DT_CTRL
 from opendbc.car.crc import CRC16_XMODEM
 from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
@@ -12,6 +13,33 @@ from openpilot.selfdrive.addon.navi_controller import SpeedLimiter
 LaneChangeState = log.LaneChangeState
 LaneChangeDirection = log.LaneChangeDirection
 TurnDirection = log.Desire
+
+LANE_LINE_UNSEEN = 14  # Ordinary absence; 1 remains the off phase of a departure warning.
+
+
+class LaneLineVisibility:
+  HIDE_FRAMES = round(1.0 / DT_CTRL)
+  HIDE_PROBABILITY = float(np.float32(0.08))
+  SHOW_PROBABILITY = float(np.float32(0.12))
+
+  def __init__(self):
+    self.hidden = False
+    self.low_since: int | None = None
+
+  def update(self, probability, frame, lane_line=0):
+    if probability is None:
+      return lane_line > 0
+    if not isfinite(probability) or not 0.0 <= probability <= 1.0:
+      self.hidden, self.low_since = True, None
+    elif probability >= self.SHOW_PROBABILITY:
+      self.hidden, self.low_since = False, None
+    elif probability < self.HIDE_PROBABILITY:
+      if self.low_since is None:
+        self.low_since = frame
+      self.hidden = self.hidden or frame - self.low_since >= self.HIDE_FRAMES
+    else:
+      self.low_since = None
+    return not self.hidden
 
 
 class LaneLineWarning:
@@ -453,8 +481,8 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
       values["LANELINE_CURVATURE_DIRECTION"] = 1 if curvature < 0 and lat_active else 0
 
       if lane_line_check >= 1:
-        lane_line_warn_left = CS.out.leftLaneLine % 10 not in (0, 5)
-        lane_line_warn_right = CS.out.rightLaneLine % 10 not in (0, 5)
+        lane_line_warn_left = CS.out.leftLaneLine > 0 and CS.out.leftLaneLine % 10 not in (0, 5)
+        lane_line_warn_right = CS.out.rightLaneLine > 0 and CS.out.rightLaneLine % 10 not in (0, 5)
       else:
         lane_line_warn_left = CS.out.leftLaneLine // 10 == 2
         lane_line_warn_right = CS.out.rightLaneLine // 10 == 2
@@ -463,17 +491,19 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
       lane_line_warn_right = CS.right_lane_line_warning.update(lane_line_warn_right or CS.out.rightBlindspot, frame)
 
       lane_line_probs = getattr(md, "laneLineProbs", ()) if md is not None else ()
+      left_seen = CS.left_lane_line_visibility.update(
+        lane_line_probs[1] if len(lane_line_probs) > 1 else None, frame, CS.out.leftLaneLine)
+      right_seen = CS.right_lane_line_visibility.update(
+        lane_line_probs[2] if len(lane_line_probs) > 2 else None, frame, CS.out.rightLaneLine)
       values["LANELINE_LEFT"] = _get_lane_value(
-        lane_line_warn_left, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible, frame,
+        lane_line_warn_left, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible and left_seen, frame,
         lane_change_available=md is not None and getattr(md.meta, "laneChangeAvailableLeft", False),
         lane_line=CS.out.leftLaneLine,
-        lane_prob=lane_line_probs[1] if len(lane_line_probs) > 1 else None,
       )
       values["LANELINE_RIGHT"] = _get_lane_value(
-        lane_line_warn_right, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible, frame,
+        lane_line_warn_right, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible and right_seen, frame,
         lane_change_available=md is not None and getattr(md.meta, "laneChangeAvailableRight", False),
         lane_line=CS.out.rightLaneLine,
-        lane_prob=lane_line_probs[2] if len(lane_line_probs) > 2 else None,
       )
 
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
@@ -706,17 +736,17 @@ def _make_ccnc_values(values, CS, lat_active, frame, hud, lane_line=True, corner
     if blink_pairs:
       _apply_radar_blink(values, blink_pairs, frame, t=blink_t)
 
-def _get_lane_value(lane_line_warn, blindspot, depart, visible, frame, lane_change_available=False, lane_line=0, lane_prob=None):
-  lane_detected = lane_line > 0 if lane_prob is None else 0.5 < lane_prob <= 1.0
-  if not visible or lane_line < 0 or not lane_detected:
-    return 1  # HIDDEN; 0 draws a gray lane line.
-
+def _get_lane_value(lane_line_warn, blindspot, depart, visible, frame, lane_change_available=False, lane_line=0):
   if depart:
     return 4 if (frame // 50) % 2 == 0 else 1
 
   if lane_line_warn or blindspot:
     return 4
 
+  if not visible:
+    return LANE_LINE_UNSEEN
+
+  lane_change_available = lane_change_available and lane_line > 0
   # A missing OEM type (0) can still use model visibility, but cannot identify dashes.
   dashed = lane_line > 0 and lane_line % 10 in (0, 5)
   if dashed:

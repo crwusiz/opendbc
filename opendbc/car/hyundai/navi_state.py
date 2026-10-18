@@ -2,10 +2,19 @@ import math
 from types import SimpleNamespace
 
 from opendbc.car import DT_CTRL
-from opendbc.car.common.conversions import UnitConverter
+from opendbc.car.common.conversions import Conversions as CV, UnitConverter
 
 
 NAVI = SimpleNamespace(
+  POSITION_MSG="Hud_Navi_V2_POS_PE",
+  SEGMENT_MSG="Hud_Navi_V2_SEG_E",
+  PROFILE_SHORT_MSG="Hud_Navi_V2_PROSHORT_E_00",
+  PROFILE_MSG="Hud_Navi_V2_PROLONG_E",
+  WRAPPED_HDA_MSG="CANFD_HDA_INFO_364",
+  WRAPPED_PROFILE_MSG="CANFD_NAVI_PROFILE_093",
+  STATUS_MSG="CANFD_NAVI_STATUS_380",
+  STATUS_TIMEOUT_NS=1_000_000_000,
+  CAMERA_MATCH_MARGIN=40.0,
   SPEED_CAMERA_PARAM_UPDATE_FRAMES=round(1.0 / DT_CTRL),
   MAX_EVENT_DISTANCE=2500.0,
   PASSED_EVENT_DISTANCE=30.0,
@@ -29,8 +38,18 @@ NAVI = SimpleNamespace(
 
 
 class NaviState:
-  def __init__(self, params=None):
+  def __init__(self, params=None, *, wrapped=False):
     self.params = params
+    self.wrapped = wrapped
+    self.profile_message = NAVI.WRAPPED_PROFILE_MSG if wrapped else NAVI.PROFILE_MSG
+    self.status = None
+    self.cp_alt = None
+    self.is_metric = True
+    self.section_start_prev = False
+    self.completed_camera_speed = 0.0
+    self.camera_status_event = None
+    self.camera_status_speed = 0.0
+    self.camera_status_target = None
     self.total_distance = 0.0
     self.speed_limit_distance = 0.0
 
@@ -128,13 +147,21 @@ class NaviState:
             self.road_class in NAVI.CONTROLLED_ACCESS_ROAD_CLASSES)
 
   @staticmethod
+  def _profile_signal(values, name, legacy_name, default, prefix="PROLONG"):
+    # The local DBC uses uppercase names; older and wrapped DBCs use aliases.
+    for key in (name, f"{prefix}_{name}", legacy_name):
+      if key in values:
+        return int(values[key])
+    return default
+
+  @staticmethod
   def _decode_profile(values):
     return {
-      "value": int(values.get("Value", 0xffffffff)),
-      "offset": int(values.get("Offset", 8191)),
-      "counter": int(values.get("CyclicCounter", 0)),
-      "update": int(values.get("Update", 0)),
-      "profile_type": int(values.get("ProfileType", 31)),
+      "value": NaviState._profile_signal(values, "VALUE", "Value", 0xffffffff),
+      "offset": NaviState._profile_signal(values, "OFFSET", "Offset", 8191),
+      "counter": NaviState._profile_signal(values, "CYCLIC_COUNTER", "CyclicCounter", 0),
+      "update": NaviState._profile_signal(values, "UPDATE", "Update", 0),
+      "profile_type": NaviState._profile_signal(values, "PROFILE_TYPE", "ProfileType", 31),
     }
 
   @staticmethod
@@ -167,12 +194,12 @@ class NaviState:
 
   @staticmethod
   def _decode_curve(values):
-    if int(values.get("ProfileType", 0)) != 1:
+    if NaviState._profile_signal(values, "PROFILE_TYPE", "ProfileType", 0, "PROSHORT") != 1:
       return None
 
-    offset = int(values.get("Offset", 8191))
-    distance = int(values.get("Distance", 1023))
-    raw_curvature = int(values.get("Value0", 1023))
+    offset = NaviState._profile_signal(values, "OFFSET", "Offset", 8191, "PROSHORT")
+    distance = NaviState._profile_signal(values, "DISTANCE", "Distance", 1023, "PROSHORT")
+    raw_curvature = NaviState._profile_signal(values, "VALUE_0", "Value0", 1023, "PROSHORT")
     if not 0 <= offset <= NAVI.CURVE_MAX_DISTANCE or raw_curvature == 1023:
       return None
 
@@ -216,7 +243,7 @@ class NaviState:
     ret.naviCurveRouteState = self.curve_route_state
 
     if self.profile_short is not None:
-      timestamp = self._message_timestamp(cp, "Hud_Navi_V2_PROSHORT_E_00")
+      timestamp = self._message_timestamp(cp, NAVI.PROFILE_SHORT_MSG)
       if timestamp > self.curve_timestamp:
         self.curve_timestamp = timestamp
         curve = self._decode_curve(self.profile_short)
@@ -260,10 +287,11 @@ class NaviState:
     if value == 6:
       return "bump", 0, 6
 
-    if not 0 < value <= 0x1ff:
+    if not 0 < value < 0xffffffff:
       return None
-    kind = value & 0xf
-    speed_code = value >> 4
+    camera_code = value & 0x1ff
+    kind = camera_code & 0xf
+    speed_code = camera_code >> 4
     if kind not in NAVI.CAMERA_KINDS or not 1 < speed_code <= 31:
       return None
     return "camera", (speed_code - 1) * 5, kind
@@ -285,8 +313,10 @@ class NaviState:
     ret.naviActive = False
     ret.naviSectionActive = False
     ret.naviSpeed = 0.0
-    profile_timestamp = self._message_timestamp(cp, "Hud_Navi_V2_PROLONG_E")
-    self.available = self.available or profile_timestamp > 0
+    if self.wrapped:
+      speed_limit_cam = self._update_wrapped_status(cp, ret)
+    profile_timestamp = self._message_timestamp(cp, self.profile_message)
+    self.available = self.available or profile_timestamp > 0 or self.speed_zone_active
     ret.naviAvailable = self.available
     self.camera_target = None
 
@@ -294,7 +324,7 @@ class NaviState:
     # average speed is zero outside a section-camera zone and valid inside it.
     # It is therefore authoritative for the current section state; 0x4BE is
     # sparse future spot data and must not be used alone to hold this state.
-    position_timestamp = self._message_timestamp(cp, "Hud_Navi_V2_POS_PE")
+    position_timestamp = self._message_timestamp(cp, NAVI.POSITION_MSG)
     position_seen = position_timestamp > 0
     position_age = int(getattr(cp, "_last_update_nanos", position_timestamp)) - position_timestamp
     position_recent = position_seen and 0 <= position_age <= NAVI.POSITION_TIMEOUT_NS
@@ -303,7 +333,7 @@ class NaviState:
     range_section_active = 0 < range_avg_speed < 511
 
     if self.segment is not None:
-      timestamp = self._message_timestamp(cp, "Hud_Navi_V2_SEG_E")
+      timestamp = self._message_timestamp(cp, NAVI.SEGMENT_MSG)
       if timestamp > self.segment_timestamp:
         self.segment_timestamp = timestamp
         segment = self._decode_segment(self.segment)
@@ -342,7 +372,7 @@ class NaviState:
         profile = self._decode_profile(self.profile)
         event = self._classify_profile(profile)
         if event is not None and timestamp > self.route_reset_timestamp:
-          if event[0] == "speed_limit_zone":
+          if event[0] == "speed_limit_zone" and not self.wrapped:
             if self.can_control and event[1] > 30:
               self.speed_zone_active = True
               self.speed_zone_speed = event[1]
@@ -353,11 +383,11 @@ class NaviState:
                 self.school_zone_uses_camera_status = speed_limit_cam and ret.speedLimit == 30
               else:
                 self._clear_school_zone()
-          elif self.can_control and (not on_controlled_access_road or
+          elif event[0] != "speed_limit_zone" and self.can_control and (not on_controlled_access_road or
                                      (event[0] != "bump" and not (event[0] == "camera" and event[1] == 30))):
             self._add_event(*event, profile["offset"])
 
-    if position_seen:
+    if position_seen and not self.wrapped:
       if not range_section_active or not self.can_control or 0 < ret.speedLimit <= 30:
         self._clear_speed_zone()
       elif 30 < ret.speedLimit < 255:
@@ -374,7 +404,7 @@ class NaviState:
     if bumps:
       ret.speedBumpDistance = bumps[0]["target"] - self.total_distance
 
-    if self.speed_zone_active and (not position_seen and not speed_limit_cam):
+    if self.speed_zone_active and not self.wrapped and (not position_seen and not speed_limit_cam):
       self._clear_speed_zone()
 
     if self.school_zone_active:
@@ -398,6 +428,18 @@ class NaviState:
       ret.naviSpeed = self.speed_zone_speed
 
     cameras = [event for event in upcoming if event["type"] == "camera"]
+    if self.wrapped:
+      if self.camera_status_event not in cameras:
+        self.camera_status_event = None
+      if self.camera_status_event is None and speed_limit_cam:
+        self.camera_status_event = next((event for event in cameras
+                                         if event["speed"] == self.camera_status_speed and
+                                         event["target"] <= self.camera_status_target + NAVI.CAMERA_MATCH_MARGIN), None)
+      cameras = [self.camera_status_event] if self.camera_status_event is not None else []
+      if speed_limit_cam and self.can_control:
+        ret.naviActive = True
+        if ret.naviSpeed <= 0:
+          ret.naviSpeed = self.camera_status_speed
     if cameras:
       camera = cameras[0]
       self.camera_target = camera["target"]
@@ -409,7 +451,63 @@ class NaviState:
     if bumps:
       ret.naviActive = True
 
-    return bool(cameras)
+    return bool(cameras) or (self.wrapped and speed_limit_cam)
+
+  def _wrapped_message_fresh(self, cp, parser, name):
+    if parser is None:
+      return False
+    timestamp = self._message_timestamp(parser, name)
+    age = cp._last_update_nanos - timestamp
+    return timestamp > 0 and 0 <= age <= NAVI.STATUS_TIMEOUT_NS and not parser.bus_timeout
+
+  def _update_wrapped_status(self, cp, ret):
+    fresh = (self._wrapped_message_fresh(cp, cp, NAVI.WRAPPED_HDA_MSG) and
+             self._wrapped_message_fresh(cp, self.cp_alt, NAVI.STATUS_MSG) and
+             self.hda_info is not None and self.status is not None)
+    raw_speed = int(self.hda_info["SPEED_LIMIT"]) if fresh else 0
+    speed = raw_speed * (1.0 if self.is_metric else CV.MPH_TO_KPH)
+    ret.speedLimit = speed if 0 < raw_speed < 255 else 0.0
+    map_warning = fresh and int(self.hda_info["MapSource"]) == 2 and 0 < raw_speed < 255
+
+    # Notification bits pulse. Retain an associated camera until its distance
+    # passes, while fresh, unchanged map-warning data continues to authorize it.
+    if self.camera_status_event is not None and self.camera_status_event["target"] <= self.total_distance:
+      self.completed_camera_speed = self.camera_status_event["speed"]
+      self.events = [event for event in self.events if event is not self.camera_status_event]
+      self.camera_status_event = None
+    previous_speed = self.camera_status_speed or self.completed_camera_speed
+    if not map_warning or (previous_speed and speed != previous_speed):
+      self.events = [event for event in self.events if event["type"] != "camera"]
+      self.camera_status_event = None
+      self.camera_status_target = None
+      self.camera_status_speed = 0.0
+      profile_event = self._classify_profile(self._decode_profile(self.profile)) if self.profile is not None else None
+      if profile_event is not None and profile_event[0] == "camera":
+        self.profile_timestamp = max(self.profile_timestamp, self._message_timestamp(cp, self.profile_message))
+    if not map_warning or speed != self.completed_camera_speed:
+      self.completed_camera_speed = 0.0
+    warning = map_warning and self.completed_camera_speed == 0
+    if warning:
+      if self.camera_status_target is None:
+        self.camera_status_target = self.total_distance + speed * self.speed_camera_distance_time
+      self.camera_status_speed = speed
+
+    if not fresh:
+      self._clear_speed_zone()
+      self.section_start_prev = True
+    else:
+      start = bool(self.status["SECTION_ALERT"])
+      rising = start and not self.section_start_prev
+      self.section_start_prev = start
+      section_speed = int(self.status["SPEED_LIMIT"])
+      valid_limit = (self.can_control and 30 < section_speed <= 150 and section_speed % 5 == 0 and
+                     section_speed == raw_speed and int(self.hda_info["MapSource"]) == 2)
+      if not valid_limit or (self.speed_zone_active and self.speed_zone_speed != speed):
+        self._clear_speed_zone()
+      if valid_limit and rising:
+        self.speed_zone_active = True
+        self.speed_zone_speed = speed
+    return warning
 
   def update_speed_limit(self, ret, speed_limit_cam, distance_time_changed=None):
     if distance_time_changed is None:
@@ -429,12 +527,16 @@ class NaviState:
       self.speed_limit_distance = self.total_distance
       ret.speedLimitDistance = 0.0
 
-  def update(self, cp, ret, speed_limit_cam, position, segment, profile, profile_short=None, hda_info=None):
+  def update(self, cp, ret, speed_limit_cam, position, segment, profile, profile_short=None, hda_info=None,
+             cp_alt=None, status=None, is_metric=True):
     self.hda_info = hda_info
     self.position = position
     self.segment = segment
     self.profile_short = profile_short
     self.profile = profile
+    self.cp_alt = cp_alt
+    self.status = status
+    self.is_metric = is_metric
 
     distance_time_changed = self._update_speed_camera_params()
     speed_limit_cam = self._update_events(cp, ret, speed_limit_cam) or speed_limit_cam

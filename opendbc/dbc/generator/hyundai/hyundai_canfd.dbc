@@ -25,23 +25,23 @@ BO_ 69 GEAR: 24 XXX
  SG_ GEAR_STEP1 : 154|5@1+ (1,0) [0|31] "" XXX
 
 BO_ 74 IMU_01_10ms: 32 CGW_CCU
- SG_ IMU_Crc1Val : 0|16@1+ (1,0) [0|0] ""  ECS,ESC,FCU_C,GW_RGW,ICSC,MDPS,RCU,RWS,SFA,VPC_C
- SG_ IMU_AlvCnt1Val : 16|8@1+ (1,0) [0|0] ""  ECS,ESC,FCU_C,GW_RGW,ICSC,MDPS,RCU,RWS,SFA,VPC_C
- SG_ IMU_YawSigSta : 24|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
- SG_ IMU_LatAccelSigSta : 28|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
- SG_ IMU_LongAccelSigSta : 32|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
- SG_ IMU_VerAccelSigSta : 36|4@1+ (1,0) [0|15] "" XXX
- SG_ IMU_McuVoltSta : 40|4@1+ (1,0) [0|15] "" XXX
- SG_ IMU_AcuRstSta : 44|4@1+ (1,0) [0|15] "" XXX
- SG_ IMU_SnsrTyp : 48|8@1+ (1,0) [0|255] "" XXX
- SG_ IMU_RollSigSta : 56|8@1+ (1,0) [0|255] "" XXX
- SG_ IMU_YawRtVal : 64|16@1+ (0.005,-163.84) [-163.84|163.835] "Deg/s"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
- SG_ IMU_LatAccelVal : 80|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
- SG_ IMU_LongAccelVal : 96|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
- SG_ IMU_SnsrTempVal : 112|16@1+ (1,0) [0|65535] "" XXX
- SG_ IMU_SeralNumVal : 128|64@1+ (1,0) [0|1.84467440737096e+19] "" XXX
- SG_ IMU_RollRtVal : 192|16@1+ (0.005,-163.84) [0|0] "º/s" XXX
- SG_ IMU_VerAccelVal : 208|8@1+ (1,0) [0|255] "" XXX
+ SG_ CHECKSUM : 0|16@1+ (1,0) [0|0] ""  ECS,ESC,FCU_C,GW_RGW,ICSC,MDPS,RCU,RWS,SFA,VPC_C
+ SG_ COUNTER : 16|8@1+ (1,0) [0|0] ""  ECS,ESC,FCU_C,GW_RGW,ICSC,MDPS,RCU,RWS,SFA,VPC_C
+ SG_ YawSigSta : 24|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ LatAccelSigSta : 28|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ LongAccelSigSta : 32|4@1+ (1,0) [0|15] ""  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ VerAccelSigSta : 36|4@1+ (1,0) [0|15] "" XXX
+ SG_ McuVoltSta : 40|4@1+ (1,0) [0|15] "" XXX
+ SG_ AcuRstSta : 44|4@1+ (1,0) [0|15] "" XXX
+ SG_ SnsrTyp : 48|8@1+ (1,0) [0|255] "" XXX
+ SG_ RollSigSta : 56|8@1+ (1,0) [0|255] "" XXX
+ SG_ YawRtVal : 64|16@1+ (0.005,-163.84) [-163.84|163.835] "Deg/s"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ LatAccelVal : 80|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ LongAccelVal : 96|16@1+ (0.000127465,-4.17677312) [-4.17677312|4.176645655] "g"  CLU,ADAS_PRK,FR_CMR,RR_C_RDR
+ SG_ SnsrTempVal : 112|16@1+ (1,0) [0|65535] "" XXX
+ SG_ SeralNumVal : 128|64@1+ (1,0) [0|1.84467440737096e+19] "" XXX
+ SG_ RollRtVal : 192|16@1+ (0.005,-163.84) [0|0] "º/s" XXX
+ SG_ VerAccelVal : 208|8@1+ (1,0) [0|255] "" XXX
 
 BO_ 96 ESP_STATUS: 32 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -150,6 +150,10 @@ BO_ 261 ACCELERATOR_ALT: 32 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
  SG_ COUNTER : 16|8@1+ (1,0) [0|255] "" XXX
  SG_ ACCELERATOR_PEDAL : 103|10@1+ (0.25,0) [0|1022] "" XXX
+
+BO_ 267 CRUISE_BUTTONS_ALT2: 16 XXX
+ SG_ CRUISE_BUTTONS : 83|4@0+ (1,0) [0|15] "" XXX
+ SG_ LFA_BTN : 87|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 272 LKAS_ALT: 32 XXX
  SG_ CHECKSUM : 0|16@1+ (1,0) [0|65535] "" XXX
@@ -735,8 +739,13 @@ BO_ 874 BLINDSPOTS_FRONT_CORNER_2: 16 XXX
  SG_ RIGHT_BSD : 27|1@0+ (1,0) [0|1] "" XXX
  SG_ LEFT_BSD : 28|1@0+ (1,0) [0|1] "" XXX
 
+BO_ 884 VEHICLE_POSITION_374: 8 XXX
+ SG_ LATITUDE : 0|32@1+ (0.000001,0) [0|85.05112878] "deg" XXX
+ SG_ LONGITUDE : 32|32@1+ (0.000001,0) [0|180] "deg" XXX
+
 BO_ 896 CANFD_NAVI_STATUS_380: 24 XXX
  SG_ CAMERA_STATUS : 24|8@1+ (1,0) [0|255] "" XXX
+ SG_ SECTION_ALERT : 84|1@1+ (1,0) [0|1] "" XXX
  SG_ SPEED_LIMIT : 96|8@1+ (1,0) [0|255] "km/h" XXX
 
 BO_ 928 TPMS: 16 XXX
@@ -755,6 +764,8 @@ BO_ 961 BLINKER_STALKS: 8 XXX
  SG_ HIGHBEAM_BACKWARD : 26|1@0+ (1,0) [0|1] "" XXX
  SG_ LEFT_BLINKER : 30|1@0+ (1,0) [0|1] "" XXX
  SG_ RIGHT_BLINKER : 32|1@0+ (1,0) [0|1] "" XXX
+ SG_ LEFT_BLINKER_TAP : 36|1@0+ (1,0) [0|1] "" XXX
+ SG_ RIGHT_BLINKER_TAP : 38|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 995 BLINKERS_ALT: 16 XXX
  SG_ LEFT_BLINKER : 74|1@0+ (1,0) [0|1] "" XXX
@@ -786,6 +797,15 @@ BO_ 1043 BLINKERS: 8 XXX
  SG_ RIGHT_LAMP_ALT : 61|1@1+ (1,0) [0|1] "" XXX
  SG_ USE_ALT_LAMP : 62|1@1+ (1,0) [0|1] "" XXX
 
+BO_ 1052 LIGHT_SENSOR: 8 XXX
+ SG_ CHECKSUM_MAYBE : 7|8@0+ (1,0) [0|255] "" XXX
+ SG_ COUNTER_ALT : 15|4@0+ (1,0) [0|15] "" XXX
+ SG_ IS_DARK : 19|1@0+ (1,0) [0|1] "" XXX
+ SG_ LIGHT_LEVEL : 24|10@1+ (1,0) [0|1023] "" XXX
+
+BO_ 1079 TRAILER_STATUS: 8 XXX
+ SG_ TRAILER_CONNECTED : 0|1@1+ (1,0) [0|1] "" XXX
+
 BO_ 1144 DRIVE_MODE: 8 XXX
  SG_ DRIVE_MODE : 0|16@1+ (1,-61611) [0|61611] "" XXX
  SG_ DRIVE_MODE2 : 28|3@1+ (1,0) [1|3] "" XXX
@@ -802,15 +822,6 @@ BO_ 1151 HVAC_TOUCH_BUTTONS: 8 XXX
  SG_ DRIVER_ONLY_BUTTON : 44|1@0+ (1,0) [0|1] "" XXX
  SG_ RECIRC_BUTTON : 48|1@0+ (1,0) [0|1] "" XXX
  SG_ HEAT_BUTTON : 52|1@0+ (1,0) [0|1] "" XXX
-
-BO_ 1052 LIGHT_SENSOR: 8 XXX
- SG_ CHECKSUM_MAYBE : 7|8@0+ (1,0) [0|255] "" XXX
- SG_ COUNTER_ALT : 15|4@0+ (1,0) [0|15] "" XXX
- SG_ IS_DARK : 19|1@0+ (1,0) [0|1] "" XXX
- SG_ LIGHT_LEVEL : 24|10@1+ (1,0) [0|1023] "" XXX
-
-BO_ 1079 TRAILER_STATUS: 8 XXX
- SG_ TRAILER_CONNECTED : 0|1@1+ (1,0) [0|1] "" XXX
 
 BO_ 1187 Hud_Navi_ISLW_PE: 8 CGW
  SG_ LinkClass : 0|3@1+ (1,0) [0|7] ""  FR_CMR
@@ -854,20 +865,22 @@ BO_ 12090 Hud_Navi_V2_SEG_E_: 8 CGW
  SG_ SpeedLimitUnder5 : 40|3@1+ (1,0) [0|7] ""  FR_CMR
 
 BO_ 1210 Hud_Navi_V2_PROSHORT_E_00: 8 CGW
- SG_ Offset : 0|13@1+ (1,0) [0|8191] "m"  FR_CMR
- SG_ CyclicCounter : 19|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ Distance : 23|10@1+ (1,0) [0|1023] "m"  FR_CMR
- SG_ Value0 : 33|10@1+ (1,0) [0|1023] ""  FR_CMR
- SG_ Value1 : 43|10@1+ (1,0) [0|1023] ""  FR_CMR
- SG_ ProfileType : 53|5@1+ (1,0) [0|31] ""  FR_CMR
+ SG_ OFFSET : 0|13@1+ (1,0) [0|8191] "m" XXX
+ SG_ PATH_INDEX : 13|6@1+ (1,0) [0|63] "" XXX
+ SG_ CYCLIC_COUNTER : 19|2@1+ (1,0) [0|3] "" XXX
+ SG_ ACCURACY : 21|2@1+ (1,0) [0|3] "" XXX
+ SG_ DISTANCE : 23|10@1+ (1,0) [0|1023] "m" XXX
+ SG_ VALUE_0 : 33|10@1+ (1,0) [0|1023] "" XXX
+ SG_ VALUE_1 : 43|10@1+ (1,0) [0|1023] "" XXX
+ SG_ PROFILE_TYPE : 53|5@1+ (1,0) [0|31] "" XXX
 
 BO_ 1214 Hud_Navi_V2_PROLONG_E: 8 CGW
- SG_ Value : 0|32@1+ (1,0) [0|4294967295] ""  FR_CMR
- SG_ Offset : 32|13@1+ (1,0) [0|8191] "m"  FR_CMR
- SG_ CyclicCounter : 45|2@1+ (1,0) [0|3] ""  FR_CMR
- SG_ Update : 47|1@1+ (1,0) [0|1] ""  FR_CMR
- SG_ PathIndex : 48|6@1+ (1,0) [0|63] "" XXX
- SG_ ProfileType : 54|5@1+ (1,0) [0|31] ""  FR_CMR
+ SG_ VALUE : 0|32@1+ (1,0) [0|4294967295] "" XXX
+ SG_ OFFSET : 32|13@1+ (1,0) [0|8191] "m" XXX
+ SG_ CYCLIC_COUNTER : 45|2@1+ (1,0) [0|3] "" XXX
+ SG_ UPDATE : 47|1@1+ (1,0) [0|1] "" XXX
+ SG_ PATH_INDEX : 48|6@1+ (1,0) [0|63] "" XXX
+ SG_ PROFILE_TYPE : 54|5@1+ (1,0) [0|31] "" XXX
 
 BO_ 1240 CLUSTER_INFO: 8 XXX
  SG_ DISTANCE_UNIT : 0|1@1+ (1,0) [0|1] "" XXX
@@ -885,13 +898,13 @@ BO_ 1264 LOCAL_TIME: 8 XXX
  SG_ YEAR : 47|8@0+ (1,0) [0|255] "" XXX
  SG_ DATE : 48|5@1+ (1,0) [0|31] "" XXX
 
-CM_ SG_ 74 IMU_Crc1Val "The data area for CRC calculation is based on the data length (DLC) of the message DB.The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID- CRC Polynomial (0x1021) , Ini";
-CM_ SG_ 74 IMU_AlvCnt1Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
-CM_ SG_ 74 IMU_YawSigSta "This signal indicates failure status of yaw rate signal and yaw rate sensing element.0000B : No failure xxx1B : IMU_Yawrate_failurexx1xB : Initialization is runningx1xxB : Reserved1xxxB : ReservedThis signal represents the physica";
-CM_ SG_ 74 IMU_LatAccelSigSta "This signal indicates failure status of lateral acceleration signal and sensing element.0000B : No failurexxx1B : IMU_Lateral acceleration failurexx1xB : Initialization is runningx1xxB : Reserved1xxxB : ReservedThis signal represe";
-CM_ SG_ 74 IMU_AcuRstSta "This signal indicates the status of IMU.0000B : Normal mode xxx1B : IMU Reset modexx1xB : Reservedx1xxB : Reserved1xxxB : ReservedIf ACU reset is required, ACU will send IMU RESET bit(XXX1B) up to 30 times and perform a reset. If ";
-CM_ SG_ 74 IMU_YawRtVal "This signal indicates Information regarding yaw rate.physical range : -163.84..163.83 ˚/s = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.005[˚/s/digit] = (HEX)*0.005[˚/s/digit] - 163.84[˚/s] ";
-CM_ SG_ 74 IMU_LatAccelVal "This signal indicates Information regarding lateral acceleration.physical range : -4.1768g..4.1765g = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.000127465[g/digit] = (HEX)*0.000127465[g/digit] - 4.17677312[g]";
+CM_ SG_ 74 Crc1Val "The data area for CRC calculation is based on the data length (DLC) of the message DB.The CRC shall be calculated over the entire data block (excluding the CRC bytes) including the user data, alive counter and Data ID- CRC Polynomial (0x1021) , Ini";
+CM_ SG_ 74 AlvCnt1Val "For the first transmission request for a data element the counter shall be initialized with 0 and shall be incremented by 1 for every subsequent send request. When the counter reaches the maximum value(0xFF), then it shall restart with 0 for the next s";
+CM_ SG_ 74 YawSigSta "This signal indicates failure status of yaw rate signal and yaw rate sensing element.0000B : No failure xxx1B : Yawrate_failurexx1xB : Initialization is runningx1xxB : Reserved1xxxB : ReservedThis signal represents the physica";
+CM_ SG_ 74 LatAccelSigSta "This signal indicates failure status of lateral acceleration signal and sensing element.0000B : No failurexxx1B : Lateral acceleration failurexx1xB : Initialization is runningx1xxB : Reserved1xxxB : ReservedThis signal represe";
+CM_ SG_ 74 AcuRstSta "This signal indicates the status of IMU.0000B : Normal mode xxx1B : IMU Reset modexx1xB : Reservedx1xxB : Reserved1xxxB : ReservedIf ACU reset is required, ACU will send IMU RESET bit(XXX1B) up to 30 times and perform a reset. If ";
+CM_ SG_ 74 YawRtVal "This signal indicates Information regarding yaw rate.physical range : -163.84..163.83 ˚/s = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.005[˚/s/digit] = (HEX)*0.005[˚/s/digit] - 163.84[˚/s] ";
+CM_ SG_ 74 LatAccelVal "This signal indicates Information regarding lateral acceleration.physical range : -4.1768g..4.1765g = 0000H..FFFEhConversion : (PH) = ((HEX)-8000H)*0.000127465[g/digit] = (HEX)*0.000127465[g/digit] - 4.17677312[g]";
 
 CM_ SG_ 96 BRAKE_PRESSURE "User applied brake pedal pressure. Ramps from computer applied pressure on falling edge of cruise. Cruise cancels if !=0";
 CM_ SG_ 96 AUTO_HOLD "AVH status. Indicates whether the vehicle is held with the hydraulic service brake";
@@ -1409,6 +1422,8 @@ VAL_ 698 VehDst8Val 0 "No Value" 1 "1~10m" 2 "11~20m" 3 "21~30m" 4 "31~40m" 5 "4
 VAL_ 698 VehDst9Val 0 "No Value" 1 "1~10m" 2 "11~20m" 3 "21~30m" 4 "31~40m" 5 "41~50m" 6 "51~60m" 7 "61~70m" 8 "71~80m" 9 "81~90m" 10 "91~100m" 11 "101~200m" 12 "201~300m" 13 "301~400m" 14 "401m~" 15 "Error indicator";
 VAL_ 698 VehDst10Val 0 "No Value" 1 "1~10m" 2 "11~20m" 3 "21~30m" 4 "31~40m" 5 "41~50m" 6 "51~60m" 7 "61~70m" 8 "71~80m" 9 "81~90m" 10 "91~100m" 11 "101~200m" 12 "201~300m" 13 "301~400m" 14 "401m~" 15 "Error indicator";
 VAL_ 736 MSLA_STATUS 0 "disabled" 1 "active" 2 "paused";
+VAL_ 866 LEFT_LANE_COLOR 0 "Not Detected" 1 "White" 2 "Yellow" 3 "Blue";
+VAL_ 866 RIGHT_LANE_COLOR 0 "Not Detected" 1 "White" 2 "Yellow" 3 "Blue";
 VAL_ 866 LEFT_LANE_LINE 0 "Not Detected" 1 "Low Confidence" 2 "Medium Confidence" 3 "High Confidence";
 VAL_ 866 RIGHT_LANE_LINE 0 "Not Detected" 1 "Low Confidence" 2 "Medium Confidence" 3 "High Confidence";
 VAL_ 1041 FL_DOOR 0 "Closed" 1 "Opened";

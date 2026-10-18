@@ -2,6 +2,7 @@ import numpy as np
 from opendbc.car import CanBusBase
 from opendbc.car.crc import CRC16_XMODEM
 from opendbc.car.hyundai.values import HyundaiFlags, HyundaiExFlags
+from opendbc.car.hyundai.navi_state import NAVI
 
 import copy
 from openpilot.cereal import log
@@ -56,7 +57,7 @@ def create_steering_messages(packer, CP, CC, CS, CAN, frame, lat_active, apply_t
     "ActToiSta": 1 if lat_active else 0,
     "LKA_UsmMod": 0,  # hide LKAS settings
     "LKA_RcgSta": 0,
-    "Damping_Gain": 100,  # can potentially tuned for better perf [3, 200]
+    "Damping_Gain": 100,  # can potentially tune for better perf [3, 200]
   }
 
   lfa_values = copy.copy(common_values)
@@ -331,6 +332,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
   speed_limiter = SpeedLimiter.instance()
   speed_limiter.recv()
   nav_active = speed_limiter.get_active()
+  nav_icon_available = bool(nav_active) or getattr(CS.out, "naviAvailable", False)
   hdp_active = cruise_enabled and nav_active
   enable_corner_radar = CP.flags & HyundaiFlags.CANFD_LKA_STEER_MSG
   desire, lane_changing = _get_desire_and_lane_changing(md)
@@ -364,6 +366,10 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
         ret.append(packer.make_can_msg("ADRV_0x160", CAN.ECAN, values))
 
     if frame % 5 == 0 and CS.ccnc_msg_161 is not None and ccnc:
+      if not hasattr(create_adrv_messages, '_lane_line_check') or frame % 100 == 0:
+        create_adrv_messages._lane_line_check = Params().get("LaneLineCheck", return_default=True) or 0
+      lane_line_check = create_adrv_messages._lane_line_check
+
       values = copy.copy(CS.ccnc_msg_161)
       values |= {
         "SETSPEED": 6 if hdp_active else 3 if main_enabled else 0,
@@ -382,7 +388,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
         "CENTERLINE": 1 if HDA_CntrlModSta > 0 else 0, #lat_active else 0,
         "CAR_CIRCLE": 2 if hdp_active else 1 if lat_active else 0,
 
-        "NAV_ICON": 2 if nav_active else 1,
+        "NAV_ICON": 2 if nav_icon_available and cruise_enabled else 1 if main_enabled and nav_icon_available else 0,
         "HDA_ICON": 5 if hdp_active else 2 if lat_active else 1,
         "LFA_ICON": 5 if hdp_active else 2 if lat_active else 1,
         "LKA_ICON": 4 if lat_active else 3,
@@ -424,8 +430,21 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
       values["LANELINE_CURVATURE"] = (min(abs(curvature), 15) + (-1 if curvature < 0 else 0)) if lat_active else 0
       values["LANELINE_CURVATURE_DIRECTION"] = 1 if curvature < 0 and lat_active else 0
 
-      values["LANELINE_LEFT"] = _get_lane_value(CS.out.leftLaneLine, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible, frame)
-      values["LANELINE_RIGHT"] = _get_lane_value(CS.out.rightLaneLine, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible, frame)
+      if lane_line_check >= 1:
+        lane_line_warn_left = CS.out.leftLaneLine % 10 not in (0, 5)
+        lane_line_warn_right = CS.out.rightLaneLine % 10 not in (0, 5)
+      else:
+        lane_line_warn_left = CS.out.leftLaneLine // 10 == 2
+        lane_line_warn_right = CS.out.rightLaneLine // 10 == 2
+
+      values["LANELINE_LEFT"] = _get_lane_value(
+        lane_line_warn_left, CS.out.leftBlindspot, hud.leftLaneDepart, hud.leftLaneVisible, frame,
+        lane_change_available=md is not None and getattr(md.meta, "laneChangeAvailableLeft", False),
+      )
+      values["LANELINE_RIGHT"] = _get_lane_value(
+        lane_line_warn_right, CS.out.rightBlindspot, hud.rightLaneDepart, hud.rightLaneVisible, frame,
+        lane_change_available=md is not None and getattr(md.meta, "laneChangeAvailableRight", False),
+      )
 
       if lat_active and (CS.out.leftBlinker or CS.out.rightBlinker):
         left_lane_raw, right_lane_raw = CS.leftLnPosition, CS.rightLnPosition
@@ -512,7 +531,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
           'BYTE_7': 0x01,
           'BYTE_8': 0x00,
         }
-        ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))
+        ret.append(packer.make_can_msg(NAVI.SEGMENT_MSG, CAN.CAM, values))
       elif frame % 500 in [40, 50, 60]:
         values = {
           'BYTE_1': 0xff,
@@ -524,7 +543,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
           'BYTE_7': 0xff,
           'BYTE_8': 0xff,
         }
-        ret.append(packer.make_can_msg("Hud_Navi_V2_SEG_E", CAN.CAM, values))
+        ret.append(packer.make_can_msg(NAVI.SEGMENT_MSG, CAN.CAM, values))
 
     return ret
 
@@ -657,11 +676,11 @@ def _make_ccnc_values(values, CS, lat_active, frame, hud, lane_line=True, corner
     if blink_pairs:
       _apply_radar_blink(values, blink_pairs, frame, t=blink_t)
 
-def _get_lane_value(prob, blindspot, depart, visible, frame):
+def _get_lane_value(lane_line_warn, blindspot, depart, visible, frame, lane_change_available=False):
   if depart:
     return 4 if (frame // 50) % 2 == 0 else 1
 
   if not visible:
     return 0
 
-  return 4 if (prob >= 20 or blindspot) else 2
+  return 4 if lane_line_warn or blindspot else 6 if lane_change_available else 2

@@ -426,7 +426,7 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
         "SETSPEED_HUD": 5 if hdp_active else 2 if cruise_enabled else 1,
         "vSetDis": set_speed,
 
-        "DISTANCE": 4 if hdp_active else hud.leadDistanceBars,
+        "DISTANCE": hud.leadDistanceBars,
         "DISTANCE_LEAD": 2 if cruise_enabled and hud.leadVisible else 0,
         "DISTANCE_CAR": 3 if hdp_active else 2 if cruise_enabled else 1 if main_enabled else 0,
         "DISTANCE_SPACING": 5 if hdp_active else 1 if cruise_enabled else 0,
@@ -468,6 +468,14 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
       for key, reset_values in alerts_disable_map.items():
         if values.get(key) in reset_values:
           values[key] = 0
+
+      # carrot: with HDP on, a gap change shows the stock "distance N" popup (ALERTS_3 7~10) for 2 s
+      gap_bars = hud.leadDistanceBars
+      if hdp_active and gap_bars != getattr(create_adrv_messages, '_gap_bars', gap_bars):
+        create_adrv_messages._gap_popup_until = frame + 200
+      create_adrv_messages._gap_bars = gap_bars
+      if frame < getattr(create_adrv_messages, '_gap_popup_until', 0) and values["ALERTS_3"] == 0 and 1 <= gap_bars <= 4:
+        values["ALERTS_3"] = 6 + gap_bars
 
       _make_ccnc_values(
         values, CS, lat_active, frame, hud,

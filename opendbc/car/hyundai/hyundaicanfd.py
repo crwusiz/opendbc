@@ -420,6 +420,17 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
         create_adrv_messages._lane_line_check = Params().get("LaneLineCheck", return_default=True) or 0
       lane_line_check = create_adrv_messages._lane_line_check
 
+      background = 1 if cruise_enabled else 3 if main_enabled else 7
+      # These background codes let the cluster handle flashing.
+      if CS.out.leftBlinker and CS.out.rightBlinker:
+        background = 6
+      elif CS.out.leftBlinker or CS.out.rightBlinker:
+        background = 4
+
+      lane_highlight = 0
+      if lat_active:
+        lane_highlight = 4 if hud.leftLaneDepart or hud.rightLaneDepart else 3 if hdp_active else 1
+
       values = copy.copy(CS.ccnc_msg_161)
       values |= {
         "SETSPEED": 6 if hdp_active else 3 if main_enabled else 0,
@@ -434,7 +445,9 @@ def create_adrv_messages(packer, CP, CC, CS, md, CAN, frame, set_speed, hud):
         "TARGET": 1 if cruise_enabled else 0,
         "TARGET_DISTANCE": int(hud.leadDistance),
 
-        "BACKGROUND": 1 if cruise_enabled else 3 if main_enabled else 7,
+        "BACKGROUND": background,
+        "LANE_HIGHLIGHT": lane_highlight,
+        "LANE_HIGHLIGHT_DISTANCE": 50.0 if lane_highlight else 0.0,
         "CENTERLINE": 1 if HDA_CntrlModSta > 0 else 0, #lat_active else 0,
         "CAR_CIRCLE": 2 if hdp_active else 1 if lat_active else 0,
 

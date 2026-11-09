@@ -87,66 +87,87 @@ static unsigned int hyundai_canfd_get_lka_addr(void) {
 
 typedef struct {
   int addr;
-  uint32_t hz;
+  uint32_t timeout;
 } HyundaiCanfdBlockEntry;
 
-// Constant definitions are named by the TX destination bus; timestamps live in each safety copy.
-static const HyundaiCanfdBlockEntry op_on_bus0_block_list[HYUNDAI_CANFD_BUS0_BLOCK_COUNT] = {
-  {0x50, 100},   // LKAS
-  {0x51, 100},   // ADRV_0x51
-  {0x110, 100},  // LKAS_ALT
-  {0x11A, 100},  // ADAS_CAM
-  {0x12A, 100},  // LFA
-  {0x160, 50},   // ADRV_0x160
-  {0x161, 20},   // CCNC_0x161
-  {0x162, 20},   // CCNC_0x162
-  {0x1BA, 20},   // BLINDSPOTS_REAR_CORNERS
-  {0x1E5, 20},   // BLINDSPOTS_FRONT_CORNER_1
-  {0x1A0, 50},   // SCC_CONTROL
-  {0x1FA, 10},   // CLUSTER_SPEED_LIMIT
-  {0x1DA, 1},    // ADRV_0x1da
-  {0x1E0, 20},   // LFAHDA_CLUSTER
-  {0x1EA, 20},   // ADRV_0x1ea
-  {0x200, 20},   // ADRV_0x200
-  {0x2A4, 20},   // CAM_0x2A4
-  {0x362, 10},   // CAM_0x362
-  {0x345, 5},    // ADRV_0x345
-  {0x4A3, 5},    // Hud_Navi_ISLW_PE
-  {0x4B4, 10},   // Hud_Navi_V2_POS_PE
-  {0xCB, 100},   // LFA_ALT
-  {0x1CF, 50},   // CRUISE_BUTTON
-  {0x1AA, 50},   // CRUISE_BUTTON_ALT
+// One message period plus a 20 ms margin, evaluated at compile time rather than on each RX.
+#define HYUNDAI_CANFD_BLOCK_ENTRY(address, hz) {(address), (1000000U / (hz)) + 20000U}
+
+// Keep each list sorted by address for binary lookup. Timestamps use the same index in each safety copy.
+static const HyundaiCanfdBlockEntry op_on_bus0_block_list[] = {
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x50, 100),   // LKAS
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x51, 100),   // ADRV_0x51
+  HYUNDAI_CANFD_BLOCK_ENTRY(0xCB, 100),   // LFA_ALT
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x110, 100),  // LKAS_ALT
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x11A, 100),  // ADAS_CAM
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x12A, 100),  // LFA
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x160, 50),   // ADRV_0x160
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x161, 20),   // CCNC_0x161
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x162, 20),   // CCNC_0x162
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1A0, 50),   // SCC_CONTROL
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1AA, 50),   // CRUISE_BUTTON_ALT
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1BA, 20),   // BLINDSPOTS_REAR_CORNERS
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1CF, 50),   // CRUISE_BUTTON
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1DA, 1),    // ADRV_0x1da
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1E0, 20),   // LFAHDA_CLUSTER
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1E5, 20),   // BLINDSPOTS_FRONT_CORNER_1
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1EA, 20),   // ADRV_0x1ea
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1FA, 10),   // CLUSTER_SPEED_LIMIT
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x200, 20),   // ADRV_0x200
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x2A4, 20),   // CAM_0x2A4
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x345, 5),    // ADRV_0x345
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x362, 10),   // CAM_0x362
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x4A3, 5),    // Hud_Navi_ISLW_PE
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x4B4, 10),   // Hud_Navi_V2_POS_PE
 };
 
-static const HyundaiCanfdBlockEntry op_on_bus2_block_list[HYUNDAI_CANFD_BUS2_BLOCK_COUNT] = {
-  {0x4A3, 5},    // Hud_Navi_ISLW_PE
-  {0x175, 50},   // TCS
-  {0x1FA, 10},   // CLUSTER_SPEED_LIMIT
-  {0x1CF, 50},   // CRUISE_BUTTON
-  {0x1AA, 50},   // CRUISE_BUTTON_ALT
-  {0xEA, 100},   // MDPS
-  {0x2AF, 10},   // HANDS_ON_DETECTION
-  {0x4B9, 5},    // Hud_Navi_V2_SEG_E
-  {0x7C4, 5},    // VEHICLE DIAGNOSTICS
+static const HyundaiCanfdBlockEntry op_on_bus2_block_list[] = {
+  HYUNDAI_CANFD_BLOCK_ENTRY(0xEA, 100),  // MDPS
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x175, 50),  // TCS
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1AA, 50),  // CRUISE_BUTTON_ALT
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1CF, 50),  // CRUISE_BUTTON
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x1FA, 10),  // CLUSTER_SPEED_LIMIT
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x2AF, 10),  // HANDS_ON_DETECTION
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x4A3, 5),   // Hud_Navi_ISLW_PE
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x4B9, 5),   // Hud_Navi_V2_SEG_E
+  HYUNDAI_CANFD_BLOCK_ENTRY(0x7C4, 5),   // VEHICLE DIAGNOSTICS
 };
+
+#undef HYUNDAI_CANFD_BLOCK_ENTRY
+
+_Static_assert((sizeof(op_on_bus0_block_list) / sizeof(op_on_bus0_block_list[0])) == HYUNDAI_CANFD_BUS0_BLOCK_COUNT, "bus 0 block count mismatch");
+_Static_assert((sizeof(op_on_bus2_block_list) / sizeof(op_on_bus2_block_list[0])) == HYUNDAI_CANFD_BUS2_BLOCK_COUNT, "bus 2 block count mismatch");
+
+static int hyundai_canfd_find_block_index(const HyundaiCanfdBlockEntry *block_list, int len, int addr) {
+  int first = 0;
+  int last = len;
+  int index = -1;
+  while (first < last) {
+    const int mid = first + ((last - first) / 2);
+    if (addr < block_list[mid].addr) {
+      last = mid;
+    } else if (addr > block_list[mid].addr) {
+      first = mid + 1;
+    } else {
+      index = mid;
+      break;
+    }
+  }
+  return index;
+}
 
 static void hyundai_canfd_update_block_timestamps(const HyundaiCanfdBlockEntry *block_list, uint32_t *timestamps, int len, int addr) {
-  for (int i = 0; i < len; i++) {
-    if (block_list[i].addr == addr) {
-      timestamps[i] = safety_ts;
-    }
+  const int index = hyundai_canfd_find_block_index(block_list, len, addr);
+  if (index >= 0) {
+    timestamps[index] = safety_ts;
   }
 }
 
 static bool hyundai_canfd_block_list_active(const HyundaiCanfdBlockEntry *block_list, const uint32_t *timestamps, int len, int addr) {
   bool block_msg = false;
-  for (int i = 0; i < len; i++) {
-    if (block_list[i].addr == addr) {
-      // One message period plus a 20 ms margin.
-      const uint32_t timeout = (1000000U / block_list[i].hz) + 20000U;
-      block_msg = (safety_ts - timestamps[i]) < timeout;
-      break;
-    }
+  const int index = hyundai_canfd_find_block_index(block_list, len, addr);
+  if (index >= 0) {
+    block_msg = (safety_ts - timestamps[index]) < block_list[index].timeout;
   }
   return block_msg;
 }
@@ -336,6 +357,8 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *msg) {
 
   // *** Update Timestamps for Block Logic ***
   if (tx) {
+    // safety_tx_hook samples a fresh timer for this packet before running both copies.
+    // Reuse that snapshot so both copies record exactly the same TX time.
     // Both lists track matching addresses regardless of the TX bus.
     hyundai_canfd_update_block_timestamps(op_on_bus0_block_list, safety.hyundai_canfd_bus0_timestamps, HYUNDAI_CANFD_BUS0_BLOCK_COUNT, msg->addr);
     hyundai_canfd_update_block_timestamps(op_on_bus2_block_list, safety.hyundai_canfd_bus2_timestamps, HYUNDAI_CANFD_BUS2_BLOCK_COUNT, msg->addr);

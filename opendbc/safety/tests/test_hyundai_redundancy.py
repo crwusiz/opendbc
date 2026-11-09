@@ -7,6 +7,23 @@ import opendbc.safety.tests.common as common
 from opendbc.safety.tests.libsafety.libsafety_py import make_CANPacket
 
 
+# TX destination bus -> address and original message frequency. These fixtures
+# preserve the forwarding policy independently of the lookup implementation.
+BLOCK_FREQUENCIES = {
+  0: {
+    0x50: 100, 0x51: 100, 0x110: 100, 0x11A: 100, 0x12A: 100,
+    0x160: 50, 0x161: 20, 0x162: 20, 0x1BA: 20, 0x1E5: 20,
+    0x1A0: 50, 0x1FA: 10, 0x1DA: 1, 0x1E0: 20, 0x1EA: 20,
+    0x200: 20, 0x2A4: 20, 0x362: 10, 0x345: 5, 0x4A3: 5,
+    0x4B4: 10, 0xCB: 100, 0x1CF: 50, 0x1AA: 50,
+  },
+  2: {
+    0x4A3: 5, 0x175: 50, 0x1FA: 10, 0x1CF: 50, 0x1AA: 50,
+    0xEA: 100, 0x2AF: 10, 0x4B9: 5, 0x7C4: 5,
+  },
+}
+
+
 class TestHyundaiRedundancy(common.SafetyTestBase):
   SAFETY_MODEL = CarParams.SafetyModel.hyundaiCanfd
 
@@ -92,6 +109,81 @@ class TestHyundaiRedundancy(common.SafetyTestBase):
               expected = -1 if elapsed < 40000 else destination
               self.assertEqual(self.safety.safety_fwd_hook(bus, 0x1CF), expected)
               self._assert_copies_match()
+
+  def test_every_forwarding_entry_maps_to_its_timeout_and_timestamp(self):
+    # Isolate the dynamic forwarding policy from the generic relay whitelist.
+    for copy in (self.safety.safety_a, self.safety.safety_b):
+      copy.setup.current_safety_config.tx_msgs_len = 0
+
+    for destination, frequencies in BLOCK_FREQUENCIES.items():
+      source = 2 - destination
+      addresses = sorted(frequencies)
+      neighbors = {neighbor for addr in addresses for neighbor in (addr - 1, addr + 1)}
+      candidates = sorted(set(addresses) | neighbors)
+      for index, addr in enumerate(addresses):
+        timeout = 1000000 // frequencies[addr] + 20000
+        for tx_time in (1000000, 0xFFFFFFF0):
+          # Timestamp slots follow the sorted metadata addresses. All other
+          # slots are older than the longest timeout, including near rollover.
+          stale_time = (tx_time - 2000000) & 0xFFFFFFFF
+          for copy in (self.safety.safety_a, self.safety.safety_b):
+            timestamps = getattr(copy.state, f"hyundai_canfd_bus{destination}_timestamps")
+            self.assertEqual(len(timestamps), len(addresses))
+            for slot in range(len(timestamps)):
+              timestamps[slot] = stale_time
+            timestamps[index] = tx_time
+
+          for elapsed in (0, timeout - 1, timeout, timeout + 1):
+            with self.subTest(destination=destination, addr=hex(addr), tx_time=tx_time, elapsed=elapsed):
+              self.safety.set_timer((tx_time + elapsed) & 0xFFFFFFFF)
+              for candidate in candidates:
+                blocked = (candidate == addr and elapsed < timeout) or (source == 0 and candidate == 0x4B9)
+                self.assertEqual(self.safety.safety_fwd_hook(source, candidate), -1 if blocked else destination,
+                                 f"unexpected forwarding for {candidate:#x}")
+              self._assert_copies_match()
+
+  def test_forwarding_lookup_for_all_standard_addresses(self):
+    tx_time = 1000000
+    for copy in (self.safety.safety_a, self.safety.safety_b):
+      copy.setup.current_safety_config.tx_msgs_len = 0
+      for destination in BLOCK_FREQUENCIES:
+        timestamps = getattr(copy.state, f"hyundai_canfd_bus{destination}_timestamps")
+        for index in range(len(timestamps)):
+          timestamps[index] = tx_time
+
+    for elapsed in (0, 1020001):
+      self.safety.set_timer(tx_time + elapsed)
+      for destination, frequencies in BLOCK_FREQUENCIES.items():
+        source = 2 - destination
+        for addr in range(0x800):
+          with self.subTest(destination=destination, addr=hex(addr), elapsed=elapsed):
+            blocked = (elapsed == 0 and addr in frequencies) or (source == 0 and addr == 0x4B9)
+            self.assertEqual(self.safety.safety_fwd_hook(source, addr), -1 if blocked else destination)
+      self._assert_copies_match()
+
+  def test_tx_updates_only_matching_timestamps_when_allowed(self):
+    tx_time = 1000000
+    self.safety.set_controls_allowed(True)
+    self.safety.set_timer(tx_time)
+    self.assertTrue(self._tx(self._resume_msg()))
+
+    expected = {}
+    for destination, frequencies in BLOCK_FREQUENCIES.items():
+      expected[destination] = [tx_time if addr == 0x1CF else 0 for addr in sorted(frequencies)]
+      for copy in (self.safety.safety_a, self.safety.safety_b):
+        self.assertEqual(list(getattr(copy.state, f"hyundai_canfd_bus{destination}_timestamps")), expected[destination])
+    self._assert_copies_match()
+
+    # Neither a disallowed resume nor a message on an unlisted TX bus refreshes
+    # the forwarding suppression window.
+    for controls_allowed, bus in ((False, 2), (True, 0)):
+      self.safety.set_controls_allowed(controls_allowed)
+      self.safety.set_timer(tx_time + 1)
+      self.assertFalse(self._tx(make_CANPacket(0x1CF, bus, b"\x00\x00\x01\x00\x00\x00\x00\x00")))
+      for destination in BLOCK_FREQUENCIES:
+        for copy in (self.safety.safety_a, self.safety.safety_b):
+          self.assertEqual(list(getattr(copy.state, f"hyundai_canfd_bus{destination}_timestamps")), expected[destination])
+      self._assert_copies_match()
 
   def test_forwarding_timestamp_corruption_fails_closed(self):
     self.safety.set_controls_allowed(True)

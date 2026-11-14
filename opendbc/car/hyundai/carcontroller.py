@@ -16,9 +16,9 @@ LongCtrlState = structs.CarControl.Actuators.LongControlState
 
 # EPS faults if you apply torque while the steering angle is above 90 degrees for more than 1 second
 # All slightly below EPS thresholds to avoid fault
-MAX_FAULT_ANGLE = 85
-MAX_FAULT_ANGLE_FRAMES = 89
-MAX_FAULT_ANGLE_CONSECUTIVE_FRAMES = 2
+MAX_ANGLE = 85
+MAX_ANGLE_FRAMES = 89
+MAX_ANGLE_CONSECUTIVE_FRAMES = 2
 
 # On some HKG CAN and CAN FD non-CANFD_ALT_BUTTONS, the cancel button (CF_Clu_CruiseSwState / CRUISE_BUTTONS = 4) is
 # a pause/resume toggle, not a dedicated cancel. Firing it mid-brake inadvertently can cause a re-enable attempt
@@ -76,9 +76,9 @@ class CarController(CarControllerBase):
 
     # TODO: needed for angle control cars?
     # >90 degree steering fault prevention
-    self.angle_limit_counter, apply_steer_req = common_fault_avoidance(abs(CS.out.steeringAngleDeg) >= MAX_FAULT_ANGLE, CC.latActive,
-                                                                       self.angle_limit_counter, MAX_FAULT_ANGLE_FRAMES,
-                                                                       MAX_FAULT_ANGLE_CONSECUTIVE_FRAMES)
+    self.angle_limit_counter, apply_steer_req = common_fault_avoidance(abs(CS.out.steeringAngleDeg) >= MAX_ANGLE, CC.latActive,
+                                                                       self.angle_limit_counter, MAX_ANGLE_FRAMES,
+                                                                       MAX_ANGLE_CONSECUTIVE_FRAMES)
 
     # steering torque
     if not self.CP.flags & HyundaiFlags.CANFD_ANGLE_STEER_MSG:

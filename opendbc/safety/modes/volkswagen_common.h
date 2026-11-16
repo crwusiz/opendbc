@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAFETY_MODES_VOLKSWAGEN_COMMON_H
+#define SAFETY_MODES_VOLKSWAGEN_COMMON_H
 
 extern const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL;
 const uint16_t FLAG_VOLKSWAGEN_LONG_CONTROL = 1;
@@ -88,10 +89,35 @@ static uint32_t volkswagen_mxb_compute_crc(const CANPacket_t *msg) {
   return volkswagen_compute_crc(msg, GET_LEN(msg), salt);
 }
 
+// Signal: TSK_06.TSK_Status (MQB), Motor_51.TSK_Status (MEB)
+static void volkswagen_tsk_status_check(int acc_status, bool stock_acc) {
+  bool cruise_engaged = (acc_status == 3) || (acc_status == 4) || (acc_status == 5);
+  safety.acc_main_on = cruise_engaged || (acc_status == 2);
+
+  // When using stock ACC, enter controls on rising edge of stock ACC engage, exit on disengage
+  if (stock_acc) {
+    pcm_cruise_check(cruise_engaged);
+  }
+
+  // Always exit controls on main switch off
+  if (!safety.acc_main_on) {
+    safety.controls_allowed = false;
+  }
+}
+
+// Enter controls on falling edge of Set or Resume with main switch on
+static void volkswagen_set_resume_check(bool set_button, bool resume_button) {
+  if ((safety.volkswagen_set_button_prev && !set_button) || (safety.volkswagen_resume_button_prev && !resume_button)) {
+    safety.controls_allowed = safety.acc_main_on;
+  }
+  safety.volkswagen_set_button_prev = set_button;
+  safety.volkswagen_resume_button_prev = resume_button;
+}
+
 static int volkswagen_mlb_mqb_driver_input_torque(const CANPacket_t *msg) {
   // Signal: LH_EPS_03.EPS_Lenkmoment (absolute torque)
   // Signal: LH_EPS_03.EPS_VZ_Lenkmoment (direction)
-  int torque_driver_new = msg->data[5] | ((msg->data[6] & 0x1FU) << 8);
+  int torque_driver_new = GET_BYTES_LE(msg, 5, 2) & 0x1FFFU;
   bool sign = GET_BIT(msg, 55U);
   if (sign) {
     torque_driver_new *= -1;
@@ -102,10 +128,12 @@ static int volkswagen_mlb_mqb_driver_input_torque(const CANPacket_t *msg) {
 static int volkswagen_mlb_mqb_steering_control_torque(const CANPacket_t *msg) {
   // Signal: HCA_01.HCA_01_LM_Offset (absolute torque)
   // Signal: HCA_01.HCA_01_LM_OffSign (direction)
-  int desired_torque = msg->data[2] | ((msg->data[3] & 0x1U) << 8);
+  int desired_torque = GET_BYTES_LE(msg, 2, 2) & 0x1FFU;
   bool sign = GET_BIT(msg, 31U);
   if (sign) {
     desired_torque *= -1;
   }
   return desired_torque;
 }
+
+#endif  // SAFETY_MODES_VOLKSWAGEN_COMMON_H

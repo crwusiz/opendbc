@@ -16,6 +16,8 @@ from pathlib import Path
 import tree_sitter_c as ts_c
 import tree_sitter as ts
 
+from opendbc.safety.tests.libsafety.libsafety_py import single_precision_flags
+
 
 ROOT = Path(__file__).resolve().parents[3]
 SAFETY_DIR = ROOT / "opendbc" / "safety"
@@ -461,7 +463,7 @@ def compile_mutated_library(preprocessed_source, sites, output_so):
 
   subprocess.run([
     "cc", "-shared", "-fPIC", "-w", "-fno-builtin", "-std=gnu11",
-    "-g0", "-O0", "-DALLOW_DEBUG",
+    "-g0", "-O0", "-DALLOW_DEBUG", *single_precision_flags(),
     str(mutation_source), "-o", str(output_so),
   ], cwd=ROOT, check=True)
 
@@ -606,9 +608,9 @@ def main():
 
     # TODO: fix these surviving mutants and delete this block
     known_survivors = {
-      ("opendbc/safety/lateral.h", 188, "boundary"),
-      ("opendbc/safety/lateral.h", 218, "boundary"),
-      ("opendbc/safety/lateral.h", 219, "boundary"),
+      ("opendbc/safety/lateral.h", 199, "boundary"),
+      ("opendbc/safety/lateral.h", 248, "boundary"),
+      ("opendbc/safety/lateral.h", 249, "boundary"),
     }
     survivors = [r for r in survivors if (str(r.site.origin_file.relative_to(ROOT)), r.site.origin_line, r.site.mutator) not in known_survivors]
 

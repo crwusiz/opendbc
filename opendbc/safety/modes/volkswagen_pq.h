@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAFETY_MODES_VOLKSWAGEN_PQ_H
+#define SAFETY_MODES_VOLKSWAGEN_PQ_H
 
 #include "opendbc/safety/declarations.h"
 #include "opendbc/safety/modes/volkswagen_common.h"
@@ -94,7 +95,7 @@ static void volkswagen_pq_rx_hook(const CANPacket_t *msg) {
   // Signal: Lenkhilfe_3.LH3_LM (absolute torque)
   // Signal: Lenkhilfe_3.LH3_LMSign (direction)
   if (msg_matches(msg, MSG_LENKHILFE_3, 0U)) {
-    int torque_driver_new = msg->data[2] | ((msg->data[3] & 0x3U) << 8);
+    int torque_driver_new = GET_BYTES_LE(msg, 2, 2) & 0x3FFU;
     int sign = (msg->data[3] & 0x4U) >> 2;
     if (sign == 1) {
       torque_driver_new *= -1;
@@ -116,13 +117,7 @@ static void volkswagen_pq_rx_hook(const CANPacket_t *msg) {
       // If ACC main switch is on, enter controls on falling edge of Set or Resume
       // Signal: GRA_Neu.GRA_Neu_Setzen
       // Signal: GRA_Neu.GRA_Neu_Recall
-      bool set_button = GET_BIT(msg, 16U);
-      bool resume_button = GET_BIT(msg, 17U);
-      if ((safety.volkswagen_set_button_prev && !set_button) || (safety.volkswagen_resume_button_prev && !resume_button)) {
-        safety.controls_allowed = safety.acc_main_on;
-      }
-      safety.volkswagen_set_button_prev = set_button;
-      safety.volkswagen_resume_button_prev = resume_button;
+      volkswagen_set_resume_check(GET_BIT(msg, 16U), GET_BIT(msg, 17U));
       // Exit controls on rising edge of Cancel, override Set/Resume if present simultaneously
       // Signal: GRA_ACC_01.GRA_Abbrechen
       if (GET_BIT(msg, 9U)) {
@@ -146,7 +141,7 @@ static void volkswagen_pq_rx_hook(const CANPacket_t *msg) {
 
   // Signal: Motor_2.MO2_BLS
   if (msg_matches(msg, MSG_MOTOR_2, 0U)) {
-    safety.brake_pressed = (msg->data[2] & 0x1U);
+    safety.brake_pressed = GET_BIT(msg, 16U);
   }
 }
 
@@ -176,7 +171,7 @@ static bool volkswagen_pq_tx_hook(const CANPacket_t *msg) {
   // Signal: HCA_1.LM_Offset (absolute torque)
   // Signal: HCA_1.LM_Offsign (direction)
   if (msg->addr == MSG_HCA_1) {
-    int desired_torque = msg->data[2] | ((msg->data[3] & 0x7FU) << 8);
+    int desired_torque = GET_BYTES_LE(msg, 2, 2) & 0x7FFFU;
     desired_torque = desired_torque / 32;  // DBC scale from PQ network to centi-Nm
     int sign = (msg->data[3] & 0x80U) >> 7;
     if (sign == 1) {
@@ -195,7 +190,7 @@ static bool volkswagen_pq_tx_hook(const CANPacket_t *msg) {
   // To avoid floating point math, scale upward and compare to pre-scaled safety m/s2 boundaries
   if (msg->addr == MSG_ACC_SYSTEM) {
     // Signal: ACC_System.ACS_Sollbeschl (acceleration in m/s2, scale 0.005, offset -7.22)
-    int desired_accel = ((((msg->data[4] & 0x7U) << 8) | msg->data[3]) * 5U) - 7220U;
+    int desired_accel = ((GET_BYTES_LE(msg, 3, 2) & 0x7FFU) * 5U) - 7220U;
 
     if (longitudinal_accel_checks(desired_accel, VOLKSWAGEN_PQ_LONG_LIMITS)) {
       tx = false;
@@ -223,3 +218,5 @@ const safety_hooks volkswagen_pq_hooks = {
   .get_checksum = volkswagen_pq_get_checksum,
   .compute_checksum = volkswagen_pq_compute_checksum,
 };
+
+#endif  // SAFETY_MODES_VOLKSWAGEN_PQ_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAFETY_MODES_ELM327_H
+#define SAFETY_MODES_ELM327_H
 
 #include "opendbc/safety/declarations.h"
 #include "opendbc/safety/modes/defaults.h"
@@ -36,6 +37,7 @@ static bool elm327_tx_hook(const CANPacket_t *msg) {
 // If safety_param == 0, bus 1 is multiplexed to the OBD-II port
 const safety_hooks elm327_hooks = {
   .init = nooutput_init,
-  .rx = default_rx_hook,
   .tx = elm327_tx_hook,
 };
+
+#endif  // SAFETY_MODES_ELM327_H

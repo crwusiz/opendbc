@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAFETY_MODES_SUBARU_PREGLOBAL_H
+#define SAFETY_MODES_SUBARU_PREGLOBAL_H
 
 #include "opendbc/safety/declarations.h"
 
@@ -28,7 +29,7 @@ static void subaru_preglobal_rx_hook(const CANPacket_t *msg) {
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if (msg_matches(msg, MSG_SUBARU_PG_CruiseControl, SUBARU_PG_MAIN_BUS)) {
-    bool cruise_engaged = (msg->data[6] >> 1) & 1U;
+    bool cruise_engaged = GET_BIT(msg, 49U);
     pcm_cruise_check(cruise_engaged);
   }
 
@@ -64,7 +65,7 @@ static bool subaru_preglobal_tx_hook(const CANPacket_t *msg) {
     int desired_torque = ((GET_BYTES_LE(msg, 0, 4) >> 8) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    bool steer_req = (msg->data[3] >> 0) & 1U;
+    bool steer_req = GET_BIT(msg, 24U);
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, SUBARU_PG_STEERING_LIMITS)) {
       tx = false;
@@ -100,3 +101,5 @@ const safety_hooks subaru_preglobal_hooks = {
   .rx = subaru_preglobal_rx_hook,
   .tx = subaru_preglobal_tx_hook,
 };
+
+#endif  // SAFETY_MODES_SUBARU_PREGLOBAL_H

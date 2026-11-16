@@ -1,3 +1,6 @@
+#ifndef SAFETY_MODES_CHRYSLER_CUSW_H
+#define SAFETY_MODES_CHRYSLER_CUSW_H
+
 #include "opendbc/safety/modes/chrysler_common.h"
 
 static safety_config chrysler_cusw_init(uint16_t param) {
@@ -23,7 +26,7 @@ static safety_config chrysler_cusw_init(uint16_t param) {
 static void chrysler_cusw_rx_hook(const CANPacket_t *msg) {
   if (msg_matches(msg, 0x1ECU, 0U)) {
     // Signal: EPS_STATUS.TORQUE_MOTOR
-    int torque_meas_new = ((msg->data[3] & 0xFU) << 8) + msg->data[4] - 2048U;
+    int torque_meas_new = (GET_BYTES_BE(msg, 3, 2) & 0xFFFU) - 2048U;
     update_sample(&safety.torque_meas, torque_meas_new);
   }
 
@@ -35,7 +38,7 @@ static void chrysler_cusw_rx_hook(const CANPacket_t *msg) {
 
   if (msg_matches(msg, 0x1E4U, 0U)) {
     // Signal: BRAKE_1.VEHICLE_SPEED
-    safety.vehicle_moving = (((msg->data[4] & 0x7U) << 8) + msg->data[5]) != 0U;
+    safety.vehicle_moving = (GET_BYTES_BE(msg, 4, 2) & 0x7FFU) != 0U;
   }
 
   if (msg_matches(msg, 0x1FEU, 0U)) {
@@ -102,3 +105,5 @@ const safety_hooks chrysler_cusw_hooks = {
   .get_checksum = chrysler_get_checksum,
   .compute_checksum = chrysler_compute_checksum,
 };
+
+#endif  // SAFETY_MODES_CHRYSLER_CUSW_H

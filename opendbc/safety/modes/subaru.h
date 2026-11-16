@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAFETY_MODES_SUBARU_H
+#define SAFETY_MODES_SUBARU_H
 
 #include "opendbc/safety/declarations.h"
 
@@ -36,20 +37,20 @@
 #define SUBARU_CAM_BUS  2U
 
 #define SUBARU_BASE_TX_MSGS(alt_bus, lkas_msg) \
-  {lkas_msg,                     SUBARU_MAIN_BUS, 8, .check_relay = true},  \
+  {(lkas_msg),                   SUBARU_MAIN_BUS, 8, .check_relay = true},  \
   {MSG_SUBARU_ES_DashStatus,     SUBARU_MAIN_BUS, 8, .check_relay = true},  \
   {MSG_SUBARU_ES_LKAS_State,     SUBARU_MAIN_BUS, 8, .check_relay = true},  \
   {MSG_SUBARU_ES_Infotainment,   SUBARU_MAIN_BUS, 8, .check_relay = true},  \
 
 #define SUBARU_COMMON_TX_MSGS(alt_bus) \
-  {MSG_SUBARU_ES_Distance, alt_bus, 8, .check_relay = false}, \
+  {MSG_SUBARU_ES_Distance, (alt_bus), 8, .check_relay = false}, \
 
 #define SUBARU_COMMON_RX_CHECKS(alt_bus)                                                                                                         \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, 100U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, 20U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_Wheel_Speeds,    (alt_bus),       8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_Brake_Status,    (alt_bus),       8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_CruiseControl,   (alt_bus),       8, 20U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
 
 static uint32_t subaru_get_checksum(const CANPacket_t *msg) {
   return (uint8_t)msg->data[0];
@@ -80,7 +81,7 @@ static void subaru_rx_hook(const CANPacket_t *msg) {
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if (msg_matches(msg, MSG_SUBARU_CruiseControl, alt_main_bus)) {
-    bool cruise_engaged = (msg->data[5] >> 1) & 1U;
+    bool cruise_engaged = GET_BIT(msg, 41U);
     pcm_cruise_check(cruise_engaged);
   }
 
@@ -92,12 +93,10 @@ static void subaru_rx_hook(const CANPacket_t *msg) {
     uint32_t fl = (GET_BYTES_LE(msg, 6, 2) >> 3) & 0x1FFFU;
 
     safety.vehicle_moving = (fr | rr | rl | fl) != 0U;
-
-    UPDATE_VEHICLE_SPEED((fr + rr + rl + fl) / 4.0 * 0.057 * KPH_TO_MS);
   }
 
   if (msg_matches(msg, MSG_SUBARU_Brake_Status, alt_main_bus)) {
-    safety.brake_pressed = (msg->data[7] >> 6) & 1U;
+    safety.brake_pressed = GET_BIT(msg, 62U);
   }
 
   if (msg_matches(msg, MSG_SUBARU_Throttle, SUBARU_MAIN_BUS)) {
@@ -127,7 +126,7 @@ static bool subaru_tx_hook(const CANPacket_t *msg) {
     int desired_torque = ((GET_BYTES_LE(msg, 0, 4) >> 16) & 0x1FFFU);
     desired_torque = -1 * to_signed(desired_torque, 13);
 
-    bool steer_req = (msg->data[3] >> 5) & 1U;
+    bool steer_req = GET_BIT(msg, 29U);
 
     const TorqueSteeringLimits limits = safety_setup.subaru_gen2 ? SUBARU_GEN2_STEERING_LIMITS : SUBARU_STEERING_LIMITS;
     violation |= steer_torque_cmd_checks(desired_torque, steer_req, limits);
@@ -136,7 +135,7 @@ static bool subaru_tx_hook(const CANPacket_t *msg) {
   // check es_distance cruise_throttle limits
   if (msg->addr == MSG_SUBARU_ES_Distance) {
     int cruise_throttle = (GET_BYTES_LE(msg, 2, 2) & 0x1FFFU);
-    bool cruise_cancel = (msg->data[7] >> 0) & 1U;
+    bool cruise_cancel = GET_BIT(msg, 56U);
 
     // If openpilot is not controlling long, only allow ES_Distance for cruise cancel requests,
     // (when Cruise_Cancel is true, and Cruise_Throttle is inactive)
@@ -192,3 +191,5 @@ const safety_hooks subaru_hooks = {
   .get_checksum = subaru_get_checksum,
   .compute_checksum = subaru_compute_checksum,
 };
+
+#endif  // SAFETY_MODES_SUBARU_H

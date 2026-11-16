@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SAFETY_MODES_BYD_H
+#define SAFETY_MODES_BYD_H
 
 #include "opendbc/safety/declarations.h"
 
@@ -20,35 +21,31 @@ static uint32_t byd_compute_checksum(const CANPacket_t *msg) {
 }
 
 static void byd_rx_hook(const CANPacket_t *msg) {
-  if (msg->bus == 0U) {
-    // Steering angle: 0.1 deg/LSB, signed
-    if (msg->addr == 0x11FU) {
-      int angle_meas_new = to_signed((msg->data[1] << 8) | msg->data[0], 16);  // STEER_ANGLE_2
-      update_sample(&safety.angle_meas, angle_meas_new);
-    }
-
-    // Vehicle speed: 0.1 kph/LSB
-    if (msg->addr == 0x1F0U) {
-      int speed = (msg->data[1] << 8) | msg->data[0];  // WHEELSPEED_CLEAN
-      safety.vehicle_moving = speed > 0;
-      UPDATE_VEHICLE_SPEED(speed * 0.1 * KPH_TO_MS);
-    }
-
-    // Gas and brake pressed
-    if (msg->addr == 0x242U) {
-      safety.brake_pressed = (msg->data[4] >> 5) & 0x1U;   // BRAKE_PRESSED
-      safety.gas_pressed = (msg->data[3] & 0x7FU) > 0U;    // RAW_THROTTLE
-    }
+  // Steering angle: 0.1 deg/LSB, signed
+  if (msg_matches(msg, 0x11FU, 0U)) {
+    int angle_meas_new = to_signed(GET_BYTES_LE(msg, 0, 2), 16);  // STEER_ANGLE_2
+    update_sample(&safety.angle_meas, angle_meas_new);
   }
 
-  if (msg->bus == 2U) {
-    // Cruise state
-    if (msg->addr == 0x32DU) {
-      // ACC_STATE: 0=OFF, 2=ACC_ON, 3=ACC_ACTIVE, 5=FORCE_ACCEL, 7=ERROR
-      uint8_t acc_state = (msg->data[2] >> 3) & 0x7U;
-      bool acc_on = (acc_state == 3U) || (acc_state == 5U);
-      pcm_cruise_check(acc_on);
-    }
+  // Vehicle speed: 0.1 kph/LSB
+  if (msg_matches(msg, 0x1F0U, 0U)) {
+    int speed = GET_BYTES_LE(msg, 0, 2);  // WHEELSPEED_CLEAN
+    safety.vehicle_moving = speed > 0;
+    UPDATE_VEHICLE_SPEED(speed * 0.1f * KPH_TO_MS);
+  }
+
+  // Gas and brake pressed
+  if (msg_matches(msg, 0x242U, 0U)) {
+    safety.brake_pressed = GET_BIT(msg, 37U);   // BRAKE_PRESSED
+    safety.gas_pressed = (msg->data[3] & 0x7FU) > 0U;    // RAW_THROTTLE
+  }
+
+  // Cruise state
+  if (msg_matches(msg, 0x32DU, 2U)) {
+    // ACC_STATE: 0=OFF, 2=ACC_ON, 3=ACC_ACTIVE, 5=FORCE_ACCEL, 7=ERROR
+    uint8_t acc_state = (msg->data[2] >> 3) & 0x7U;
+    bool acc_on = (acc_state == 3U) || (acc_state == 5U);
+    pcm_cruise_check(acc_on);
   }
 }
 
@@ -61,17 +58,17 @@ static bool byd_tx_hook(const CANPacket_t *msg) {
 
   // NOTE: based off BYD_ATTO_3 to match openpilot
   const AngleSteeringParams BYD_STEERING_PARAMS = {
-    .slip_factor = -0.0006166479109059387,  // calc_slip_factor(VM)
-    .steer_ratio = 14.8,
-    .wheelbase = 2.72,
+    .slip_factor = -0.0006166479109059387f,  // calc_slip_factor(VM)
+    .steer_ratio = 14.8f,
+    .wheelbase = 2.72f,
   };
 
   bool tx = true;
 
   // Steering control: 0.1 deg/LSB, signed
   if (msg->addr == 0x1E2U) {
-    int desired_angle = to_signed((msg->data[4] << 8) | msg->data[3], 16);  // STEER_ANGLE
-    bool steer_req = ((msg->data[2] >> 5) & 0x1U) != 0U;                    // STEER_REQ
+    int desired_angle = to_signed(GET_BYTES_LE(msg, 3, 2), 16);  // STEER_ANGLE
+    bool steer_req = GET_BIT(msg, 21U);  // STEER_REQ
 
     if (steer_angle_cmd_checks_vm(desired_angle, steer_req, BYD_STEERING_LIMITS, BYD_STEERING_PARAMS)) {
       tx = false;
@@ -81,9 +78,9 @@ static bool byd_tx_hook(const CANPacket_t *msg) {
   // Only allow cancel (ACC_ON_BTN) while stock cruise is engaged, or button release.
   if (msg->addr == 0x3B0U) {
     bool other_buttons = ((msg->data[0] & 0x58U) != 0U) ||  // SET, RES, LKAS_ON
-                         ((msg->data[1] & 0x80U) != 0U) ||  // DEC_DISTANCE
-                         ((msg->data[2] & 0x1U) != 0U);     // INC_DISTANCE
-    bool cancel = (msg->data[2] & 0x8U) != 0U;             // ACC_ON_BTN
+                         GET_BIT(msg, 15U) ||               // DEC_DISTANCE
+                         GET_BIT(msg, 16U);                 // INC_DISTANCE
+    bool cancel = GET_BIT(msg, 19U);  // ACC_ON_BTN
     tx = !other_buttons && (!cancel || safety.cruise_engaged_prev);
   }
 
@@ -117,3 +114,5 @@ const safety_hooks byd_hooks = {
   .get_checksum = byd_get_checksum,
   .compute_checksum = byd_compute_checksum,
 };
+
+#endif  // SAFETY_MODES_BYD_H

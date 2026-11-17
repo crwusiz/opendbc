@@ -65,60 +65,37 @@ class RadarInterface(RadarInterfaceBase):
       self.radar_msg_count = RADAR_MSG_COUNT
 
     self.radar_tracks = Params().get_bool("RadarTrackEnable")
-    self.updated_tracks = set()
     self.updated_scc = set()
-    self.rcp_tracks = get_radar_can_parser(CP, self.radar_tracks, self.radar_start_addr, self.radar_msg_count)
-    self.rcp_scc = get_radar_can_parser_scc(CP)
-    self.trigger_msg_scc = 416 if self.canfd else 0x420
-
-    self.trigger_msg_tracks = self.radar_start_addr + self.radar_msg_count - 1
-
-    self.radar_off_can = CP.radarUnavailable
+    self.rcp = None if CP.radarUnavailable else get_radar_can_parser(CP, self.radar_tracks, self.radar_start_addr, self.radar_msg_count)
+    self.rcp_scc = None if CP.radarUnavailable else get_radar_can_parser_scc(CP)
+    self.trigger_msg = self.radar_start_addr + self.radar_msg_count - 1
 
     self.vRel_last = 0
     self.dRel_last = 0
 
-    self.frame = 0
-
-
   def update(self, can_strings):
-    self.frame += 1
-    if self.radar_off_can or (self.rcp_tracks is None and self.rcp_scc is None):
-      return super().update(None)
-
     if self.rcp_scc is not None:
       vls_s = self.rcp_scc.update(can_strings)
       self.updated_scc.update(vls_s)
-      if not self.radar_tracks and self.frame % 5 == 0:
-        self._update_scc(self.updated_scc)
-        self.updated_scc.clear()
-        ret = structs.RadarData()
-        if not self.rcp_scc.can_valid:
-          ret.errors.canError = True
-        ret.points = list(self.pts.values())
-        return ret
-    if self.radar_tracks and self.rcp_tracks is not None:
-      vls_t = self.rcp_tracks.update(can_strings)
-      self.updated_tracks.update(vls_t)
-      if self.trigger_msg_tracks in self.updated_tracks:
-        self._update(self.updated_tracks)
-        self._update_scc(self.updated_scc)
-        self.updated_scc.clear()
-        self.updated_tracks.clear()
-        ret = structs.RadarData()
-        if not self.rcp_tracks.can_valid:
-          ret.errors.canError = True
-        ret.points = list(self.pts.values())
-        return ret
 
-    return None
+    ret = super().update(can_strings)
+    if self.rcp is None and self.rcp_scc is not None and ret is not None:
+      self._update_scc(self.updated_scc)
+      self.updated_scc.clear()
+      if not self.rcp_scc.can_valid:
+        ret.errors.canError = True
+      ret.points = list(self.pts.values())
+    return ret
 
+  def _update(self, rcp, updated_messages):
+    ret = structs.RadarData()
+    if not rcp.can_valid:
+      ret.errors.canError = True
 
-  def _update(self, updated_messages):
     t_id = 32
     for addr in range(self.radar_start_addr, self.radar_start_addr + self.radar_msg_count):
 
-      msg = self.rcp_tracks.vl[f"RADAR_TRACK_{addr:x}"]
+      msg = rcp.vl[f"RADAR_TRACK_{addr:x}"]
 
       if self.radar_group1:
         valid = msg['VALID_CNT1'] > 10
@@ -154,7 +131,7 @@ class RadarInterface(RadarInterfaceBase):
     # radar group1은 하나의 msg에 2개의 레이더가 들어있음.
     if self.radar_group1:
       for addr in range(self.radar_start_addr, self.radar_start_addr + self.radar_msg_count):
-        msg = self.rcp_tracks.vl[f"RADAR_TRACK_{addr:x}"]
+        msg = rcp.vl[f"RADAR_TRACK_{addr:x}"]
 
         valid = msg['VALID_CNT2'] > 10
         if valid:
@@ -170,6 +147,12 @@ class RadarInterface(RadarInterfaceBase):
             del self.pts[t_id]
 
         t_id += 1
+
+    if self.rcp_scc is not None:
+      self._update_scc(self.updated_scc)
+      self.updated_scc.clear()
+    ret.points = list(self.pts.values())
+    return ret
 
   def _update_scc(self, updated_messages):
     cpt = self.rcp_scc.vl

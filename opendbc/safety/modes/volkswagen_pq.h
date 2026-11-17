@@ -33,12 +33,12 @@ static uint8_t volkswagen_pq_get_counter(const CANPacket_t *msg) {
 }
 
 static uint32_t volkswagen_pq_compute_checksum(const CANPacket_t *msg) {
-  int len = GET_LEN(msg);
+  uint32_t len = GET_LEN(msg);
   uint8_t checksum = 0U;
-  int checksum_byte = (msg->addr == MSG_MOTOR_5) ? 7 : 0;
+  uint32_t checksum_byte = (msg->addr == MSG_MOTOR_5) ? 7U : 0U;
 
   // Simple XOR over the payload, except for the byte where the checksum lives.
-  for (int i = 0; i < len; i++) {
+  for (uint32_t i = 0U; i < len; i++) {
     if (i != checksum_byte) {
       checksum ^= (uint8_t)msg->data[i];
     }
@@ -95,11 +95,7 @@ static void volkswagen_pq_rx_hook(const CANPacket_t *msg) {
   // Signal: Lenkhilfe_3.LH3_LM (absolute torque)
   // Signal: Lenkhilfe_3.LH3_LMSign (direction)
   if (msg_matches(msg, MSG_LENKHILFE_3, 0U)) {
-    int torque_driver_new = GET_BYTES_LE(msg, 2, 2) & 0x3FFU;
-    int sign = (msg->data[3] & 0x4U) >> 2;
-    if (sign == 1) {
-      torque_driver_new *= -1;
-    }
+    int torque_driver_new = sign_magnitude(GET_BYTES_LE(msg, 2, 2) & 0x3FFU, GET_BIT(msg, 26U));
     update_sample(&safety.torque_driver, torque_driver_new);
   }
 
@@ -171,12 +167,8 @@ static bool volkswagen_pq_tx_hook(const CANPacket_t *msg) {
   // Signal: HCA_1.LM_Offset (absolute torque)
   // Signal: HCA_1.LM_Offsign (direction)
   if (msg->addr == MSG_HCA_1) {
-    int desired_torque = GET_BYTES_LE(msg, 2, 2) & 0x7FFFU;
-    desired_torque = desired_torque / 32;  // DBC scale from PQ network to centi-Nm
-    int sign = (msg->data[3] & 0x80U) >> 7;
-    if (sign == 1) {
-      desired_torque *= -1;
-    }
+    // DBC scale from PQ network to centi-Nm
+    int desired_torque = sign_magnitude((GET_BYTES_LE(msg, 2, 2) & 0x7FFFU) / 32U, GET_BIT(msg, 31U));
 
     uint32_t hca_status = ((msg->data[1] >> 4) & 0xFU);
     bool steer_req = ((hca_status == 5U) || (hca_status == 7U));

@@ -20,8 +20,7 @@
   .has_steer_req_tolerance = true, \
 }
 
-extern const LongitudinalLimits HYUNDAI_LONG_LIMITS;
-const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
+static const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
   .max_accel = 200,   // 1/100 m/s2
   .min_accel = -350,  // 1/100 m/s2
 };
@@ -45,13 +44,21 @@ const LongitudinalLimits HYUNDAI_LONG_LIMITS = {
   {0x483, 0, 8}, // FCA12 Bus 0
   */
 
-#define HYUNDAI_COMMON_RX_CHECKS(legacy)                                                                                                                                               \
-  {.msg = {{0x260, 0, 8, 100U, .max_counter = 3U, .ignore_quality_flag = true},                                                                                           \
-           {0x371, 0, 8, 100U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }}},                                                    \
-  {.msg = {{0x386, 0, 8, 100U, .ignore_checksum = (legacy), .ignore_counter = (legacy), .max_counter = (legacy) ? 0U : 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}}, \
-  {.msg = {{0x394, 0, 8, 100U, .ignore_checksum = (legacy), .ignore_counter = (legacy), .max_counter = (legacy) ? 0U : 7U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
-  {.msg = {{0x251, 0, 8, 50U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }, { 0 }}},                                              \
-  {.msg = {{0x4F1, 0, 4, 50U, .ignore_checksum = true, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},                                                  \
+#define HYUNDAI_COMMON_RX_CHECKS                                                                                                       \
+  {.msg = {{0x260, 0, 8, 100U, .max_counter = 3U, .ignore_quality_flag = true},                                                         \
+           {0x371, 0, 8, 100U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }}},                  \
+  {.msg = {{0x251, 0, 8, 50U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }, { 0 }}},            \
+  {.msg = {{0x4F1, 0, 4, 50U, .ignore_checksum = true, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},                \
+
+// WHL_SPD11 and TCS13
+#define HYUNDAI_WHL_SPD_TCS_RX_CHECKS                                                                                                  \
+  {.msg = {{0x386, 0, 8, 100U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},                                        \
+  {.msg = {{0x394, 0, 8, 100U, .max_counter = 7U, .ignore_quality_flag = true}, { 0 }, { 0 }}},                                         \
+
+// older hyundai models have no counters and checksums on WHL_SPD11 and TCS13
+#define HYUNDAI_LEGACY_WHL_SPD_TCS_RX_CHECKS                                                                                           \
+  {.msg = {{0x386, 0, 8, 100U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }, { 0 }}},           \
+  {.msg = {{0x394, 0, 8, 100U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }, { 0 }}},           \
 
 #define HYUNDAI_SCC12_ADDR_CHECK(scc_bus)                                                                            \
   {.msg = {{0x421, (scc_bus), 8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}}, \
@@ -135,7 +142,7 @@ static void hyundai_rx_hook(const CANPacket_t *msg) {
   // SCC12 is on bus 2 for camera-based SCC cars, bus 0 on all others
   /*if (msg_matches(msg, 0x421U, safety_setup.hyundai_camera_scc ? 2U : 0U)) {
     // 2 bits: 13-14
-    int cruise_engaged = (GET_BYTES_LE(msg, 0, 4) >> 13) & 0x3U;
+    bool cruise_engaged = ((GET_BYTES_LE(msg, 0, 4) >> 13) & 0x3U) != 0U;
     hyundai_common_cruise_state_check(cruise_engaged);
   }*/
 
@@ -143,19 +150,19 @@ static void hyundai_rx_hook(const CANPacket_t *msg) {
     // 1 bits: 0
     //int cruise_engaged = GET_BYTES(msg, 0, 4) & 0x1U;
     //hyundai_common_cruise_state_check(cruise_engaged);
-    int cruise_available = GET_BIT(msg, 0U);
+    bool cruise_available = GET_BIT(msg, 0U);
     hyundai_common_cruise_state_check(cruise_available);
   }
 
   if (msg_matches(msg, 0x251U, 0U)) {
-    int torque_driver_new = (GET_BYTES_LE(msg, 0, 2) & 0x7ffU) - 1024U;
+    int torque_driver_new = from_offset(GET_BYTES_LE(msg, 0, 2) & 0x7ffU, 1024);
     // update array of samples
     update_sample(&safety.torque_driver, torque_driver_new);
   }
 
   // ACC steering wheel buttons
   if (msg_matches(msg, 0x4F1U, 0U)) {
-    int cruise_button = msg->data[0] & 0x7U;
+    uint8_t cruise_button = msg->data[0] & 0x7U;
     bool main_button = GET_BIT(msg, 3U);
     bool lfa_button = false;
     hyundai_common_cruise_buttons_check(cruise_button, main_button, lfa_button);
@@ -197,28 +204,27 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
 
   // FCA11: Block any potential actuation
   if (msg->addr == 0x38DU) {
-    int CR_VSM_DecCmd = msg->data[1];
+    uint8_t CR_VSM_DecCmd = msg->data[1];
     bool FCA_CmdAct = GET_BIT(msg, 20U);
     bool CF_VSM_DecCmdAct = GET_BIT(msg, 31U);
 
-    if ((CR_VSM_DecCmd != 0) || FCA_CmdAct || CF_VSM_DecCmdAct) {
+    if ((CR_VSM_DecCmd != 0U) || FCA_CmdAct || CF_VSM_DecCmdAct) {
       tx = false;
     }
   }
 
   // ACCEL: safety check
   if (msg->addr == 0x421U) {
-    int desired_accel_raw = (GET_BYTES_LE(msg, 3, 2) & 0x7FFU) - 1023U;
-    int desired_accel_val = ((msg->data[5] << 3) | (msg->data[4] >> 5)) - 1023U;
+    int desired_accel_raw = from_offset(GET_BYTES_LE(msg, 3, 2) & 0x7FFU, 1023);
+    int desired_accel_val = from_offset(GET_BYTES_LE(msg, 4, 2) >> 5, 1023);
 
-    //int aeb_decel_cmd = msg->data[2];
+    //uint8_t aeb_decel_cmd = msg->data[2];
     //bool aeb_req = GET_BIT(msg, 54U);
     //bool aeb_stop_req = GET_BIT(msg, 55U);
 
-    bool violation = false;
-
-    violation |= longitudinal_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS);
-    violation |= longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS);
+    const bool raw_violation = longitudinal_accel_checks(desired_accel_raw, HYUNDAI_LONG_LIMITS);
+    const bool val_violation = longitudinal_accel_checks(desired_accel_val, HYUNDAI_LONG_LIMITS);
+    bool violation = raw_violation || val_violation;
     //violation |= (aeb_decel_cmd != 0);
     //violation |= aeb_req;
     //violation |= aeb_stop_req;
@@ -230,7 +236,7 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
 
   // LKA STEER: safety check
   if (msg->addr == 0x340U) {
-    int desired_torque = ((GET_BYTES_LE(msg, 0, 4) >> 16) & 0x7ffU) - 1024U;
+    int desired_torque = from_offset((GET_BYTES_LE(msg, 0, 4) >> 16) & 0x7ffU, 1024);
     bool steer_req = GET_BIT(msg, 27U);
 
     const TorqueSteeringLimits limits = safety_setup.hyundai_alt_limits_2 ? HYUNDAI_STEERING_LIMITS_ALT_2 :
@@ -250,12 +256,12 @@ static bool hyundai_tx_hook(const CANPacket_t *msg) {
 
   // BUTTONS: used for resume spamming and cruise cancellation
   /*if ((msg->addr == 0x4F1U) && !safety_setup.hyundai_longitudinal) {
-    int button = msg->data[0] & 0x7U;
+    uint8_t button = msg->data[0] & 0x7U;
 
-    bool allowed_resume = (button == 1) && safety.controls_allowed;
-    bool allowed_set_decel = (button == 2) && safety.controls_allowed;
-    bool allowed_gap_dist = (button == 3) && safety.controls_allowed;
-    bool allowed_cancel = (button == 4) && safety.cruise_engaged_prev;
+    bool allowed_resume = (button == 1U) && safety.controls_allowed;
+    bool allowed_set_decel = (button == 2U) && safety.controls_allowed;
+    bool allowed_gap_dist = (button == 3U) && safety.controls_allowed;
+    bool allowed_cancel = (button == 4U) && safety.cruise_engaged_prev;
     if (!(allowed_resume || allowed_set_decel || allowed_gap_dist || allowed_cancel)) {
       tx = false;
     }
@@ -287,11 +293,13 @@ static safety_config hyundai_init(uint16_t param) {
   if (safety_setup.hyundai_longitudinal) {
     // Use CLU11 (buttons) to manage controls allowed instead of SCC cruise state
     static const RxCheck hyundai_long_rx_checks[] = {
-      HYUNDAI_COMMON_RX_CHECKS(false)
+      HYUNDAI_COMMON_RX_CHECKS
+      HYUNDAI_WHL_SPD_TCS_RX_CHECKS
     };
 
     static const RxCheck hyundai_fcev_long_rx_checks[] = {
-      HYUNDAI_COMMON_RX_CHECKS(false)
+      HYUNDAI_COMMON_RX_CHECKS
+      HYUNDAI_WHL_SPD_TCS_RX_CHECKS
       HYUNDAI_FCEV_GAS_ADDR_CHECK
     };
 
@@ -307,19 +315,22 @@ static safety_config hyundai_init(uint16_t param) {
     }
   } else if (safety_setup.hyundai_camera_scc) {
     static const RxCheck hyundai_cam_scc_rx_checks[] = {
-      HYUNDAI_COMMON_RX_CHECKS(false)
+      HYUNDAI_COMMON_RX_CHECKS
+      HYUNDAI_WHL_SPD_TCS_RX_CHECKS
       HYUNDAI_SCC12_ADDR_CHECK(2)
     };
 
     ret = BUILD_SAFETY_CFG(hyundai_cam_scc_rx_checks, HYUNDAI_CAMERA_SCC_TX_MSGS);
   } else {
     static const RxCheck hyundai_rx_checks[] = {
-       HYUNDAI_COMMON_RX_CHECKS(false)
+       HYUNDAI_COMMON_RX_CHECKS
+       HYUNDAI_WHL_SPD_TCS_RX_CHECKS
        HYUNDAI_SCC12_ADDR_CHECK(0)
     };
 
     static const RxCheck hyundai_fcev_rx_checks[] = {
-      HYUNDAI_COMMON_RX_CHECKS(false)
+      HYUNDAI_COMMON_RX_CHECKS
+      HYUNDAI_WHL_SPD_TCS_RX_CHECKS
       HYUNDAI_SCC12_ADDR_CHECK(0)
       HYUNDAI_FCEV_GAS_ADDR_CHECK
     };
@@ -337,7 +348,8 @@ static safety_config hyundai_init(uint16_t param) {
 static safety_config hyundai_legacy_init(uint16_t param) {
   // older hyundai models have less checks due to missing counters and checksums
   static const RxCheck hyundai_legacy_rx_checks[] = {
-    HYUNDAI_COMMON_RX_CHECKS(true)
+    HYUNDAI_COMMON_RX_CHECKS
+    HYUNDAI_LEGACY_WHL_SPD_TCS_RX_CHECKS
     //HYUNDAI_SCC12_ADDR_CHECK(0)
   };
 
@@ -348,7 +360,7 @@ static safety_config hyundai_legacy_init(uint16_t param) {
   return BUILD_SAFETY_CFG(hyundai_legacy_rx_checks, HYUNDAI_TX_MSGS);
 }
 
-const safety_hooks hyundai_hooks = {
+static const safety_hooks hyundai_hooks = {
   .init = hyundai_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,
@@ -357,7 +369,7 @@ const safety_hooks hyundai_hooks = {
   .compute_checksum = hyundai_compute_checksum,
 };
 
-const safety_hooks hyundai_legacy_hooks = {
+static const safety_hooks hyundai_legacy_hooks = {
   .init = hyundai_legacy_init,
   .rx = hyundai_rx_hook,
   .tx = hyundai_tx_hook,

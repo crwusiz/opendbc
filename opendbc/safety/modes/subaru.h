@@ -34,7 +34,6 @@
 
 #define SUBARU_MAIN_BUS 0U
 #define SUBARU_ALT_BUS  1U
-#define SUBARU_CAM_BUS  2U
 
 #define SUBARU_BASE_TX_MSGS(alt_bus, lkas_msg) \
   {(lkas_msg),                   SUBARU_MAIN_BUS, 8, .check_relay = true},  \
@@ -179,7 +178,7 @@ static safety_config subaru_init(uint16_t param) {
   return ret;
 }
 
-const safety_hooks subaru_hooks = {
+static const safety_hooks subaru_hooks = {
   .init = subaru_init,
   .rx = subaru_rx_hook,
   .tx = subaru_tx_hook,

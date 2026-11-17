@@ -14,7 +14,6 @@
 
 // CAN bus numbers
 #define MAZDA_MAIN 0
-#define MAZDA_CAM  2
 
 // track msgs coming from OP so that we know what CAM msgs to drop and what to forward
 static void mazda_rx_hook(const CANPacket_t *msg) {
@@ -60,8 +59,7 @@ static bool mazda_tx_hook(const CANPacket_t *msg) {
   // Check if msg is sent on the main BUS
   // steer cmd checks
   if (msg_matches(msg, MAZDA_LKAS, MAZDA_MAIN)) {
-    uint32_t desired_torque_bits = GET_BYTES_BE(msg, 0, 2) & 0xFFFU;
-    int desired_torque = (int)desired_torque_bits - 2048;
+    int desired_torque = from_offset(GET_BYTES_BE(msg, 0, 2) & 0xFFFU, 2048);
 
     if (steer_torque_cmd_checks(desired_torque, true, MAZDA_STEERING_LIMITS)) {
       tx = false;
@@ -100,7 +98,7 @@ static safety_config mazda_init(uint16_t param) {
   return BUILD_SAFETY_CFG(mazda_rx_checks, MAZDA_TX_MSGS);
 }
 
-const safety_hooks mazda_hooks = {
+static const safety_hooks mazda_hooks = {
   .init = mazda_init,
   .rx = mazda_rx_hook,
   .tx = mazda_tx_hook,

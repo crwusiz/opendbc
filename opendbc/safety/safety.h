@@ -35,7 +35,7 @@
 #include "opendbc/safety/modes/byd.h"
 #include "opendbc/safety/modes/hyundai_canfd.h"
 
-uint32_t GET_BYTES_LE(const CANPacket_t *msg, int start, int len) {
+static uint32_t GET_BYTES_LE(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
   for (int i = 0; i < len; i++) {
     const uint32_t shift = (uint32_t)i * 8U;
@@ -45,7 +45,7 @@ uint32_t GET_BYTES_LE(const CANPacket_t *msg, int start, int len) {
 }
 
 // Read up to four bytes in big-endian order.
-uint32_t GET_BYTES_BE(const CANPacket_t *msg, int start, int len) {
+static uint32_t GET_BYTES_BE(const CANPacket_t *msg, int start, int len) {
   uint32_t ret = 0U;
   for (int i = 0; i < len; i++) {
     ret = (ret << 8) | (uint32_t)msg->data[start + i];
@@ -54,7 +54,7 @@ uint32_t GET_BYTES_BE(const CANPacket_t *msg, int start, int len) {
 }
 
 // Read up to eight bytes in little-endian order, without alignment assumptions.
-uint64_t GET_BYTES_64_LE(const CANPacket_t *msg, int start, int len) {
+static uint64_t GET_BYTES_64_LE(const CANPacket_t *msg, int start, int len) {
   uint64_t ret = 0U;
   for (int i = 0; i < len; i++) {
     const uint32_t shift = (uint32_t)i * 8U;
@@ -63,13 +63,12 @@ uint64_t GET_BYTES_64_LE(const CANPacket_t *msg, int start, int len) {
   return ret;
 }
 
-const int MAX_WRONG_COUNTERS = 5;
+static const int MAX_WRONG_COUNTERS = 5;
 
 // UM2331 CPU_SM_2 and RAM_SM_3: rx, tx, fwd and tick run on two copies of the state and config and compare the decisions, the tick also compares the copies
 SafetyCopy safety_a = {.setup = {.current_hooks = &nooutput_hooks}};
 SafetyCopy safety_b = {.setup = {.current_hooks = &nooutput_hooks}};
 SafetyCopy *current_copy = &safety_a;
-uint32_t safety_ts;
 bool safety_redundancy_fault = false;
 
 static void generic_rx_checks(void);
@@ -136,13 +135,13 @@ static int get_addr_check_index(const CANPacket_t *msg, const RxCheck addr_list[
 static void update_counter(RxStatus *status, const CanMsgCheck *m, uint8_t counter) {
   uint8_t expected_counter = (status->last_counter + 1U) % (m->max_counter + 1U);
   status->wrong_counters += (expected_counter == counter) ? -1 : 1;
-  status->wrong_counters = SAFETY_CLAMP(status->wrong_counters, 0, MAX_WRONG_COUNTERS);
+  status->wrong_counters = safety_clamp_int(status->wrong_counters, 0, MAX_WRONG_COUNTERS);
   status->last_counter = counter;
 }
 
 static bool rx_msg_safety_check(const CANPacket_t *msg,
                                 const safety_config *cfg,
-                                const safety_hooks *safety_hooks) {
+                                const safety_hooks *hooks) {
 
   int index = get_addr_check_index(msg, cfg->rx_checks, cfg->rx_checks_len);
 
@@ -156,8 +155,8 @@ static bool rx_msg_safety_check(const CANPacket_t *msg,
     if (m->ignore_checksum) {
       status->valid_checksum = true;
     } else {
-      uint32_t checksum = safety_hooks->get_checksum(msg);
-      uint32_t checksum_comp = safety_hooks->compute_checksum(msg);
+      uint32_t checksum = hooks->get_checksum(msg);
+      uint32_t checksum_comp = hooks->compute_checksum(msg);
       status->valid_checksum = checksum_comp == checksum;
     }
 
@@ -165,7 +164,7 @@ static bool rx_msg_safety_check(const CANPacket_t *msg,
     if (m->ignore_counter) {
       status->wrong_counters = 0;
     } else {
-      uint8_t counter = safety_hooks->get_counter(msg);
+      uint8_t counter = hooks->get_counter(msg);
       update_counter(status, m, counter);
     }
 
@@ -173,7 +172,7 @@ static bool rx_msg_safety_check(const CANPacket_t *msg,
     if (m->ignore_quality_flag) {
       status->valid_quality_flag = true;
     } else {
-      status->valid_quality_flag = safety_hooks->get_quality_flag_valid(msg);
+      status->valid_quality_flag = hooks->get_quality_flag_valid(msg);
     }
   }
   bool valid = is_msg_valid(index);
@@ -464,7 +463,7 @@ int set_safety_hooks(uint16_t mode, uint16_t param) {
 }
 
 // convert a trimmed integer to signed 32 bit int
-int to_signed(uint32_t d, int bits) {
+static int to_signed(uint32_t d, int bits) {
   const uint32_t sign_bit = (uint32_t)1U << ((uint32_t)bits - 1U);
   int d_signed = (int)d;
   if (d >= sign_bit) {
@@ -474,13 +473,18 @@ int to_signed(uint32_t d, int bits) {
 }
 
 // convert a magnitude and a separate sign bit to a signed int
-int sign_magnitude(uint32_t magnitude, bool negative) {
+static int sign_magnitude(uint32_t magnitude, bool negative) {
   const int value = (int)magnitude;
   return negative ? -value : value;
 }
 
+// convert an offset-encoded raw value to a signed int
+static int from_offset(uint32_t raw, int offset) {
+  return (int)raw - offset;
+}
+
 // given a new sample, update the sample_t struct
-void update_sample(struct sample_t *sample, int sample_new) {
+static void update_sample(struct sample_t *sample, int sample_new) {
   for (int i = MAX_SAMPLE_VALS - 1; i > 0; i--) {
     sample->values[i] = sample->values[i-1];
   }
@@ -499,12 +503,12 @@ void update_sample(struct sample_t *sample, int sample_new) {
   }
 }
 
-int ROUND(float val) {
+static int ROUND(float val) {
   const float rounded = val + ((val > 0.0f) ? 0.5f : -0.5f);
   return (int)rounded;
 }
 
-void pcm_cruise_check(bool cruise_engaged) {
+static void pcm_cruise_check(bool cruise_engaged) {
   // Enter controls on rising edge of stock ACC, exit controls if stock ACC disengages
   if (!cruise_engaged) {
     safety.controls_allowed = false;
@@ -515,12 +519,12 @@ void pcm_cruise_check(bool cruise_engaged) {
   safety.cruise_engaged_prev = cruise_engaged;
 }
 
-void speed_mismatch_check(const float speed_2) {
+static void speed_mismatch_check(const float speed_2) {
   // Disable controls if speeds from two sources are too far apart.
   // For safety modes that use speed to adjust torque or angle limits
   // compared in vehicle_speed's integer units, so the limit is exact
   const int MAX_SPEED_DELTA = 2 * (int)VEHICLE_SPEED_FACTOR;  // 2 m/s
-  bool is_invalid_speed = SAFETY_ABS(ROUND(speed_2 * VEHICLE_SPEED_FACTOR) - safety.vehicle_speed.values[0]) > MAX_SPEED_DELTA;
+  bool is_invalid_speed = safety_abs_int(ROUND(speed_2 * VEHICLE_SPEED_FACTOR) - safety.vehicle_speed.values[0]) > MAX_SPEED_DELTA;
   if (is_invalid_speed) {
     safety.controls_allowed = false;
   }

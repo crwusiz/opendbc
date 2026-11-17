@@ -13,7 +13,7 @@ static uint32_t body_get_checksum(const CANPacket_t *msg) {
 
 static uint32_t body_compute_checksum(const CANPacket_t *msg) {
   uint8_t checksum = 0xFFU;
-  int len = GET_LEN(msg);
+  int len = (int)GET_LEN(msg);
   for (int i = len - 2; i >= 0; i--) {
     checksum = crc8_update(checksum, msg->data[i], 0xD5U);
   }
@@ -61,7 +61,7 @@ static safety_config body_init(uint16_t param) {
   return ret;
 }
 
-const safety_hooks body_hooks = {
+static const safety_hooks body_hooks = {
   .init = body_init,
   .rx = body_rx_hook,
   .tx = body_tx_hook,

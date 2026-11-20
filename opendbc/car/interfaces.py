@@ -162,7 +162,7 @@ class CarInterfaceBase(ABC):
     # Set params dependent on values set by the car interface
     ret.rotationalInertiaPerMass = scale_rot_inertia_per_mass(ret.wheelbase)
     ret.tireStiffnessFrontPerMass, ret.tireStiffnessRearPerMass = scale_tire_stiffness_per_mass(ret.wheelbase, ret.centerToFront,
-                                                                                              ret.tireStiffnessFactor)
+                                                                                                ret.tireStiffnessFactor)
 
     return ret
 

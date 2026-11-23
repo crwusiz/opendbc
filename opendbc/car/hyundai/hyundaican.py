@@ -217,6 +217,15 @@ def create_frt_radar_opt(packer):
   return packer.make_can_msg("FRT_RADAR11", 0, frt_radar11_values)
 
 
+def hyundai_can_checksum(address: int, sig, d: bytearray) -> int:
+  if address == 0x386:
+    checksum = sum((b & (0x3F if i % 2 else 0xFF)).bit_count() for i, b in enumerate(d)) ^ 9
+    return (checksum >> (2 if sig.name.endswith("_MSB") else 0)) & 0x3
+
+  if address == 0x394:
+    d = d[:7]
+  return (sig.get_raw_value(d) - sum((b >> 4) + (b & 0xF) for b in d)) & 0xF
+
 # ---------------------------------------------------------------------------------------
 # CF_Lkas_FcwOpt_USM 0 = No car + lanes
 #                    1 = White car + lanes

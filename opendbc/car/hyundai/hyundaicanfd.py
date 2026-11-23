@@ -667,8 +667,15 @@ def hkg_can_fd_checksum(address: int, sig, d: bytearray) -> int:
     crc = ((crc << 8) ^ CRC16_XMODEM[(crc >> 8) ^ d[i]]) & 0xFFFF
   crc = ((crc << 8) ^ CRC16_XMODEM[(crc >> 8) ^ ((address >> 0) & 0xFF)]) & 0xFFFF
   crc = ((crc << 8) ^ CRC16_XMODEM[(crc >> 8) ^ ((address >> 8) & 0xFF)]) & 0xFFFF
-  offsets = {8: 0x5F29, 16: 0x041D, 24: 0x819D, 32: 0x9F5B}
-  return crc ^ offsets.get(len(d), 0)
+  if len(d) == 8:
+    crc ^= 0x5F29
+  elif len(d) == 16:
+    crc ^= 0x041D
+  elif len(d) == 24:
+    crc ^= 0x819D
+  elif len(d) == 32:
+    crc ^= 0x9F5B
+  return crc
 
 
 def hyundai_crc8(data: bytes) -> int:

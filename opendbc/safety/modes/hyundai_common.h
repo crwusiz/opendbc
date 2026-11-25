@@ -75,7 +75,7 @@ static void hyundai_common_cruise_buttons_check(const uint8_t cruise_button, con
     // exit controls on cancel press
     //if (cruise_button == HYUNDAI_BTN_CANCEL) {
     //  exit_controls();
-    }
+    //}
 
     safety.cruise_button_prev = cruise_button;
   }
